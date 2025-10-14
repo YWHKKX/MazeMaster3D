@@ -1,0 +1,729 @@
+## 角色基类（3D物理节点）
+##
+## 所有游戏角色的基础类，使用 CharacterBody3D 实现物理移动和碰撞。
+## 集成了状态机、导航系统、战斗系统、物理系统等核心功能。
+##
+## 继承层次：
+## CharacterBase → Monster / Hero → 具体单位（GoblinWorker, Knight 等）
+##
+## 场景结构：
+## CharacterBase (CharacterBody3D)
+## ├── Model (MeshInstance3D)
+## ├── CollisionShape (CollisionShape3D)
+## ├── NavigationAgent (NavigationAgent3D)
+## ├── StateMachine (StateMachine)
+## ├── AnimationPlayer (AnimationPlayer)
+## └── StatusIndicator (Control)
+class_name CharacterBase
+extends CharacterBody3D
+
+## ============================================================================
+## 信号定义
+## ============================================================================
+
+## 生命值变化信号
+signal health_changed(old_health: float, new_health: float)
+
+## 死亡信号
+signal died()
+
+## 受到攻击信号
+signal attacked(attacker: CharacterBase, damage: float)
+
+## 攻击目标信号
+signal target_acquired(target: Node3D)
+
+## 状态变化信号
+signal status_changed(old_status: Enums.CreatureStatus, new_status: Enums.CreatureStatus)
+
+## ============================================================================
+## 导出属性（可在编辑器中配置）
+## ============================================================================
+
+## 角色数据（Resource）
+@export var character_data: CharacterData
+
+## 阵营
+@export var faction: Enums.Faction = Enums.Faction.MONSTERS
+
+## 是否启用调试模式
+@export var debug_mode: bool = false
+
+## ============================================================================
+## 基础属性（从 CharacterData 初始化）
+## ============================================================================
+
+## 当前生命值
+var current_health: float = 100.0
+
+## 最大生命值
+var max_health: float = 100.0
+
+## 攻击力
+var attack: float = 10.0
+
+## 防御力/护甲
+var armor: float = 0.0
+
+## 移动速度
+var speed: float = 20.0
+
+## 体型大小
+var size: float = 15.0
+
+## 攻击范围
+var attack_range: float = 3.0
+
+## 攻击冷却时间
+var attack_cooldown: float = 1.0
+
+## 检测范围
+var detection_range: float = 10.0
+
+## ============================================================================
+## 战斗属性
+## ============================================================================
+
+## 当前目标
+var current_target: Node3D = null
+
+## 目标最后被看到的时间
+var target_last_seen_time: float = 0.0
+
+## 上次攻击时间
+var last_attack_time: float = 0.0
+
+## 是否在战斗中
+var in_combat: bool = false
+
+## 最后战斗时间
+var last_combat_time: float = 0.0
+
+## 是否为战斗单位
+var is_combat_unit: bool = true
+
+## ============================================================================
+## 物理属性
+## ============================================================================
+
+## 碰撞半径（自动计算）
+var collision_radius: float = 0.0
+
+## 击退状态
+var knockback_state: Dictionary = {}
+
+## 地面悬浮系统
+var enable_ground_hover: bool = true
+var hover_height: float = 0.05
+var hover_smooth_speed: float = 5.0
+
+## 击退系统
+var is_knockback: bool = false
+var knockback_velocity: Vector3 = Vector3.ZERO
+var knockback_decay_rate: float = 5.0
+
+## 是否可以移动
+var can_move: bool = true
+
+## 是否可以攻击
+var can_attack: bool = true
+
+## 免疫标志
+var immunities: int = 0
+
+## ============================================================================
+## 状态
+## ============================================================================
+
+## 当前状态
+var current_status: Enums.CreatureStatus = Enums.CreatureStatus.IDLE
+
+## 是否存活
+var is_alive: bool = true
+
+## ============================================================================
+## 节点引用（使用 @onready 延迟初始化）
+## ============================================================================
+
+## 🔧 [移除] NavigationAgent3D 已废弃，统一使用 MovementHelper.process_navigation
+# @onready var nav_agent: NavigationAgent3D = get_node_or_null("NavigationAgent3D")
+
+## 状态机（可选）
+@onready var state_machine: StateMachine = get_node_or_null("StateMachine")
+
+## 动画播放器（可选）
+@onready var animation_player: AnimationPlayer = get_node_or_null("AnimationPlayer")
+
+## 模型（可选，可能是 MeshInstance3D 或 Node3D 包装器）
+@onready var model: Node3D = get_node_or_null("Model")
+
+## 碰撞形状（可选）
+@onready var collision_shape: CollisionShape3D = get_node_or_null("CollisionShape")
+
+## 🔧 [状态栏系统] 头顶状态栏（动态创建）
+var status_bar: Node3D = null
+
+## ============================================================================
+## 生命周期
+## ============================================================================
+
+func _ready() -> void:
+	# 从 CharacterData 初始化属性
+	if character_data:
+		_init_from_character_data()
+	else:
+		_init_default_values()
+	
+	# 设置物理属性
+	_setup_physics()
+	
+	# 🔧 [移除] 导航系统设置已废弃，统一使用 MovementHelper.process_navigation
+	# _setup_navigation()
+	
+	# 设置碰撞层级
+	_setup_collision_layers()
+	
+	# 🔧 应用模型缩放（延迟到下一帧，确保模型已加载）
+	call_deferred("_apply_model_scale")
+	
+	# 🔧 [状态栏系统] 创建头顶状态栏
+	call_deferred("_setup_status_bar")
+	
+	# 角色初始化完成
+
+func _physics_process(delta: float) -> void:
+	# 🔧 锁定Y轴：确保单位只在水平面移动
+	velocity.y = 0.0
+	
+	# 处理地面悬浮
+	if enable_ground_hover:
+		_update_ground_hover(delta)
+	
+	# 处理击退效果
+	if is_knockback:
+		_update_knockback(delta)
+	else:
+		# 🔧 关键修复：正常移动时调用 move_and_slide()
+		# 状态机会设置 velocity，这里需要应用到实际移动
+		if velocity.length() > 0.001: # 只有在有移动速度时才调用
+			# 保存移动前的位置
+			var pos_before = global_position
+			
+			# 🔧 修复1：根据移动方向旋转单位
+			_update_rotation_from_velocity(delta)
+			
+			# 应用移动
+			move_and_slide()
+			
+			# 🔧 移动后强制保持Y坐标在地面高度
+			global_position.y = hover_height
+			
+			# 🔍 调试：检查是否真的移动了
+			var pos_after = global_position
+			var moved_distance = pos_before.distance_to(pos_after)
+			# 检查单位移动状态（调试用）
+	
+	# 子类可以重写此方法添加自定义物理逻辑
+	pass
+
+## ============================================================================
+## 初始化方法
+## ============================================================================
+
+## 从 CharacterData 初始化属性
+func _init_from_character_data() -> void:
+	if not character_data:
+		return
+	
+	# 基础属性
+	max_health = character_data.max_health
+	current_health = max_health
+	attack = character_data.attack
+	armor = character_data.armor
+	speed = character_data.speed
+	size = character_data.size
+	
+	# 战斗属性
+	attack_range = character_data.attack_range
+	attack_cooldown = character_data.attack_cooldown
+	detection_range = character_data.detection_range
+	
+	# 物理属性
+	collision_radius = character_data.get_collision_radius()
+	immunities = character_data.immunities
+	
+	# 从CharacterData加载角色信息
+
+## 应用模型缩放和位置
+func _apply_model_scale() -> void:
+	"""根据 size 属性缩放 3D 模型并调整位置让脚底对齐地面"""
+	if model:
+		# 应用缩放
+		if model.has_method("apply_size_scale"):
+			model.apply_size_scale(size)
+		
+		# 🔧 关键修复：将模型向下偏移，让脚底对齐地面
+		# CharacterBody3D.position.y = 0.05（单位脚底悬浮位置）
+		# 模型原点可能在中心，需要向下偏移让脚底对齐地面（y=0）
+		# 对于 Goblin 模型，使用固定偏移
+		model.position.y = 0.0 # 不偏移，让模型原点对齐单位位置
+		
+		# 应用模型缩放和位置
+
+
+## 🔧 [状态栏系统] 创建头顶状态栏
+func _setup_status_bar() -> void:
+	"""创建并设置头顶状态栏"""
+	# 加载UnitStatusBar类
+	var UnitStatusBarClass = preload("res://scripts/ui/UnitStatusBar.gd")
+	var bar = UnitStatusBarClass.new()
+	bar.name = "UnitStatusBar"
+	add_child(bar)
+	status_bar = bar # 保存引用
+	
+	# 🔧 根据单位size调整状态栏尺寸和位置
+	bar.set_unit_size(size) # 调整整体尺寸
+	
+	var bar_height = size * 0.01 + 0.5 # 基础高度 + 根据体型调整
+	bar.set_offset_y(bar_height)
+	
+	# 初始化血条
+	_update_status_bar_health()
+	
+	# 状态栏已创建
+
+
+## 🔧 [状态栏系统] 更新状态栏血量显示
+func _update_status_bar_health() -> void:
+	"""更新状态栏的血量显示"""
+	if status_bar and is_instance_valid(status_bar) and status_bar.has_method("update_health"):
+		status_bar.update_health(current_health, max_health)
+
+## 获取交互范围（基于单位碰撞半径）
+func get_interaction_range(target_radius: float = 0.5, buffer: float = 0.3) -> float:
+	"""计算与目标的交互范围
+	
+	@param target_radius: 目标半径（如金矿=0.5，建筑可能更大）
+	@param buffer: 缓冲距离（额外的安全距离）
+	@return: 有效交互范围
+	
+	公式：交互范围 = 单位半径 + 目标半径 + 缓冲
+	"""
+	# 🔧 使用 collision_radius（已根据 size 动态计算）
+	return collision_radius + target_radius + buffer
+
+## 使用默认值初始化
+func _init_default_values() -> void:
+	max_health = 100.0
+	current_health = 100.0
+	attack = 10.0
+	armor = 0.0
+	speed = 20.0
+	size = 15.0
+	attack_range = 3.0
+	attack_cooldown = 1.0
+	detection_range = 10.0
+	collision_radius = 0.3
+	
+	# 使用默认值初始化
+
+## ============================================================================
+## 系统设置
+## ============================================================================
+
+## 设置物理系统
+func _setup_physics() -> void:
+	# 设置运动模式为浮动（不受重力影响，适合俯视角RTS）
+	motion_mode = MOTION_MODE_FLOATING
+	
+	# 🔧 根据 size 动态计算碰撞半径
+	# 修复：size应该代表单位的实际大小（厘米）
+	# size=18 → 0.18米 = 18厘米（合理的角色大小）
+	# 🔧 [避障优化] 缩小碰撞半径，减少碰撞频率
+	# 碰撞半径 = size / 200（单位换算，缩小50%）
+	var actual_collision_radius = size / 200.0 # size=18 → 0.09米（原来0.18米）
+	
+	# 创建或更新碰撞形状
+	if collision_shape:
+		var capsule = CapsuleShape3D.new()
+		capsule.radius = actual_collision_radius
+		capsule.height = actual_collision_radius * 4.0 # 高度 = 半径的4倍
+		collision_shape.shape = capsule
+		
+		# 🔧 碰撞体位置：让碰撞体底部对齐地面
+		# position.y = 半径 × 倍数（让胶囊体底部刚好在 y=0）
+		collision_shape.position.y = actual_collision_radius * 0.8
+		
+		# 设置碰撞体积
+	
+	# 更新 collision_radius（供其他系统使用）
+	collision_radius = actual_collision_radius
+	
+	# 设置安全边距
+	safe_margin = 0.15
+	
+	# 启用地面悬浮（用于贴合地形起伏）
+	enable_ground_hover = true
+	hover_height = 0.05 # 悬浮高度（从胶囊体底部开始）
+
+## 🔧 [移除] 导航系统设置已废弃，统一使用 MovementHelper.process_navigation
+# func _setup_navigation() -> void:
+# 	if not nav_agent:
+# 		return
+# 	
+# 	# 配置导航代理
+# 	nav_agent.path_desired_distance = 0.3
+# 	nav_agent.target_desired_distance = 1.0
+# 	nav_agent.max_speed = speed
+# 	nav_agent.radius = collision_radius
+# 	nav_agent.height = collision_radius * 2.0
+# 	nav_agent.avoidance_enabled = true
+# 	nav_agent.path_postprocessing = NavigationPathQueryParameters3D.PATH_POSTPROCESSING_EDGECENTERED
+	
+	# 🔧 [移除] 导航系统延迟设置已废弃
+	# call_deferred("_setup_navigation_deferred")
+
+## 设置碰撞层级
+func _setup_collision_layers() -> void:
+	# 清空所有层
+	collision_layer = 0
+	collision_mask = 0
+	
+	# 根据阵营设置碰撞层
+	match faction:
+		Enums.Faction.MONSTERS:
+			set_collision_layer_value(2, true) # 玩家单位层
+		Enums.Faction.HEROES:
+			set_collision_layer_value(3, true) # 敌方单位层
+		Enums.Faction.NEUTRAL:
+			set_collision_layer_value(2, true) # 中立单位使用玩家层
+	
+	# 设置碰撞掩码：检测哪些层
+	set_collision_mask_value(1, true) # 检测环境层（墙壁、地形）
+	set_collision_mask_value(2, true) # 检测玩家单位
+	set_collision_mask_value(3, true) # 检测敌方单位
+	set_collision_mask_value(4, true) # 🔧 修复：检测建筑层（Layer 4，不是 6）
+
+## ============================================================================
+## 移动相关
+## ============================================================================
+
+## 🔧 [移除] 移动到目标位置函数已废弃，统一使用 MovementHelper.process_navigation
+# func move_to_position(target_pos: Vector3) -> void:
+# 	if not nav_agent:
+# 		return
+# 	nav_agent.target_position = target_pos
+
+## 获取网格位置（2D坐标）
+## 用于与旧系统兼容，将 3D 位置转换为 2D 网格坐标
+func get_grid_position() -> Vector2i:
+	return Vector2i(int(global_position.x), int(global_position.z))
+
+## 🔧 [移除] 停止移动和到达检查函数已废弃，统一使用 MovementHelper.process_navigation
+# func stop_movement() -> void:
+# 	velocity = Vector3.ZERO
+# 	if nav_agent:
+# 		nav_agent.target_position = global_position
+# 
+# ## 检查是否到达目标
+# func is_at_target() -> bool:
+# 	if not nav_agent:
+# 		return true
+# 	return nav_agent.is_navigation_finished()
+
+## ============================================================================
+## 战斗相关
+## ============================================================================
+
+## 受到伤害
+func take_damage(damage: float, attacker: CharacterBase = null) -> void:
+	if not is_alive:
+		return
+	
+	# 计算护甲减免
+	var armor_reduction = 1.0 - min(armor * GameBalance.ARMOR_DAMAGE_REDUCTION, GameBalance.MAX_ARMOR_REDUCTION)
+	var actual_damage = damage * armor_reduction
+	
+	var old_health = current_health
+	current_health = max(0.0, current_health - actual_damage)
+	
+	# 🔧 [状态栏系统] 更新血条显示
+	_update_status_bar_health()
+	
+	# 发出信号
+	health_changed.emit(old_health, current_health)
+	attacked.emit(attacker, actual_damage)
+	
+	# 进入战斗状态
+	in_combat = true
+	last_combat_time = Time.get_ticks_msec() / 1000.0
+	
+	# 检查死亡
+	if current_health <= 0:
+		die()
+	
+	# 角色受到伤害
+
+## 治疗
+func heal(amount: float) -> void:
+	if not is_alive:
+		return
+	
+	var old_health = current_health
+	current_health = min(max_health, current_health + amount)
+	health_changed.emit(old_health, current_health)
+
+## 死亡
+func die() -> void:
+	if not is_alive:
+		return
+	
+	is_alive = false
+	current_health = 0.0
+	current_status = Enums.CreatureStatus.IDLE # 死亡后重置状态
+	died.emit()
+	
+	# 角色死亡
+
+## 检查是否可以攻击目标
+func can_attack_target(target: Node3D) -> bool:
+	if not is_alive or not can_attack:
+		return false
+	if not target or not is_instance_valid(target):
+		return false
+	
+	# 检查距离
+	var distance = global_position.distance_to(target.global_position)
+	return distance <= attack_range
+
+## ============================================================================
+## 目标管理
+## ============================================================================
+
+## 设置目标
+func set_target(target: Node3D) -> void:
+	if current_target != target:
+		current_target = target
+		target_acquired.emit(target)
+
+## 清除目标
+func clear_target() -> void:
+	current_target = null
+
+## 检查目标是否有效
+func is_target_valid() -> bool:
+	return current_target != null and is_instance_valid(current_target)
+
+## ============================================================================
+## 状态管理
+## ============================================================================
+
+## 改变状态
+func change_status(new_status: Enums.CreatureStatus) -> void:
+	if current_status != new_status:
+		var old_status = current_status
+		current_status = new_status
+		status_changed.emit(old_status, new_status)
+		
+		# 角色状态变化
+
+## 状态转字符串（调试用）
+func _status_to_string(status: Enums.CreatureStatus) -> String:
+	match status:
+		Enums.CreatureStatus.IDLE: return "IDLE"
+		Enums.CreatureStatus.WANDERING: return "WANDERING"
+		Enums.CreatureStatus.MOVING: return "MOVING"
+		Enums.CreatureStatus.FIGHTING: return "FIGHTING"
+		Enums.CreatureStatus.FLEEING: return "FLEEING"
+		Enums.CreatureStatus.MINING: return "MINING"
+		Enums.CreatureStatus.BUILDING: return "BUILDING"
+		Enums.CreatureStatus.DEPOSITING: return "DEPOSITING"
+		Enums.CreatureStatus.FETCHING: return "FETCHING"
+		_: return "UNKNOWN"
+
+## ============================================================================
+## 阵营判断
+## ============================================================================
+
+## 判断是否为敌人
+func is_enemy_of(other: CharacterBase) -> bool:
+	if not other or not is_instance_valid(other):
+		return false
+	return faction != other.faction
+
+## 判断是否为友军
+func is_friend_of(other: CharacterBase) -> bool:
+	if not other or not is_instance_valid(other):
+		return false
+	return faction == other.faction
+
+## ============================================================================
+## 查询方法
+## ============================================================================
+
+## 获取角色名称
+func get_character_name() -> String:
+	if character_data:
+		return character_data.character_name
+	return "Unknown"
+
+## 获取生命值百分比
+func get_health_percent() -> float:
+	if max_health <= 0:
+		return 0.0
+	return current_health / max_health
+
+## 是否血量过低
+func is_low_health() -> bool:
+	return get_health_percent() < Constants.FLEE_HEALTH_THRESHOLD
+
+## 获取角色信息（调试用）
+func get_character_info() -> Dictionary:
+	var target_name := "none"
+	if current_target and is_instance_valid(current_target):
+		target_name = current_target.name
+	
+	return {
+		"name": get_character_name(),
+		"faction": Enums.faction_to_string(faction),
+		"status": _status_to_string(current_status),
+		"health": "%d/%d" % [current_health, max_health],
+		"position": global_position,
+		"is_alive": is_alive,
+		"current_target": target_name
+	}
+
+## ============================================================================
+## 实用方法
+## ============================================================================
+
+## 更新回血（脱离战斗后自动回血）
+func update_regeneration(delta: float) -> void:
+	if not is_alive:
+		return
+	
+	# 检查是否脱离战斗足够长时间
+	var current_time = Time.get_ticks_msec() / 1000.0
+	if not in_combat and (current_time - last_combat_time) > Constants.REGENERATION_DELAY:
+		# 自动回血
+		if current_health < max_health:
+			heal(Constants.REGENERATION_RATE * delta)
+
+## 检查敌人是否在范围内
+func is_enemy_in_range(enemy: CharacterBase, check_range: float) -> bool:
+	if not enemy or not is_instance_valid(enemy) or not enemy.is_alive:
+		return false
+	return global_position.distance_to(enemy.global_position) <= check_range
+
+## ============================================================================
+## 物理系统高级功能
+## ============================================================================
+
+## 地面悬浮更新（射线检测贴地）
+func _update_ground_hover(delta: float) -> void:
+	# 向地面发射射线，检测高度差
+	var ray_origin = global_position + Vector3.UP * 10.0
+	var ray_target = global_position - Vector3.UP * 20.0
+	
+	var space_state = get_world_3d().direct_space_state
+	var query = PhysicsRayQueryParameters3D.create(ray_origin, ray_target)
+	query.collision_mask = 1 # 只检测环境层
+	
+	var result = space_state.intersect_ray(query)
+	
+	if result:
+		# 🔧 目标高度 = 地面高度 + 悬浮高度
+		# 注意：CharacterBody3D 的 global_position 现在表示脚底位置（因为碰撞形状已向上偏移）
+		var target_height = result.position.y + hover_height
+		# 平滑地调整单位高度，模拟悬浮
+		var new_y = lerp(global_position.y, target_height, hover_smooth_speed * delta)
+		global_position.y = new_y
+
+## 根据速度更新旋转（朝向移动方向）
+func _update_rotation_from_velocity(delta: float) -> void:
+	"""根据移动速度自动旋转单位朝向移动方向
+	
+	参考：Godot 4 最佳实践 - 使用 atan2 计算Y轴旋转
+	"""
+	if velocity.length() < 0.001:
+		return
+	
+	# 获取水平移动方向（忽略Y轴）
+	var horizontal_velocity = Vector3(velocity.x, 0, velocity.z)
+	if horizontal_velocity.length() < 0.001:
+		return
+	
+	var movement_direction = horizontal_velocity.normalized()
+	
+	# 🔧 使用 atan2 计算目标旋转角度
+	# atan2(x, z) 计算从 Z 轴正方向到目标方向的角度
+	# Godot 的前方是 -Z 轴，所以使用 atan2(x, z)
+	var target_rotation = atan2(movement_direction.x, movement_direction.z)
+	
+	# 🔧 平滑旋转（使用 lerp_angle 处理角度环绕）
+	var rotation_speed = 10.0 # 旋转速度（可调整，值越大转向越快）
+	rotation.y = lerp_angle(rotation.y, target_rotation, rotation_speed * delta)
+
+## 击退效果更新
+func _update_knockback(delta: float) -> void:
+	# 应用击退速度
+	velocity = knockback_velocity
+	move_and_slide()
+	
+	# 击退速度衰减
+	knockback_velocity = knockback_velocity.lerp(Vector3.ZERO, knockback_decay_rate * delta)
+	
+	# 当击退速度很小时，结束击退状态
+	if knockback_velocity.length() < 0.1:
+		is_knockback = false
+		knockback_velocity = Vector3.ZERO
+
+## 应用击退效果
+func apply_knockback(direction: Vector3, force: float):
+	"""应用击退效果（从攻击者方向被击退）"""
+	is_knockback = true
+	knockback_velocity = direction.normalized() * force
+	
+	# 触发击退动画（如果有AnimationPlayer）
+	if animation_player and animation_player.has_animation("hit"):
+		animation_player.play("hit")
+
+## ============================================================================
+## 虚方法（子类需要实现）
+## ============================================================================
+
+## 更新逻辑（子类重写）
+func update_logic(_delta: float) -> void:
+	pass
+
+## 获取特定单位的搜索范围（子类重写）
+func get_search_range() -> float:
+	return detection_range
+
+## 获取游荡速度倍数（子类重写）
+func get_wander_speed_multiplier() -> float:
+	return Constants.WANDER_SPEED_MULTIPLIER
+
+## ============================================================================
+## 远程攻击接口
+## ============================================================================
+
+func execute_ranged_attack(target: CharacterBase, projectile_manager: Node) -> void:
+	"""执行远程攻击（生成投射物）"""
+	if not projectile_manager or not target:
+		return
+	
+	# 获取枪口位置（如果有）
+	var muzzle_pos = global_position + Vector3.UP * (collision_radius * 1.5)
+	
+	# 根据攻击类型生成不同投射物
+	match get("attack_type"):
+		Enums.AttackType.RANGED_BOW:
+			projectile_manager.spawn_arrow(muzzle_pos, target.global_position, self, attack)
+		Enums.AttackType.RANGED_GUN:
+			projectile_manager.spawn_bullet(muzzle_pos, target.global_position, self, attack)
+		Enums.AttackType.MAGIC_SINGLE:
+			projectile_manager.spawn_fireball(muzzle_pos, target.global_position, self, attack)
+		_:
+			# 默认使用箭矢
+			projectile_manager.spawn_arrow(muzzle_pos, target.global_position, self, attack)

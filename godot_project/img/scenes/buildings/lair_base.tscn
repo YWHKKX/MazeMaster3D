@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3 uid="uid://lair001"]
+
+[ext_resource type="Script" path="res://img/scenes/buildings/lair_model.gd" id="1"]
+
+[node name="LairModel" type="Node3D"]
+script = ExtResource("1")
+

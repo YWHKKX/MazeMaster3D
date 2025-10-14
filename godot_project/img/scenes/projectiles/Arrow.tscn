@@ -1,0 +1,29 @@
+[gd_scene load_steps=3 format=3 uid="uid://b7qxz9wm5n8et"]
+
+[ext_resource type="Script" path="res://scripts/combat/Projectile.gd" id="1"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_arrow"]
+radius = 0.1
+height = 0.5
+
+[node name="Arrow" type="Area3D"]
+collision_layer = 16
+collision_mask = 15
+script = ExtResource("1")
+speed = 25.0
+damage = 10.0
+max_distance = 50.0
+pierce_count = 0
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0)
+shape = SubResource("CapsuleShape3D_arrow")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+transform = Transform3D(0.1, 0, 0, 0, -4.37114e-09, -0.1, 0, 0.5, -2.18557e-09, 0, 0, 0)
+mesh = SubResource("CapsuleMesh_arrow")
+
+[sub_resource type="CapsuleMesh" id="CapsuleMesh_arrow"]
+radius = 0.05
+height = 0.5
+
