@@ -142,14 +142,21 @@ var current_status: Enums.CreatureStatus = Enums.CreatureStatus.IDLE
 var is_alive: bool = true
 
 ## ============================================================================
+## 状态机系统
+## ============================================================================
+
+## 状态机引用
+@onready var state_machine: StateMachine = get_node_or_null("StateMachine")
+
+## 是否启用状态机
+@export var enable_state_machine: bool = true
+
+## ============================================================================
 ## 节点引用（使用 @onready 延迟初始化）
 ## ============================================================================
 
 ## 🔧 [移除] NavigationAgent3D 已废弃，统一使用 MovementHelper.process_navigation
 # @onready var nav_agent: NavigationAgent3D = get_node_or_null("NavigationAgent3D")
-
-## 状态机（可选）
-@onready var state_machine: StateMachine = get_node_or_null("StateMachine")
 
 ## 动画播放器（可选）
 @onready var animation_player: AnimationPlayer = get_node_or_null("AnimationPlayer")
@@ -188,6 +195,11 @@ func _ready() -> void:
 	
 	# 🔧 [状态栏系统] 创建头顶状态栏
 	call_deferred("_setup_status_bar")
+	
+	# 初始化状态机
+	if enable_state_machine and state_machine:
+		state_machine.debug_mode = debug_mode
+		state_machine.auto_start = true
 	
 	# 角色初始化完成
 
@@ -392,17 +404,21 @@ func _setup_collision_layers() -> void:
 	# 根据阵营设置碰撞层
 	match faction:
 		Enums.Faction.MONSTERS:
-			set_collision_layer_value(2, true) # 玩家单位层
+			set_collision_layer_value(2, true) # 怪物阵营层
 		Enums.Faction.HEROES:
-			set_collision_layer_value(3, true) # 敌方单位层
+			set_collision_layer_value(3, true) # 英雄阵营层
+		Enums.Faction.BEASTS:
+			set_collision_layer_value(4, true) # 野兽阵营层
 		Enums.Faction.NEUTRAL:
-			set_collision_layer_value(2, true) # 中立单位使用玩家层
+			set_collision_layer_value(5, true) # 中立阵营层
 	
 	# 设置碰撞掩码：检测哪些层
 	set_collision_mask_value(1, true) # 检测环境层（墙壁、地形）
-	set_collision_mask_value(2, true) # 检测玩家单位
-	set_collision_mask_value(3, true) # 检测敌方单位
-	set_collision_mask_value(4, true) # 🔧 修复：检测建筑层（Layer 4，不是 6）
+	set_collision_mask_value(2, true) # 检测怪物阵营
+	set_collision_mask_value(3, true) # 检测英雄阵营
+	set_collision_mask_value(4, true) # 检测野兽阵营
+	set_collision_mask_value(5, true) # 检测中立阵营
+	set_collision_mask_value(6, true) # 检测建筑层
 
 ## ============================================================================
 ## 移动相关
@@ -549,13 +565,36 @@ func _status_to_string(status: Enums.CreatureStatus) -> String:
 func is_enemy_of(other: CharacterBase) -> bool:
 	if not other or not is_instance_valid(other):
 		return false
+	
+	# 统一阵营系统：不同阵营即为敌人
+	# 特殊情况：野兽阵营对所有阵营都是中立的
+	if faction == Enums.Faction.BEASTS or other.faction == Enums.Faction.BEASTS:
+		return false
+	
 	return faction != other.faction
 
 ## 判断是否为友军
 func is_friend_of(other: CharacterBase) -> bool:
 	if not other or not is_instance_valid(other):
 		return false
+	
+	# 相同阵营为友军
 	return faction == other.faction
+
+## 判断是否为中立
+func is_neutral_to(other: CharacterBase) -> bool:
+	if not other or not is_instance_valid(other):
+		return false
+	
+	# 野兽阵营对所有阵营都是中立的
+	if faction == Enums.Faction.BEASTS or other.faction == Enums.Faction.BEASTS:
+		return true
+	
+	# 中立阵营对所有阵营都是中立的
+	if faction == Enums.Faction.NEUTRAL or other.faction == Enums.Faction.NEUTRAL:
+		return true
+	
+	return false
 
 ## ============================================================================
 ## 查询方法
@@ -727,3 +766,88 @@ func execute_ranged_attack(target: CharacterBase, projectile_manager: Node) -> v
 		_:
 			# 默认使用箭矢
 			projectile_manager.spawn_arrow(muzzle_pos, target.global_position, self, attack)
+
+## ============================================================================
+## 状态机辅助方法
+## ============================================================================
+
+## 设置移动目标
+func set_movement_target(target_position: Vector3) -> void:
+	"""设置移动目标位置"""
+	if has_method("move_towards"):
+		# 如果角色有move_towards方法，使用它
+		pass
+	else:
+		# 默认实现：直接设置velocity
+		var direction = (target_position - global_position).normalized()
+		velocity = direction * speed
+
+## 移动到目标位置
+func move_towards(target_position: Vector3, delta: float) -> void:
+	"""移动到目标位置"""
+	var direction = (target_position - global_position).normalized()
+	velocity = direction * speed
+	move_and_slide()
+
+## 获取攻击范围
+func get_attack_range() -> float:
+	"""获取攻击范围"""
+	return attack_range
+
+## 获取攻击力
+func get_attack_power() -> float:
+	"""获取攻击力"""
+	return attack
+
+## 获取健康百分比
+func get_health_percentage() -> float:
+	"""获取健康百分比"""
+	if max_health <= 0:
+		return 0.0
+	return current_health / max_health
+
+## 恢复健康
+func restore_health(amount: float) -> void:
+	"""恢复健康"""
+	current_health = min(current_health + amount, max_health)
+	health_changed.emit(current_health - amount, current_health)
+
+## 恢复饥饿度（野兽用）
+func restore_hunger(amount: float) -> void:
+	"""恢复饥饿度"""
+	# 默认实现：无操作
+	# 子类可以重写此方法
+	pass
+
+## 恢复体力（野兽用）
+func restore_stamina(amount: float) -> void:
+	"""恢复体力"""
+	# 默认实现：无操作
+	# 子类可以重写此方法
+	pass
+
+## 获取饥饿度（野兽用）
+func get_hunger_level() -> float:
+	"""获取饥饿度"""
+	# 默认实现：返回0（不饥饿）
+	# 子类可以重写此方法
+	return 0.0
+
+## 获取体力（野兽用）
+func get_stamina_level() -> float:
+	"""获取体力"""
+	# 默认实现：返回1（满体力）
+	# 子类可以重写此方法
+	return 1.0
+
+## 检查是否死亡
+func is_dead() -> bool:
+	"""检查是否死亡"""
+	return not is_alive
+
+## 治疗目标（英雄用）
+func heal(target: Node) -> void:
+	"""治疗目标"""
+	if target and target.has_method("restore_health"):
+		var heal_amount = attack * 0.5  # 治疗量基于攻击力
+		target.restore_health(heal_amount)

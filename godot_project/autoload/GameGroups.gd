@@ -26,6 +26,7 @@ const INTERACTION_ZONES = "interaction_zones"
 const CHARACTERS = "characters"
 const MONSTERS = "monsters"
 const HEROES = "heroes"
+const BEASTS = "beasts"
 const WORKERS = "workers"
 const ENGINEERS = "engineers"
 const COMBAT_UNITS = "combat_units"
@@ -61,6 +62,21 @@ const DRUIDS = "druids"
 const SHADOW_BLADE_MASTERS = "shadow_blade_masters"
 const THIEVES = "thieves"
 const ASSASSINS = "assassins"
+
+# === 野兽单位Groups（特定类型）===
+const DEERS = "deers"
+const FOREST_WOLVES = "forest_wolves"
+const GIANT_RATS = "giant_rats"
+const RABBITS = "rabbits"
+const GRASSLAND_WOLVES = "grassland_wolves"
+const RHINO_BEASTS = "rhino_beasts"
+const FISHES = "fishes"
+const FISH_MEN = "fish_men"
+const GIANT_LIZARDS = "giant_lizards"
+const SKELETONS = "skeletons"
+const ZOMBIES = "zombies"
+const DEMONS = "demons"
+const SHADOW_BEASTS = "shadow_beasts"
 
 # === 交互Groups ===
 const INTERACTABLE = "interactable"
@@ -194,6 +210,10 @@ static func get_all_characters() -> Array:
 	"""获取所有角色"""
 	return get_nodes(CHARACTERS)
 
+static func get_all_beasts() -> Array:
+	"""获取所有野兽"""
+	return get_nodes(BEASTS)
+
 static func get_all_workers() -> Array:
 	"""获取所有工人"""
 	return get_nodes(WORKERS)
@@ -233,7 +253,7 @@ func print_group_status():
 	var groups = [
 		BUILDINGS, DUNGEON_HEART, RESOURCE_BUILDINGS, PRODUCTION_BUILDINGS,
 		GOLD_MINES, RESOURCE_NODES,
-		CHARACTERS, MONSTERS, HEROES, WORKERS, ENGINEERS, COMBAT_UNITS,
+		CHARACTERS, MONSTERS, HEROES, BEASTS, WORKERS, ENGINEERS, COMBAT_UNITS,
 		INTERACTABLE, DESTRUCTIBLE, SELECTABLE
 	]
 	for group in groups:

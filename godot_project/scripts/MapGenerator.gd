@@ -1,22 +1,41 @@
 extends Node
 class_name MapGenerator
 
-# 地牢迷宫生成器 - 参考random_room.gd的设计
-# 生成随机房间并连接成地牢
-# 日志管理器实例（全局变量）
-# 地图类型枚举
-enum MapType {
-	STANDARD_DUNGEON, # 标准地牢
-	COMPLEX_MAZE, # 复杂迷宫
-	RESOURCE_RICH, # 资源丰富
-	MILITARY_FOCUSED, # 军事重点
-	EXPLORATION_HEAVY # 探索重型
+## 🗺️ 高级地图生成器 - 基于迷宫生成系统文档设计
+## 实现分块系统、噪声生成、四大区域（房间、迷宫、生态、英雄营地）
+## 集成autoload数据，消除硬编码，简化配置系统
+
+# ============================================================================
+# 区域类型枚举
+# ============================================================================
+
+enum RegionType {
+	ROOM_SYSTEM, # 房间系统
+	MAZE_SYSTEM, # 迷宫系统
+	ECOSYSTEM, # 生态系统
+	HERO_CAMP_PORTAL # 英雄营地/传送门
 }
 
-# 地图配置
+# ============================================================================
+# 生态区域类型
+# ============================================================================
+
+enum EcosystemType {
+	FOREST, # 森林
+	GRASSLAND, # 草地
+	LAKE, # 湖泊
+	CAVE, # 洞穴
+	WASTELAND, # 荒地
+	DEAD_LAND # 死地
+}
+
+# ============================================================================
+# 地图配置类
+# ============================================================================
+
 class MapConfig:
-	var map_type: MapType
 	var size: Vector3
+	var chunk_size: int = 16 # 分块大小
 	var max_room_count: int = 15
 	var min_room_size: int = 6
 	var max_room_size: int = 15
@@ -25,11 +44,25 @@ class MapConfig:
 	var corridor_width: int = 3
 	var complexity: float = 0.5
 
-	func _init(type: MapType = MapType.STANDARD_DUNGEON, map_size: Vector3 = Vector3(100, 1, 100)):
-		map_type = type
+	# 噪声参数
+	var noise_scale: float = 0.1
+	var height_threshold: float = 0.5
+	var humidity_threshold: float = 0.5
+	
+	# 生态分布参数
+	var forest_probability: float = 0.3
+	var lake_probability: float = 0.1
+	var cave_probability: float = 0.2
+	var wasteland_probability: float = 0.1
+
+	func _init(map_size: Vector3 = Vector3(100, 1, 100)):
 		size = map_size
 
-# 房间数据结构
+# ============================================================================
+# 数据结构类
+# ============================================================================
+
+## 房间数据结构
 class Room:
 	var position: Vector2i
 	var size: Vector2i
@@ -37,12 +70,14 @@ class Room:
 	var connections: Array = [] # 连接的房间
 	var room_id: int
 	var room_type: String = "normal"
+	var region_type: RegionType = RegionType.ROOM_SYSTEM
 	
-	func _init(pos: Vector2i, room_size: Vector2i, id: int):
+	func _init(pos: Vector2i, room_size: Vector2i, id: int, type: RegionType = RegionType.ROOM_SYSTEM):
 		position = pos
 		size = room_size
 		center = pos + room_size / 2
 		room_id = id
+		region_type = type
 	
 	func get_rect() -> Rect2i:
 		return Rect2i(position, size)
@@ -63,33 +98,141 @@ class Room:
 			points.append(Vector2i(position.x + size.x - 1, y)) # 右边
 		return points
 
-# 地图生成器引用
+## 分块数据结构
+class Chunk:
+	var chunk_pos: Vector2i
+	var world_pos: Vector2i
+	var size: int
+	var is_loaded: bool = false
+	var tiles: Array = []
+	var objects: Array = []
+	
+	func _init(pos: Vector2i, chunk_size: int):
+		chunk_pos = pos
+		world_pos = pos * chunk_size
+		size = chunk_size
+
+## 生态区域数据结构
+class EcosystemRegion:
+	var position: Vector2i
+	var size: Vector2i
+	var ecosystem_type: EcosystemType
+	var resource_spawns: Array = []
+	var creature_spawns: Array = []
+	
+	func _init(pos: Vector2i, region_size: Vector2i, eco_type: EcosystemType):
+		position = pos
+		size = region_size
+		ecosystem_type = eco_type
+
+## 英雄营地/传送门数据结构
+class HeroCamp:
+	var position: Vector2i
+	var camp_type: String
+	var spawn_waves: Array = []
+	var is_active: bool = true
+	
+	func _init(pos: Vector2i, type: String):
+		position = pos
+		camp_type = type
+
+# ============================================================================
+# 地图生成器核心变量
+# ============================================================================
+
 var tile_manager: Node
+var character_manager: Node
+var ecosystem_manager: Node
 var rooms: Array[Room] = []
 var room_counter: int = 0
 
+# 分块系统
+var chunks: Dictionary = {} # Vector2i -> Chunk
+var loaded_chunks: Array[Vector2i] = []
+var chunk_size: int = 16
+
+# 噪声生成器
+var height_noise: FastNoiseLite
+var humidity_noise: FastNoiseLite
+var temperature_noise: FastNoiseLite
+
+# 区域管理
+var ecosystem_regions: Array[EcosystemRegion] = []
+var hero_camps: Array[HeroCamp] = []
+var maze_rooms: Array[Room] = []
+
+# 配置参数（从autoload获取）
+var config: MapConfig
+
 func _ready():
-	"""初始化地图生成器"""
-	LogManager.info("=== MapGenerator 初始化开始 ===")
+	"""初始化高级地图生成器"""
+	LogManager.info("=== 高级地图生成器初始化开始 ===")
 	
+	# 获取管理器引用
 	tile_manager = get_node("/root/Main/TileManager")
 	if tile_manager:
 		LogManager.info("TileManager 连接成功")
 	else:
 		LogManager.error("ERROR: TileManager 未找到")
-	# RoomGenerator 已移除，直接在地图生成器中处理
-	LogManager.info("=== MapGenerator 初始化完成 ===")
+	
+	character_manager = get_node_or_null("/root/Main/CharacterManager")
+	if character_manager:
+		LogManager.info("CharacterManager 连接成功")
+	else:
+		LogManager.warning("CharacterManager 未找到，生物生成功能将受限")
+	
+	# 创建生态系统管理器
+	var ecosystem_script = preload("res://scripts/ecosystem/EcosystemManager.gd")
+	if not ecosystem_script:
+		LogManager.error("ERROR: 无法加载EcosystemManager脚本！")
+	else:
+		ecosystem_manager = ecosystem_script.new()
+		add_child(ecosystem_manager)
+		LogManager.info("EcosystemManager 创建成功")
+	
+	# 初始化噪声生成器
+	_initialize_noise_generators()
+	
+	# 初始化配置
+	config = MapConfig.new()
+	
+	LogManager.info("=== 高级地图生成器初始化完成 ===")
+
+func _initialize_noise_generators():
+	"""初始化噪声生成器"""
+	# 高度噪声
+	height_noise = FastNoiseLite.new()
+	height_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	height_noise.seed = randi()
+	height_noise.frequency = 0.1
+	
+	# 湿度噪声
+	humidity_noise = FastNoiseLite.new()
+	humidity_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	humidity_noise.seed = randi()
+	humidity_noise.frequency = 0.08
+	
+	# 温度噪声
+	temperature_noise = FastNoiseLite.new()
+	temperature_noise.noise_type = FastNoiseLite.TYPE_PERLIN
+	temperature_noise.seed = randi()
+	temperature_noise.frequency = 0.12
+	
+	LogManager.info("噪声生成器初始化完成")
 
 func generate_map(_config: MapConfig) -> void:
-	"""生成地图 - 两步生成流程"""
-	LogManager.info("=== 开始生成地牢地图 ===")
+	"""生成高级地图 - 基于文档的四步生成流程"""
+	LogManager.info("=== 开始生成高级地图系统 ===")
 
 	# 确保 TileManager 已完全初始化
 	if not tile_manager:
 		LogManager.error("ERROR: TileManager 未找到，无法生成地图")
 		return
 	
-	# 同步地图尺寸到 TileManager（若配置不同）
+	# 更新配置
+	config = _config
+	
+	# 同步地图尺寸到 TileManager
 	if tile_manager.get_map_size and tile_manager.get_map_size() != _config.size:
 		if tile_manager.set_map_size:
 			tile_manager.set_map_size(_config.size)
@@ -98,46 +241,322 @@ func generate_map(_config: MapConfig) -> void:
 	# 等待一帧确保 TileManager 完全初始化
 	await get_tree().process_frame
 	
-	# 第一步：初始化地图
-	LogManager.info("=== 第一步：初始化地图 ===")
-	_initialize_map(_config)
+	# 第一步：初始化地图和分块系统
+	LogManager.info("=== 第一步：初始化地图和分块系统 ===")
+	_initialize_map_and_chunks(_config)
 	
-	# 第二步：生成房间
-	LogManager.info("=== 第二步：生成房间 ===")
-	_generate_rooms_on_map(_config)
+	# 第二步：生成噪声地形
+	LogManager.info("=== 第二步：生成噪声地形 ===")
+	_generate_noise_terrain(_config)
 	
-	LogManager.info("=== 地牢地图生成完成 ===")
+	# 第三步：生成四大区域
+	LogManager.info("=== 第三步：生成四大区域 ===")
+	_generate_four_regions(_config)
 	
-	# [关键] 发射地图生成完成事件（通知 NavigationManager 烘焙导航网格）
+	# 第四步：生成资源和生物
+	LogManager.info("=== 第四步：生成资源和生物 ===")
+	_generate_resources_and_creatures(_config)
+	
+	LogManager.info("=== 高级地图生成完成 ===")
+	
+	# 发射地图生成完成事件
 	GameEvents.map_generated.emit()
 	LogManager.info("✅ 已发射 map_generated 事件")
 
-func _initialize_map(_config: MapConfig) -> void:
-	"""第一步：初始化地图"""
+func _initialize_map_and_chunks(_config: MapConfig) -> void:
+	"""第一步：初始化地图和分块系统"""
 	
 	# 清空现有地图
 	_clear_map()
 	
-	# 重新初始化地图结构（所有地块为未挖掘状态）
+	# 重新初始化地图结构
 	tile_manager._initialize_map_structure()
 	
-	# 初始化所有地块为UNEXCAVATED
+	# 初始化分块系统
+	_initialize_chunk_system(_config)
+	
+	# 初始化所有地块为UNEXCAVATED（使用autoload常量）
 	_initialize_all_tiles_as_unexcavated()
+
+func _initialize_chunk_system(_config: MapConfig) -> void:
+	"""初始化分块系统"""
+	chunk_size = _config.chunk_size
+	chunks.clear()
+	loaded_chunks.clear()
+	
+	var chunk_count_x = int(_config.size.x / chunk_size) + 1
+	var chunk_count_z = int(_config.size.z / chunk_size) + 1
+	
+	LogManager.info("初始化分块系统: %dx%d 分块，每分块 %dx%d" % [chunk_count_x, chunk_count_z, chunk_size, chunk_size])
+	
+	for x in range(chunk_count_x):
+		for z in range(chunk_count_z):
+			var chunk_pos = Vector2i(x, z)
+			var chunk = Chunk.new(chunk_pos, chunk_size)
+			chunks[chunk_pos] = chunk
+
+func _generate_noise_terrain(_config: MapConfig) -> void:
+	"""第二步：生成噪声地形"""
+	LogManager.info("开始生成噪声地形...")
+	
+	var map_size_x = int(_config.size.x)
+	var map_size_z = int(_config.size.z)
+	
+	# 更新噪声参数
+	height_noise.frequency = _config.noise_scale
+	humidity_noise.frequency = _config.noise_scale * 0.8
+	temperature_noise.frequency = _config.noise_scale * 1.2
+	
+	for x in range(map_size_x):
+		for z in range(map_size_z):
+			var pos = Vector3(x, 0, z)
+			
+			# 获取噪声值
+			var height_value = height_noise.get_noise_2d(x, z)
+			var humidity_value = humidity_noise.get_noise_2d(x, z)
+			var temperature_value = temperature_noise.get_noise_2d(x, z)
+			
+			# 根据噪声值确定生态类型
+			var ecosystem_type = _determine_ecosystem_type(height_value, humidity_value, temperature_value)
+			
+			# 设置对应的瓦片类型
+			var tile_type = _get_tile_type_for_ecosystem(ecosystem_type)
+			tile_manager.set_tile_type(pos, tile_type)
+	
+	LogManager.info("噪声地形生成完成")
+
+func _determine_ecosystem_type(height: float, humidity: float, temperature: float) -> EcosystemType:
+	"""根据噪声值确定生态类型"""
+	# 使用文档中的生态分布规则
+	if height > config.height_threshold:
+		if humidity < config.humidity_threshold:
+			return EcosystemType.WASTELAND
+		else:
+			return EcosystemType.FOREST
+	else:
+		if humidity < config.humidity_threshold:
+			return EcosystemType.CAVE
+		else:
+			if temperature > 0.3:
+				return EcosystemType.LAKE
+			else:
+				return EcosystemType.GRASSLAND
+
+func _get_tile_type_for_ecosystem(eco_type: EcosystemType) -> int:
+	"""根据生态类型获取对应的瓦片类型（使用autoload常量）"""
+	match eco_type:
+		EcosystemType.FOREST:
+			return TileTypes.EMPTY  # 森林 - 空地
+		EcosystemType.GRASSLAND:
+			return TileTypes.EMPTY  # 草地 - 空地
+		EcosystemType.LAKE:
+			return TileTypes.WATER  # 湖泊 - 水域
+		EcosystemType.CAVE:
+			return TileTypes.EMPTY  # 洞穴 - 空地
+		EcosystemType.WASTELAND:
+			return TileTypes.EMPTY  # 荒地 - 空地
+		EcosystemType.DEAD_LAND:
+			return TileTypes.EMPTY  # 死地 - 空地
+		_:
+			return TileTypes.EMPTY
 	
 
+func _generate_four_regions(_config: MapConfig) -> void:
+	"""第三步：生成四大区域"""
+	LogManager.info("开始生成四大区域...")
+	
+	# 1. 生成房间系统
+	_generate_room_system(_config)
+	
+	# 2. 生成迷宫系统
+	_generate_maze_system(_config)
+	
+	# 3. 生成生态系统
+	_generate_ecosystem_regions(_config)
+	
+	# 4. 生成英雄营地/传送门
+	_generate_hero_camps(_config)
+	
+	LogManager.info("四大区域生成完成")
+
+func _generate_room_system(_config: MapConfig) -> void:
+	"""生成房间系统"""
+	LogManager.info("生成房间系统...")
+	
+	# 清空房间列表
+	rooms.clear()
+	room_counter = 0
+	
+	# 在地图中心区域生成随机房间
+	_generate_random_rooms(_config)
+	
+	# 连接所有房间
+	_connect_rooms()
+	
+	# 生成地牢之心
+	_place_dungeon_heart()
+	_create_heart_clearing()
+
+func _generate_maze_system(_config: MapConfig) -> void:
+	"""生成迷宫系统"""
+	LogManager.info("生成迷宫系统...")
+	
+	# 使用递归回溯算法生成迷宫
+	_generate_maze_with_backtracking(_config)
+
+func _generate_maze_with_backtracking(_config: MapConfig) -> void:
+	"""使用递归回溯算法生成迷宫"""
+	var maze_width = int(_config.size.x / 2)
+	var maze_height = int(_config.size.z / 2)
+	var maze_start_x = int(_config.size.x / 4)
+	var maze_start_z = int(_config.size.z / 4)
+	
+	# 初始化迷宫网格
+	var maze_grid = []
+	for x in range(maze_width):
+		maze_grid.append([])
+		for z in range(maze_height):
+			maze_grid[x].append(1)  # 1表示墙，0表示通道
+	
+	# 递归回溯算法
+	var stack = []
+	var start_pos = Vector2i(1, 1)
+	stack.append(start_pos)
+	maze_grid[start_pos.x][start_pos.y] = 0
+	
+	while not stack.is_empty():
+		var current = stack[-1]
+		var neighbors = _get_unvisited_neighbors(current, maze_grid, maze_width, maze_height)
+		
+		if neighbors.size() > 0:
+			var next = neighbors[randi() % neighbors.size()]
+			# 打通墙壁
+			var wall_x = current.x + (next.x - current.x) / 2
+			var wall_z = current.y + (next.y - current.y) / 2
+			maze_grid[wall_x][wall_z] = 0
+			maze_grid[next.x][next.y] = 0
+			stack.append(next)
+		else:
+			stack.pop_back()
+	
+	# 将迷宫应用到地图
+	_apply_maze_to_map(maze_grid, maze_start_x, maze_start_z)
+
+func _get_unvisited_neighbors(pos: Vector2i, grid: Array, width: int, height: int) -> Array:
+	"""获取未访问的邻居"""
+	var neighbors = []
+	var directions = [Vector2i(0, 2), Vector2i(2, 0), Vector2i(0, -2), Vector2i(-2, 0)]
+	
+	for dir in directions:
+		var neighbor = pos + dir
+		if neighbor.x > 0 and neighbor.x < width - 1 and neighbor.y > 0 and neighbor.y < height - 1:
+			if grid[neighbor.x][neighbor.y] == 1:
+				neighbors.append(neighbor)
+	
+	return neighbors
+
+func _apply_maze_to_map(maze_grid: Array, start_x: int, start_z: int) -> void:
+	"""将迷宫应用到地图"""
+	for x in range(maze_grid.size()):
+		for z in range(maze_grid[x].size()):
+			var world_pos = Vector3(start_x + x, 0, start_z + z)
+			if maze_grid[x][z] == 0:  # 通道
+				tile_manager.set_tile_type(world_pos, TileTypes.CORRIDOR)
+			else:  # 墙壁
+				tile_manager.set_tile_type(world_pos, TileTypes.STONE_WALL)
+
+func _generate_ecosystem_regions(_config: MapConfig) -> void:
+	"""生成生态系统区域"""
+	LogManager.info("生成生态系统区域...")
+	
+	# 检查生态系统管理器
+	if not ecosystem_manager:
+		LogManager.error("ERROR: EcosystemManager 未找到！无法生成生态系统区域")
+		return
+	
+	# 使用生态系统管理器生成区域
+	ecosystem_regions = ecosystem_manager.generate_ecosystem_regions(_config.size, 5)
+	LogManager.info("生态系统区域生成完成，共生成 %d 个区域" % ecosystem_regions.size())
+
+func _apply_ecosystem_region(region: EcosystemRegion) -> void:
+	"""将生态区域应用到地图"""
+	for x in range(region.size.x):
+		for z in range(region.size.y):
+			var world_pos = Vector3(region.position.x + x, 0, region.position.y + z)
+			var tile_type = _get_tile_type_for_ecosystem(region.ecosystem_type)
+			tile_manager.set_tile_type(world_pos, tile_type)
+
+func _generate_hero_camps(_config: MapConfig) -> void:
+	"""生成英雄营地/传送门"""
+	LogManager.info("生成英雄营地/传送门...")
+	
+	hero_camps.clear()
+	
+	# 在地图边缘和特定位置生成英雄营地
+	var camp_count = randi_range(2, 4)
+	for i in range(camp_count):
+		var camp_pos = Vector2i(
+			randi_range(5, int(_config.size.x) - 5),
+			randi_range(5, int(_config.size.z) - 5)
+		)
+		
+		# 确保不在中心区域（地牢之心附近）
+		var center_x = int(_config.size.x / 2)
+		var center_z = int(_config.size.z / 2)
+		if camp_pos.distance_to(Vector2i(center_x, center_z)) < 20:
+			continue
+		
+		var camp_type = "hero_camp_" + str(i)
+		var camp = HeroCamp.new(camp_pos, camp_type)
+		hero_camps.append(camp)
+		
+		# 在地图上标记传送门
+		tile_manager.set_tile_type(Vector3(camp_pos.x, 0, camp_pos.y), TileTypes.PORTAL)
+
+func _generate_resources_and_creatures(_config: MapConfig) -> void:
+	"""第四步：生成资源和生物"""
+	LogManager.info("生成资源和生物...")
+	
+	# 生成金矿（使用autoload中的概率和储量）
+	_generate_gold_veins(config.resource_density * 0.016, 500)
+	
+	# 在生态区域生成资源
+	for region in ecosystem_regions:
+		_generate_ecosystem_resources(region)
+	
+	# 在英雄营地生成敌对生物
+	for camp in hero_camps:
+		_generate_hero_camp_creatures(camp)
+
+func _generate_ecosystem_resources(region: EcosystemRegion) -> void:
+	"""在生态区域生成资源"""
+	match region.ecosystem_type:
+		EcosystemType.FOREST:
+			# 森林生成树木资源
+			pass
+		EcosystemType.LAKE:
+			# 湖泊生成鱼类资源
+			pass
+		EcosystemType.CAVE:
+			# 洞穴生成矿物资源
+			pass
+
+func _generate_hero_camp_creatures(camp: HeroCamp) -> void:
+	"""在英雄营地生成敌对生物"""
+	# 这里可以生成各种敌对生物
+	pass
+
 func _initialize_all_tiles_as_unexcavated() -> void:
-	"""初始化所有地块为UNEXCAVATED（优化版本：使用简化渲染）"""
+	"""初始化所有地块为UNEXCAVATED（使用autoload常量）"""
 	
 	for x in range(tile_manager.map_size.x):
 		for z in range(tile_manager.map_size.z):
 			var pos = Vector3(x, 0, z)
-			# 创建TileInfo对象，并创建简化的3D对象
-			var tile_data = tile_manager.TileInfo.new(pos, tile_manager.TileType.UNEXCAVATED, tile_manager.MapLevel.LEVEL_0_MAIN)
+			# 使用autoload常量
+			var tile_data = tile_manager.TileInfo.new(pos, TileTypes.UNEXCAVATED, tile_manager.MapLevel.LEVEL_0_MAIN)
 			var level_index = int(tile_data.level)
 			tile_manager.tiles[level_index][x][z] = tile_data
-			# 调用_create_tile_object，UNEXCAVATED现在使用简化渲染
 			tile_manager._create_tile_object(tile_data)
-			# 初始化资源字典（用于金矿等）
 			tile_manager.tiles[level_index][x][z].resources = {}
 	
 
@@ -149,19 +568,18 @@ func _place_dungeon_heart() -> void:
 
 	LogManager.info("放置地牢之心（2x2）在位置: (" + str(center_x) + ", " + str(center_z) + ")")
 
-	# 🔧 放置2x2地牢之心瓦片
+	# 使用autoload常量放置2x2地牢之心瓦片
 	var dungeon_heart_tiles = []
 	for dx in range(2):
 		for dz in range(2):
 			var pos = Vector3(center_x + dx, level_index, center_z + dz)
-			var success = tile_manager.set_tile_type(pos, tile_manager.TileType.DUNGEON_HEART)
+			var success = tile_manager.set_tile_type(pos, TileTypes.DUNGEON_HEART)
 			if success:
 				dungeon_heart_tiles.append(pos)
 	
 	LogManager.info("✅ 地牢之心2x2瓦片放置成功，共 %d 个瓦片" % dungeon_heart_tiles.size())
 	
-	# 🔧 [修改] 移除地牢之心周围的 STONE_FLOOR 设置
-	# 地牢之心周围将保持为 EMPTY 瓦片，允许苦工更接近
+	# 地牢之心周围保持为 EMPTY 瓦片，允许苦工更接近
 	LogManager.info("✅ 地牢之心周围保持为 EMPTY 瓦片，允许单位接近")
 
 func _create_heart_clearing() -> void:
@@ -169,7 +587,7 @@ func _create_heart_clearing() -> void:
 	var center_x = int(tile_manager.map_size.x / 2)
 	var center_z = int(tile_manager.map_size.z / 2)
 	
-	# 🔧 创建 7x7 的清理区域（2x2 地牢之心 + 周围一圈）
+	# 创建 7x7 的清理区域（2x2 地牢之心 + 周围一圈）
 	var radius = 3 # 7x7 区域，半径 3
 	for dx in range(-radius, radius + 1):
 		for dz in range(-radius, radius + 1):
@@ -179,8 +597,8 @@ func _create_heart_clearing() -> void:
 			if dx >= 0 and dx <= 1 and dz >= 0 and dz <= 1:
 				continue
 			
-			# 强制设置为EMPTY，覆盖任何现有类型
-			tile_manager.set_tile_type(pos, tile_manager.TileType.EMPTY)
+			# 使用autoload常量强制设置为EMPTY
+			tile_manager.set_tile_type(pos, TileTypes.EMPTY)
 	
 
 func _generate_rooms_on_map(_config: MapConfig) -> void:
@@ -231,7 +649,7 @@ func _generate_random_rooms(_config: MapConfig) -> void:
 
 func _generate_gold_veins(probability: float, vein_capacity: int) -> void:
 	"""在未挖掘岩石中按概率生成金矿，并设置储量到 tile.resources.gold_amount
-	使用聚集分布算法，让金矿集中在特定区域"""
+	使用聚集分布算法，让金矿集中在特定区域（使用autoload常量）"""
 	LogManager.info("=== 开始生成金矿 ===")
 	LogManager.info("基础概率: " + str(probability * 100) + "% 储量: " + str(vein_capacity))
 	
@@ -263,8 +681,8 @@ func _generate_gold_veins(probability: float, vein_capacity: int) -> void:
 			if tile == null:
 				continue
 			
-			# 仅在未挖掘岩石中生成
-			if tile.type == tile_manager.TileType.UNEXCAVATED:
+			# 仅在未挖掘岩石中生成（使用autoload常量）
+			if tile.type == TileTypes.UNEXCAVATED:
 				unexcavated_count += 1
 				# 计算到最近聚集中心的距离
 				var min_distance = INF
@@ -282,8 +700,8 @@ func _generate_gold_veins(probability: float, vein_capacity: int) -> void:
 					adjusted_probability *= 0.1 # 远离聚集中心概率很低
 				
 				if randf() < adjusted_probability:
-					# 设置为金矿并记录储量
-					tile_manager.set_tile_type(pos, tile_manager.TileType.GOLD_MINE)
+					# 使用autoload常量设置为金矿并记录储量
+					tile_manager.set_tile_type(pos, TileTypes.GOLD_MINE)
 					var updated = tile_manager.get_tile_data(pos)
 					if updated:
 						updated.resources["gold_amount"] = vein_capacity
@@ -296,7 +714,7 @@ func _generate_gold_veins(probability: float, vein_capacity: int) -> void:
 	LogManager.info("扫描了 " + str(unexcavated_count) + " 个未挖掘地块")
 	LogManager.info("成功生成 " + str(generated_count) + " 个金矿")
 	
-	# 🔧 通知 GoldMineManager 重新扫描金矿（内联）
+	# 通知 GoldMineManager 重新扫描金矿
 	LogManager.info("MapGenerator - 通知 GoldMineManager 重新扫描")
 	var gold_mine_manager = get_node_or_null("/root/Main/GoldMineManager")
 	if gold_mine_manager and gold_mine_manager.has_method("rescan_gold_mines"):
@@ -307,29 +725,6 @@ func _generate_gold_veins(probability: float, vein_capacity: int) -> void:
 	else:
 		LogManager.error("未找到 GoldMineManager")
 
-func _adjust_config_for_type(_config: MapConfig) -> void:
-	"""根据地图类型调整配置"""
-	match _config.map_type:
-		MapType.STANDARD_DUNGEON:
-			_config.max_room_count = 15
-			_config.min_room_size = 6
-			_config.max_room_size = 12
-		MapType.COMPLEX_MAZE:
-			_config.max_room_count = 25
-			_config.min_room_size = 4
-			_config.max_room_size = 8
-			_config.complexity = 0.8
-		MapType.RESOURCE_RICH:
-			_config.max_room_count = 20
-			_config.resource_density = 0.3
-		MapType.MILITARY_FOCUSED:
-			_config.max_room_count = 12
-			_config.min_room_size = 8
-			_config.max_room_size = 15
-		MapType.EXPLORATION_HEAVY:
-			_config.max_room_count = 30
-			_config.min_room_size = 5
-			_config.max_room_size = 10
 
 
 func _create_random_room(_config: MapConfig) -> Room:
@@ -442,33 +837,124 @@ func _force_connect_room(room: Room, target_room: Room) -> void:
 	target_room.connections.append(room.room_id)
 
 func _mark_connection(point1: Vector2i, point2: Vector2i) -> void:
-	"""在地图上标记连接"""
+	"""在地图上标记连接（使用autoload常量）"""
 	# 创建从point1到point2的路径
 	var current = point1
 	var target = point2
 	
 	# 先水平移动，再垂直移动
 	while current.x != target.x:
-		_set_tile_type(Vector3(current.x, 0, current.y), tile_manager.TileType.CORRIDOR)
+		_set_tile_type(Vector3(current.x, 0, current.y), TileTypes.CORRIDOR)
 		if current.x < target.x:
 			current.x += 1
 		else:
 			current.x -= 1
 	
 	while current.y != target.y:
-		_set_tile_type(Vector3(current.x, 0, current.y), tile_manager.TileType.CORRIDOR)
+		_set_tile_type(Vector3(current.x, 0, current.y), TileTypes.CORRIDOR)
 		if current.y < target.y:
 			current.y += 1
 		else:
 			current.y -= 1
 	
 	# 设置目标点
-	_set_tile_type(Vector3(current.x, 0, current.y), tile_manager.TileType.CORRIDOR)
+	_set_tile_type(Vector3(current.x, 0, current.y), TileTypes.CORRIDOR)
 
 func _set_tile_type(position: Vector3, tile_type: int) -> void:
 	"""设置地块类型"""
 	if tile_manager:
 		tile_manager.set_tile_type(position, tile_type)
+
+# ============================================================================
+# 性能优化功能
+# ============================================================================
+
+func load_chunk(chunk_pos: Vector2i) -> void:
+	"""动态加载分块"""
+	if chunk_pos in chunks:
+		var chunk = chunks[chunk_pos]
+		if not chunk.is_loaded:
+			_generate_chunk_content(chunk)
+			chunk.is_loaded = true
+			loaded_chunks.append(chunk_pos)
+			LogManager.info("分块已加载: " + str(chunk_pos))
+
+func unload_chunk(chunk_pos: Vector2i) -> void:
+	"""动态卸载分块"""
+	if chunk_pos in chunks:
+		var chunk = chunks[chunk_pos]
+		if chunk.is_loaded:
+			_clear_chunk_content(chunk)
+			chunk.is_loaded = false
+			loaded_chunks.erase(chunk_pos)
+			LogManager.info("分块已卸载: " + str(chunk_pos))
+
+func _generate_chunk_content(chunk: Chunk) -> void:
+	"""生成分块内容"""
+	# 这里可以实现分块的具体内容生成
+	# 例如：生成该分块内的房间、资源、生物等
+	pass
+
+func _clear_chunk_content(chunk: Chunk) -> void:
+	"""清空分块内容"""
+	# 这里可以实现分块内容的清理
+	# 例如：移除该分块内的3D对象、清理内存等
+	pass
+
+func update_chunk_loading(player_position: Vector3) -> void:
+	"""根据玩家位置更新分块加载状态"""
+	var player_chunk_x = int(player_position.x / chunk_size)
+	var player_chunk_z = int(player_position.z / chunk_size)
+	var player_chunk_pos = Vector2i(player_chunk_x, player_chunk_z)
+	
+	# 加载玩家周围的分块
+	var load_radius = 2
+	for x in range(player_chunk_x - load_radius, player_chunk_x + load_radius + 1):
+		for z in range(player_chunk_z - load_radius, player_chunk_z + load_radius + 1):
+			var chunk_pos = Vector2i(x, z)
+			if chunk_pos in chunks:
+				load_chunk(chunk_pos)
+	
+	# 卸载远离玩家的分块
+	var chunks_to_unload = []
+	for chunk_pos in loaded_chunks:
+		var distance = chunk_pos.distance_to(player_chunk_pos)
+		if distance > load_radius + 1:
+			chunks_to_unload.append(chunk_pos)
+	
+	for chunk_pos in chunks_to_unload:
+		unload_chunk(chunk_pos)
+
+func get_chunk_at_position(world_pos: Vector3) -> Chunk:
+	"""获取指定位置的分块"""
+	var chunk_x = int(world_pos.x / chunk_size)
+	var chunk_z = int(world_pos.z / chunk_size)
+	var chunk_pos = Vector2i(chunk_x, chunk_z)
+	
+	if chunk_pos in chunks:
+		return chunks[chunk_pos]
+	return null
+
+# ============================================================================
+# 使用示例
+# ============================================================================
+
+## 创建标准地图
+# var config = MapGenerator.MapConfig.new(Vector3(100, 1, 100))
+# map_generator.generate_map(config)
+
+## 创建大型地图
+# var config = MapGenerator.MapConfig.new(Vector3(200, 1, 200))
+# config.max_room_count = 30
+# config.resource_density = 0.2
+# map_generator.generate_map(config)
+
+## 创建资源丰富地图
+# var config = MapGenerator.MapConfig.new(Vector3(150, 1, 150))
+# config.resource_density = 0.3
+# config.forest_probability = 0.5
+# config.lake_probability = 0.2
+# map_generator.generate_map(config)
 
 func _clear_map() -> void:
 	"""清空现有地图"""
@@ -478,7 +964,7 @@ func _clear_map() -> void:
 		LogManager.error("ERROR: TileManager 为空，无法清空地图")
 
 func _generate_room_floor(room: Room) -> void:
-	"""生成房间内部 - 将房间内部填充为UNEXCAVATED（优化版本：不创建3D对象）"""
+	"""生成房间内部 - 将房间内部填充为UNEXCAVATED（使用autoload常量）"""
 	var rect = room.get_rect()
 	
 	if not tile_manager:
@@ -503,15 +989,13 @@ func _generate_room_floor(room: Room) -> void:
 			
 			# 检查是否是地牢之心位置，如果是则跳过
 			var tile_data = tile_manager.get_tile_data(position)
-			if tile_data and tile_data.type == tile_manager.TileType.DUNGEON_HEART:
+			if tile_data and tile_data.type == TileTypes.DUNGEON_HEART:
 				continue
 			
-			# 将房间内部填充为UNEXCAVATED（实心房间）
-			# UNEXCAVATED类型现在会创建简化的墙体渲染
-			var success = tile_manager.set_tile_type(position, tile_manager.TileType.UNEXCAVATED)
+			# 使用autoload常量将房间内部填充为UNEXCAVATED
+			var success = tile_manager.set_tile_type(position, TileTypes.UNEXCAVATED)
 			if success:
 				floor_tiles_placed += 1
-				pass
 			else:
 				LogManager.error("设置房间内部瓦片失败，位置: " + str(position))
 			
@@ -520,11 +1004,9 @@ func _generate_room_floor(room: Room) -> void:
 				break
 		if floor_tiles_placed > 1000:
 			break
-	
-	pass
 
 func _generate_room_walls(room: Room) -> void:
-	"""生成房间墙壁 - 在房间周围放置石墙"""
+	"""生成房间墙壁 - 在房间周围放置石墙（使用autoload常量）"""
 	var rect = room.get_rect()
 	var wall_tiles_placed = 0
 	var wall_tiles_failed = 0
@@ -538,11 +1020,11 @@ func _generate_room_walls(room: Room) -> void:
 		var top_wall_pos = Vector3(x, 0, rect.position.y - 1)
 		var bottom_wall_pos = Vector3(x, 0, rect.position.y + rect.size.y)
 		
-		if tile_manager.set_tile_type(top_wall_pos, tile_manager.TileType.STONE_WALL):
+		if tile_manager.set_tile_type(top_wall_pos, TileTypes.STONE_WALL):
 			wall_tiles_placed += 1
 		else:
 			wall_tiles_failed += 1
-		if tile_manager.set_tile_type(bottom_wall_pos, tile_manager.TileType.STONE_WALL):
+		if tile_manager.set_tile_type(bottom_wall_pos, TileTypes.STONE_WALL):
 			wall_tiles_placed += 1
 		else:
 			wall_tiles_failed += 1
@@ -552,16 +1034,16 @@ func _generate_room_walls(room: Room) -> void:
 		var left_wall_pos = Vector3(rect.position.x - 1, 0, y)
 		var right_wall_pos = Vector3(rect.position.x + rect.size.x, 0, y)
 		
-		if tile_manager.set_tile_type(left_wall_pos, tile_manager.TileType.STONE_WALL):
+		if tile_manager.set_tile_type(left_wall_pos, TileTypes.STONE_WALL):
 			wall_tiles_placed += 1
 		else:
 			wall_tiles_failed += 1
-		if tile_manager.set_tile_type(right_wall_pos, tile_manager.TileType.STONE_WALL):
+		if tile_manager.set_tile_type(right_wall_pos, TileTypes.STONE_WALL):
 			wall_tiles_placed += 1
 		else:
 			wall_tiles_failed += 1
 	
-	# 🔍 调试：输出墙壁生成统计
+	# 调试：输出墙壁生成统计
 	if wall_tiles_failed > 0:
 		LogManager.warning("⚠️ [MapGenerator] 房间 #%d 墙壁生成: 成功=%d, 失败=%d" % [
 			room.room_id, wall_tiles_placed, wall_tiles_failed

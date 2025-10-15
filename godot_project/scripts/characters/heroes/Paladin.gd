@@ -12,6 +12,8 @@ func _ready() -> void:
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
 	add_to_group("paladins")
+	
+	# 状态机会在HeroBase._ready()中自动创建
 
 func _init_paladin_data() -> void:
 	var data = CharacterData.new()

@@ -21,6 +21,8 @@ func _ready() -> void:
 	add_to_group(GameGroups.MONSTERS)
 	add_to_group("imps")
 	
+	# 状态机会在MonsterBase._ready()中自动创建
+	
 	if debug_mode:
 		print("[Imp] 小恶魔初始化完成 - 位置: %v" % global_position)
 

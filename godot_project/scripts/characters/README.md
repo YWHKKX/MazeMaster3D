@@ -4,13 +4,15 @@
 
 本角色系统提供了一个统一的、模块化的角色管理框架，适用于所有游戏单位（怪物和英雄）。
 
-**版本**: v4.0  
-**更新日期**: 2025-10-14  
+**版本**: v5.0  
+**更新日期**: 2025-01-15  
 **主要改进**: 
 - ✅ 统一移动API（MovementHelper）
 - ✅ 建筑寻路优化（BuildingFinder）
 - ✅ 金矿包装器系统修复
 - ✅ 状态机API统一化
+- ✅ 统一状态机系统（StateManager）
+- ✅ 阵营化状态机配置（野兽、英雄、怪物）
 
 ## 核心组件
 
@@ -53,6 +55,7 @@
 - 工作系统（挖矿、建造）
 - 查找敌人和友军
 - 工作信号
+- 自动状态机创建（通用怪物状态）
 
 ### 4. HeroBase.gd (extends CharacterBase)
 **英雄基类**，所有英雄的父类。
@@ -63,22 +66,125 @@
 - 技能系统
 - 经验和等级系统
 - 查找怪物和建筑
+- 自动状态机创建（英雄状态）
+
+### 5. BeastBase.gd (extends CharacterBase)
+**野兽基类**，所有野兽的父类。
+
+**特有功能**：
+- 觅食行为
+- 逃跑行为
+- 中立行为模式
+- 生存状态管理
+- 自动状态机创建（野兽状态）
+
+### 6. StateManager.gd
+**统一状态管理器**，负责管理所有阵营的状态机系统。
+
+**核心功能**：
+- 为不同阵营的角色创建相应的状态机
+- 管理状态脚本的加载和配置
+- 提供统计和调试功能
+- 支持野兽、英雄、怪物三个阵营的状态机配置
 
 ## 继承层次
 
 ```
 CharacterBase (CharacterBody3D)
 ├── MonsterBase
-│   ├── GoblinWorker
-│   ├── GoblinEngineer
+│   ├── GoblinWorker (独立状态机)
+│   ├── GoblinEngineer (独立状态机)
 │   ├── Imp
 │   ├── OrcWarrior
-│   └── ...
-└── HeroBase
-    ├── Knight
-    ├── Archer
-    ├── Mage
-    └── ...
+│   └── ... (使用通用怪物状态机)
+├── HeroBase
+│   ├── Knight
+│   ├── Archer
+│   ├── Mage
+│   └── ... (使用英雄状态机)
+└── BeastBase
+    ├── Deer
+    ├── ForestWolf
+    ├── GiantRat
+    └── ... (使用野兽状态机)
+```
+
+## 🤖 统一状态机系统
+
+### 概述
+本系统为 MazeMaster3D 游戏中的三个阵营（野兽、英雄、怪物）提供了统一的状态机管理。每个阵营都有其独特的行为模式，通过状态机系统实现智能的AI行为。
+
+### 阵营设计
+
+#### 🦌 野兽阵营（中立势力）
+- **特点**: 中立行为，不会主动攻击，主要进行觅食、游荡、休息等生存行为
+- **状态**: IdleState, WanderState, FleeState, SeekFoodState, ConsumeFoodState, RestState
+- **行为模式**: 被动防御，遇到威胁时逃跑
+
+#### ⚔️ 英雄阵营（友方势力）
+- **特点**: 主动保护，会帮助友军，主动攻击敌人
+- **状态**: IdleState, CombatState, PatrolState, SupportState, RetreatState
+- **行为模式**: 主动进攻，支援友军，巡逻保护
+
+#### 👹 怪物阵营（敌对势力）
+- **特点**: 主动攻击，会追击敌人，守卫特定区域
+- **状态**: IdleState, CombatState, ChaseState, PatrolState, GuardState, RetreatState
+- **行为模式**: 主动进攻，追击敌人，守卫领地
+
+### 特殊单位状态机
+某些特殊单位（如 GoblinWorker、GoblinEngineer）拥有独立的状态机实现，不依赖通用的阵营状态机：
+
+- **GoblinWorker**: 专门的工作状态机（挖矿、返回基地、存储金币等）
+- **GoblinEngineer**: 专门的工程状态机（建造、修理、获取金币等）
+
+### 状态机文件结构
+
+```
+characters/
+├── StateManager.gd                    # 统一状态管理器
+├── CharacterBase.gd                   # 角色基类（已更新支持状态机）
+├── BeastBase.gd                       # 野兽基类
+├── HeroBase.gd                        # 英雄基类
+├── MonsterBase.gd                     # 怪物基类
+├── beasts/
+│   └── beast_states/                  # 野兽状态机
+│       ├── IdleState.gd
+│       ├── WanderState.gd
+│       ├── FleeState.gd
+│       ├── SeekFoodState.gd
+│       ├── ConsumeFoodState.gd
+│       └── RestState.gd
+├── heroes/
+│   └── hero_states/                   # 英雄状态机
+│       ├── IdleState.gd
+│       ├── CombatState.gd
+│       ├── PatrolState.gd
+│       ├── SupportState.gd
+│       └── RetreatState.gd
+└── monsters/
+    ├── goblin_worker_states/          # 哥布林苦工专用状态机
+    │   ├── IdleState.gd
+    │   ├── MoveToMineState.gd
+    │   ├── MiningState.gd
+    │   ├── ReturnToBaseState.gd
+    │   ├── DepositGoldState.gd
+    │   ├── WanderState.gd
+    │   └── EscapeState.gd
+    ├── goblin_engineer_states/        # 地精工程师专用状态机
+    │   ├── IdleState.gd
+    │   ├── FetchGoldState.gd
+    │   ├── MoveToTargetState.gd
+    │   ├── WorkState.gd
+    │   ├── ReturnGoldState.gd
+    │   ├── WanderState.gd
+    │   └── EscapeState.gd
+    └── monster_states/                # 通用怪物状态机
+        ├── IdleState.gd
+        ├── CombatState.gd
+        ├── ChaseState.gd
+        ├── PatrolState.gd
+        ├── GuardState.gd
+        └── RetreatState.gd
 ```
 
 ## 快速开始
@@ -195,21 +301,64 @@ character.clear_target()
 
 ### 示例 4：使用状态机
 
-```gdscript
-# 在角色脚本中获取状态机
-@onready var state_machine: StateMachine = $StateMachine
+#### 4.1 通用角色状态机（自动创建）
 
-func _ready():
+```gdscript
+# 在 BeastBase, HeroBase, MonsterBase 中，状态机会自动创建
+func _ready() -> void:
     super._ready()
-    # 状态机会自动启动并进入初始状态
+    
+    # 设置阵营（野兽、英雄、怪物）
+    faction = Enums.Faction.BEASTS
+    
+    # 状态机会根据阵营自动创建相应的状态
+    if enable_state_machine and not state_machine:
+        state_machine = StateManager.get_instance().create_state_machine_for_character(self)
 
 # 在状态中访问角色属性
 # IdleState.gd
 func enter(_data: Dictionary = {}) -> void:
+    # owner_node 引用角色实例
+    if owner_node.faction == Enums.Faction.BEASTS:
+        # 野兽行为
+        pass
+    elif owner_node.faction == Enums.Faction.HEROES:
+        # 英雄行为
+        pass
+```
+
+#### 4.2 特殊单位状态机（GoblinWorker, GoblinEngineer）
+
+```gdscript
+# GoblinWorker.gd - 使用专用状态机
+@onready var worker_state_machine: Node = $StateMachine
+
+func _ready() -> void:
+    super._ready()
+    
+    # 启用调试模式
+    debug_mode = true
+    if worker_state_machine:
+        worker_state_machine.debug_mode = true
+
+# 在专用状态中访问苦工属性
+# MoveToMineState.gd
+func enter(_data: Dictionary = {}) -> void:
     # owner_node 引用 GoblinWorker 实例
-    var nearest_mine = owner_node.find_nearest_gold_mine()
+    var nearest_mine = owner_node.find_nearby_gold_mine()
     if nearest_mine:
-        change_to("MoveToMineState", {"target": nearest_mine})
+        change_to("MiningState", {"target": nearest_mine})
+```
+
+#### 4.3 手动创建状态机
+
+```gdscript
+# 如果需要手动创建状态机
+var state_machine = StateManager.get_instance().create_state_machine_for_character(character)
+
+# 调试状态机
+if character.debug_mode:
+    print("当前状态: %s" % state_machine.get_current_state_name())
 ```
 
 ### 示例 5：使用信号系统
@@ -274,7 +423,15 @@ ui_manager.update_character_died(character)
 ✅ **推荐**：
 ```gdscript
 # 使用状态机管理复杂行为
-StateMachine
+# 通用角色使用阵营状态机
+StateMachine (自动创建)
+├── IdleState
+├── CombatState
+├── PatrolState
+└── RetreatState
+
+# 特殊单位使用专用状态机
+GoblinWorker StateMachine
 ├── IdleState
 ├── MoveToMineState
 ├── MiningState
@@ -292,7 +449,31 @@ func _process(delta):
     # ... 几百行代码
 ```
 
-### 4. 正确使用阵营系统
+### 4. 状态机使用最佳实践
+
+✅ **推荐**：
+```gdscript
+# 让角色基类自动创建状态机
+func _ready() -> void:
+    super._ready()
+    faction = Enums.Faction.BEASTS  # 设置阵营
+    # 状态机会根据阵营自动创建
+
+# 在状态中访问角色属性
+func enter(_data: Dictionary = {}) -> void:
+    # 使用 owner_node 访问角色实例
+    if owner_node.has_method("find_nearest_enemy"):
+        var enemy = owner_node.find_nearest_enemy()
+```
+
+❌ **不推荐**：
+```gdscript
+# 手动创建状态机（除非有特殊需求）
+var state_machine = StateMachine.new()
+# 手动添加状态...
+```
+
+### 5. 正确使用阵营系统
 
 ```gdscript
 # 判断敌友关系
@@ -304,7 +485,7 @@ elif character.is_friend_of(other_character):
     pass
 ```
 
-### 5. 生命周期管理
+### 6. 生命周期管理
 
 ```gdscript
 func _ready():
@@ -403,6 +584,19 @@ nav_agent.debug_enabled = true
 
 ## 版本历史
 
+- v5.0 (2025-01-15): 统一状态机系统
+  - 新增 BeastBase 野兽基类
+  - 新增 StateManager 统一状态管理器
+  - 实现阵营化状态机配置（野兽、英雄、怪物）
+  - 保持 GoblinWorker 和 GoblinEngineer 的独立状态机
+  - 更新状态机文档和使用指南
+
+- v4.0 (2025-10-14): 状态机API统一化
+  - 统一移动API（MovementHelper）
+  - 建筑寻路优化（BuildingFinder）
+  - 金矿包装器系统修复
+  - 状态机API统一化
+
 - v1.0 (2025-10-10): 初始版本
   - 创建 CharacterData Resource
   - 创建 CharacterBase 基类
@@ -413,7 +607,7 @@ nav_agent.debug_enabled = true
 
 ---
 
-**最后更新**：2025-10-10  
-**版本**：1.0  
+**最后更新**：2025-01-15  
+**版本**：5.0  
 **状态**：稳定
 

@@ -68,6 +68,10 @@ func _ready() -> void:
 	# 加入英雄组（使用 GameGroups 常量）
 	add_to_group(GameGroups.HEROES)
 	
+	# 创建状态机
+	if enable_state_machine and not state_machine:
+		state_machine = StateManager.get_instance().create_state_machine_for_character(self)
+	
 	if debug_mode:
 		print("[HeroBase] 英雄初始化: %s (Lv.%d)" % [get_character_name(), current_level])
 

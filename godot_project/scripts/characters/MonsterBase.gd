@@ -65,6 +65,10 @@ func _ready() -> void:
 	# 设置怪物阵营
 	faction = Enums.Faction.MONSTERS
 	
+	# 创建状态机
+	if enable_state_machine and not state_machine:
+		state_machine = StateManager.get_instance().create_state_machine_for_character(self)
+	
 	if debug_mode:
 		print("[MonsterBase] 怪物初始化: %s" % get_character_name())
 

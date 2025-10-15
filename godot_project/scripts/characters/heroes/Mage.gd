@@ -12,6 +12,8 @@ func _ready() -> void:
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
 	add_to_group("mages")
+	
+	# 状态机会在HeroBase._ready()中自动创建
 
 func _init_mage_data() -> void:
 	var data = CharacterData.new()

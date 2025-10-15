@@ -202,8 +202,9 @@ enum BuildingStatus {
 
 enum Faction {
 	PLAYER, ## 玩家阵营
-	MONSTERS, ## 怪物阵营
-	HEROES, ## 英雄阵营
+	MONSTERS, ## 怪物阵营（敌对）
+	HEROES, ## 英雄阵营（友方）
+	BEASTS, ## 野兽阵营（中立）
 	NEUTRAL ## 中立阵营
 }
 
@@ -314,5 +315,6 @@ static func faction_to_string(faction: Faction) -> String:
 		Faction.PLAYER: return "player"
 		Faction.MONSTERS: return "monsters"
 		Faction.HEROES: return "heroes"
+		Faction.BEASTS: return "beasts"
 		Faction.NEUTRAL: return "neutral"
 		_: return "unknown"
