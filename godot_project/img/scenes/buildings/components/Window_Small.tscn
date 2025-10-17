@@ -1,0 +1,17 @@
+[gd_scene load_steps=2 format=3 uid="uid://e7y1t5z6a8b9d"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/BuildingComponent.gd" id="1"]
+
+[node name="Window_Small" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "window"
+component_material = "glass"
+
+[node name="BoxMesh" type="BoxMesh" parent="."]
+size = Vector3(0.33, 0.33, 0.05)
+
+[node name="StandardMaterial3D" type="StandardMaterial3D" parent="."]
+albedo_color = Color(0.7, 0.9, 1.0, 0.3)
+transparency = 1
+roughness = 0.1
+metallic = 0.0

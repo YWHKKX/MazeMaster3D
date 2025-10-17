@@ -1,0 +1,19 @@
+[gd_scene load_steps=2 format=3 uid="uid://i9c3y1z2a5b6h"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/BuildingComponent.gd" id="1"]
+
+[node name="Gem_Pile" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "decoration"
+component_material = "crystal"
+
+[node name="BoxMesh" type="BoxMesh" parent="."]
+size = Vector3(0.33, 0.33, 0.33)
+
+[node name="StandardMaterial3D" type="StandardMaterial3D" parent="."]
+albedo_color = Color(1.0, 0.2, 0.8, 1)
+roughness = 0.1
+metallic = 0.0
+emission_enabled = true
+emission = Color(1.0, 0.5, 0.9, 1)
+emission_energy = 0.6

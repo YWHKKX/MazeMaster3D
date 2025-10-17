@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://v2w3x4y5z6a7b"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/BuildingComponent.gd" id="1"]
+
+[node name="Skull_Pile" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "decoration"
+component_material = "bone"
+
+[node name="BoxMesh" type="BoxMesh" parent="."]
+size = Vector3(0.33, 0.33, 0.33)
+
+[node name="StandardMaterial3D" type="StandardMaterial3D" parent="."]
+albedo_color = Color(0.9, 0.8, 0.7, 1)
+roughness = 0.8
+metallic = 0.0

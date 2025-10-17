@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://u9o3k1l2m5n6t"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/BuildingComponent.gd" id="1"]
+
+[node name="Stairs_Wood" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "decoration"
+component_material = "wood"
+
+[node name="BoxMesh" type="BoxMesh" parent="."]
+size = Vector3(0.33, 0.33, 0.33)
+
+[node name="StandardMaterial3D" type="StandardMaterial3D" parent="."]
+albedo_color = Color(0.5, 0.3, 0.2, 1)
+roughness = 0.6
+metallic = 0.1
