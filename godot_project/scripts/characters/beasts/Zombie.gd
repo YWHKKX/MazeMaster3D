@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("zombies")
+	add_to_group(GameGroups.ZOMBIES)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_zombie_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "僵尸"
-	data.creature_type = Enums.CreatureType.ZOMBIE
-	data.max_health = 800  # 血量较高
+	data.creature_type = BeastsTypes.BeastType.ZOMBIE
+	data.max_health = 800 # 血量较高
 	data.attack = 30
 	data.armor = 2
-	data.speed = 20        # 移动很慢
+	data.speed = 20 # 移动很慢
 	data.size = 20
 	data.attack_range = 3.0
 	data.attack_cooldown = 2.5
 	data.detection_range = 6.0
-	data.color = Color(0.3, 0.5, 0.3)  # 灰绿色
+	data.color = Color(0.3, 0.5, 0.3) # 灰绿色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,4 +41,4 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 0.5  # 非常缓慢
+	return 0.5 # 非常缓慢

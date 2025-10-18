@@ -11,14 +11,14 @@ func _ready() -> void:
 		_init_mage_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("mages")
+	add_to_group(GameGroups.MAGES)
 	
 	# 状态机会在HeroBase._ready()中自动创建
 
 func _init_mage_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "法师"
-	data.creature_type = Enums.CreatureType.MAGE
+	data.creature_type = HeroesTypes.HeroType.MAGE
 	data.max_health = 500
 	data.attack = 22
 	data.armor = 1
@@ -27,8 +27,8 @@ func _init_mage_data() -> void:
 	data.attack_range = 10.0
 	data.attack_cooldown = 2.0
 	data.detection_range = 10.0
-	data.attack_type = Enums.AttackType.MAGIC
-	data.damage_type = Enums.DamageType.MAGICAL
+	data.attack_type = CombatTypes.AttackType.MAGIC
+	data.damage_type = CombatTypes.DamageType.MAGICAL
 	data.color = Color(0.8, 0.6, 1.0)
 	character_data = data
 	_init_from_character_data()

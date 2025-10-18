@@ -17,7 +17,7 @@ var max_guard_time: float = 30.0
 var guard_radius: float = 10.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var monster = state_machine.owner
+	var monster = state_machine.owner_node
 	
 	# 设置守卫位置
 	guard_position = monster.global_position
@@ -37,12 +37,10 @@ func enter(_data: Dictionary = {}) -> void:
 	guard_timer.timeout.connect(_on_guard_timeout)
 	add_child(guard_timer)
 	guard_timer.start()
-	
-	if state_machine.debug_mode:
-		print("[MonsterGuardState] 怪物开始守卫 | 守卫位置: %s" % str(guard_position))
+
 
 func update(_delta: float) -> void:
-	var monster = state_machine.owner
+	var monster = state_machine.owner_node
 	
 	# 优先级1: 战斗准备 - 检测敌人
 	if _has_nearby_enemies(monster):

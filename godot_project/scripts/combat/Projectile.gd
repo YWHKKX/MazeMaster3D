@@ -51,7 +51,7 @@ func _physics_process(delta: float):
 func _on_body_entered(body: Node3D):
 	"""碰撞检测"""
 	# 击中环境，销毁（使用 GameGroups 常量）
-	if body.is_in_group(GameGroups.ENVIRONMENT):
+	if body.is_in_group(GameGroups.GameGroup.ENVIRONMENT):
 		_destroy()
 		return
 	

@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name Imp
+extends MonsterBase
 
 ## 小恶魔 - 基础战斗单位，性价比高
 ## 战斗等级: ⭐⭐
@@ -19,18 +19,16 @@ func _ready() -> void:
 	
 	# 加入组（使用 GameGroups 常量）
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("imps")
+	add_to_group(GameGroups.IMPS)
 	
 	# 状态机会在MonsterBase._ready()中自动创建
 	
-	if debug_mode:
-		print("[Imp] 小恶魔初始化完成 - 位置: %v" % global_position)
 
 ## 初始化小恶魔数据（如果没有使用 Resource）
 func _init_imp_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "小恶魔"
-	data.creature_type = Enums.CreatureType.IMP
+	data.creature_type = MonstersTypes.MonsterType.IMP
 	data.max_health = 800
 	data.attack = 15
 	data.armor = 2

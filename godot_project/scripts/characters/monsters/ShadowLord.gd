@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name ShadowLord
+extends MonsterBase
 
 ## 暗影领主 - 全能战士，形态切换能力强
 ## 战斗等级: ⭐⭐⭐⭐⭐
@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_shadow_lord_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("shadow_lords")
+	add_to_group(GameGroups.SHADOW_LORDS)
 
 func _init_shadow_lord_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "暗影领主"
-	data.creature_type = Enums.CreatureType.SHADOW_LORD
+	data.creature_type = MonstersTypes.MonsterType.SHADOW_LORD
 	data.max_health = 3200
 	data.attack = 55
 	data.armor = 12
@@ -27,6 +27,6 @@ func _init_shadow_lord_data() -> void:
 	data.detection_range = Constants.SEARCH_RANGE_SHADOW_LORD
 	data.cost_gold = GameBalance.SHADOW_LORD_COST
 	data.upkeep = GameBalance.SHADOW_LORD_UPKEEP
-	data.damage_type = Enums.DamageType.MAGICAL
+	data.damage_type = CombatTypes.DamageType.MAGICAL
 	character_data = data
 	_init_from_character_data()

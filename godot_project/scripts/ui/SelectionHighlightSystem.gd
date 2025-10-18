@@ -188,13 +188,13 @@ func _create_tile_highlight(position: Vector3, highlight_type: HighlightType):
 	
 	# 修正位置以匹配瓦片渲染（新坐标系：地面底部Y=0）
 	# 获取瓦块类型来确定正确的Y坐标和高亮尺寸
-	var tile_type = tile_manager.TileType.STONE_FLOOR if tile_manager else 0
+	var tile_type = TileTypes.TileType.STONE_FLOOR if tile_manager else 0
 	var y_position = 0.5 # 默认墙体高度
 	if tile_manager:
 		tile_type = tile_manager.get_tile_type(position)
 		# 检查是否是全填充类型（墙体）
-		if tile_type in [tile_manager.TileType.UNEXCAVATED, tile_manager.TileType.STONE_WALL,
-						 tile_manager.TileType.GOLD_MINE]:
+		if tile_type in [TileTypes.TileType.UNEXCAVATED, TileTypes.TileType.STONE_WALL,
+						 TileTypes.TileType.GOLD_MINE]:
 			y_position = 0.5 # 墙体中心
 		else:
 			y_position = 0.025 # 地面/建筑mesh中心
@@ -241,8 +241,8 @@ func _create_overlay_highlight(parent: Node3D, highlight_type: HighlightType, ti
 	var highlight_height = tile_size.y # 默认
 	if tile_manager:
 		# 检查是否是全填充类型（墙体）
-		if tile_type in [tile_manager.TileType.UNEXCAVATED, tile_manager.TileType.STONE_WALL,
-						 tile_manager.TileType.GOLD_MINE]:
+		if tile_type in [TileTypes.TileType.UNEXCAVATED, TileTypes.TileType.STONE_WALL,
+						 TileTypes.TileType.GOLD_MINE]:
 			highlight_height = 1.0 # 墙体高度
 		else:
 			highlight_height = 0.05 # 地面高度
@@ -274,8 +274,8 @@ func _create_wireframe_highlight(parent: Node3D, highlight_type: HighlightType, 
 	# 根据瓦块类型确定高亮高度
 	var highlight_height = tile_size.y
 	if tile_manager:
-		if tile_type in [tile_manager.TileType.UNEXCAVATED, tile_manager.TileType.STONE_WALL,
-						 tile_manager.TileType.GOLD_MINE]:
+		if tile_type in [TileTypes.TileType.UNEXCAVATED, TileTypes.TileType.STONE_WALL,
+						 TileTypes.TileType.GOLD_MINE]:
 			highlight_height = 1.0
 		else:
 			highlight_height = 0.05
@@ -295,8 +295,8 @@ func _create_outline_highlight(parent: Node3D, highlight_type: HighlightType, ti
 	# 根据瓦块类型确定高亮高度
 	var highlight_height = tile_size.y
 	if tile_manager:
-		if tile_type in [tile_manager.TileType.UNEXCAVATED, tile_manager.TileType.STONE_WALL,
-						 tile_manager.TileType.GOLD_MINE]:
+		if tile_type in [TileTypes.TileType.UNEXCAVATED, TileTypes.TileType.STONE_WALL,
+						 TileTypes.TileType.GOLD_MINE]:
 			highlight_height = 1.0
 		else:
 			highlight_height = 0.05
@@ -487,18 +487,18 @@ func _check_terrain_conditions(position: Vector3, entity_type: String) -> bool:
 		"dig":
 			# 放宽挖掘限制：允许更多类型的地块尝试挖掘
 			return (tile_data.is_diggable or
-					tile_data.type == tile_manager.TileType.EMPTY)
+					tile_data.type == TileTypes.TileType.EMPTY)
 		"build":
 			# 放宽建造限制：允许更多类型的地块建造
-			return (tile_data.type == tile_manager.TileType.STONE_WALL or
-					tile_data.type == tile_manager.TileType.STONE_FLOOR or
-					tile_data.type == tile_manager.TileType.EMPTY or
+			return (tile_data.type == TileTypes.TileType.STONE_WALL or
+					tile_data.type == TileTypes.TileType.STONE_FLOOR or
+					tile_data.type == TileTypes.TileType.EMPTY or
 					tile_data.is_walkable)
 		"summon_monster", "summon_logistics":
 			# 放宽召唤限制：允许更多类型的地块召唤
 			return (tile_data.is_walkable or
-					tile_data.type == tile_manager.TileType.EMPTY or
-					tile_data.type == tile_manager.TileType.STONE_FLOOR)
+					tile_data.type == TileTypes.TileType.EMPTY or
+					tile_data.type == TileTypes.TileType.STONE_FLOOR)
 		_:
 			return true
 
@@ -572,7 +572,7 @@ func _compute_dig_highlight_state(position: Vector3) -> HighlightState:
 		return HighlightState.INVALID_TERRAIN
 	
 	# 特殊处理：EMPTY -> 黄色（已挖掘，不需要再挖掘）
-	if tile_data.type == tile_manager.TileType.EMPTY:
+	if tile_data.type == TileTypes.TileType.EMPTY:
 		return HighlightState.INVALID_RESOURCES
 	
 	# 建筑类型 -> 黄色（资源问题）

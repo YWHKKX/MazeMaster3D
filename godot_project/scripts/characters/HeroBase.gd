@@ -60,7 +60,7 @@ func _ready() -> void:
 	super._ready()
 	
 	# 设置英雄阵营
-	faction = Enums.Faction.HEROES
+	faction = HeroesTypes.Faction.HEROES
 	
 	# 设置巡逻中心为初始位置
 	patrol_center = global_position
@@ -72,9 +72,6 @@ func _ready() -> void:
 	if enable_state_machine and not state_machine:
 		state_machine = StateManager.get_instance().create_state_machine_for_character(self)
 	
-	if debug_mode:
-		print("[HeroBase] 英雄初始化: %s (Lv.%d)" % [get_character_name(), current_level])
-
 func _process(delta: float) -> void:
 	if not is_alive:
 		return
@@ -97,7 +94,7 @@ func _physics_process(delta: float) -> void:
 
 ## 开始巡逻
 func start_patrol() -> void:
-	change_status(Enums.CreatureStatus.WANDERING)
+	change_status(HeroesTypes.HeroStatus.WANDERING)
 	_generate_patrol_target()
 
 ## 生成巡逻目标
@@ -108,16 +105,13 @@ func _generate_patrol_target() -> void:
 		randf_range(-patrol_radius, patrol_radius)
 	)
 	
-	if debug_mode:
-		print("[HeroBase] %s 生成巡逻目标: %s" % [get_character_name(), patrol_target])
-
 ## 追击敌人
 func pursue_enemy(enemy: CharacterBase) -> void:
 	if not enemy or not is_instance_valid(enemy):
 		return
 	
 	set_target(enemy)
-	change_status(Enums.CreatureStatus.FIGHTING)
+	change_status(HeroesTypes.HeroStatus.FIGHTING)
 	
 	# 🔧 [修复] 使用统一的MovementHelper.process_navigation替代NavigationAgent3D
 	# 注意：这里只设置目标，实际的移动在_physics_process中处理
@@ -127,11 +121,7 @@ func pursue_enemy(enemy: CharacterBase) -> void:
 ## 放弃追击
 func abandon_pursuit() -> void:
 	clear_target()
-	change_status(Enums.CreatureStatus.WANDERING)
-	
-	if debug_mode:
-		print("[HeroBase] %s 放弃追击" % get_character_name())
-
+	change_status(HeroesTypes.HeroStatus.WANDERING)
 ## 检查是否应该放弃追击
 func should_abandon_pursuit() -> bool:
 	if not current_target or not is_instance_valid(current_target):
@@ -160,9 +150,6 @@ func cast_skill(skill_name: String) -> bool:
 	
 	# 设置冷却时间（这里使用默认值，子类可以自定义）
 	skill_cooldowns[skill_name] = 5.0
-	
-	if debug_mode:
-		print("[HeroBase] %s 释放技能: %s" % [get_character_name(), skill_name])
 	
 	return true
 
@@ -203,9 +190,6 @@ func level_up() -> void:
 	
 	leveled_up.emit(current_level)
 	
-	if debug_mode:
-		print("[HeroBase] %s 升级到 Lv.%d！" % [get_character_name(), current_level])
-
 ## ============================================================================
 ## 查找方法（英雄特定）
 ## ============================================================================
@@ -261,10 +245,10 @@ func take_damage(damage: float, attacker: CharacterBase = null) -> void:
 	super.take_damage(damage, attacker)
 	
 	# 英雄受到攻击时进入战斗状态
-	if is_alive and current_status != Enums.CreatureStatus.FIGHTING:
+	if is_alive and current_status != HeroesTypes.HeroStatus.FIGHTING:
 		if attacker:
 			set_target(attacker)
-			change_status(Enums.CreatureStatus.FIGHTING)
+			change_status(HeroesTypes.HeroStatus.FIGHTING)
 
 func die() -> void:
 	super.die()
@@ -273,10 +257,6 @@ func die() -> void:
 	if state_machine:
 		state_machine.stop()
 	
-	# 可以在这里播放死亡特效、掉落物品等
-	if debug_mode:
-		print("[HeroBase] 英雄 %s 阵亡" % get_character_name())
-
 ## 获取特定英雄的搜索范围（子类可重写）
 func get_search_range() -> float:
 	return detection_range

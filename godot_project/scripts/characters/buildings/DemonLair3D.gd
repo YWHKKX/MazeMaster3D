@@ -5,12 +5,12 @@ class_name DemonLair3D
 ## 基于Building3D，实现恶魔巢穴的3x3x3渲染
 
 # 召唤系统
-var summon_cost: int = 20                    # 召唤成本
-var summon_time: float = 60.0                # 召唤时间
-var summon_progress: float = 0.0             # 召唤进度
-var is_summoning: bool = false               # 是否正在召唤
-var bound_demon: Node = null                 # 绑定的恶魔
-var is_locked: bool = false                  # 锁定状态
+var summon_cost: int = 20 # 召唤成本
+var summon_time: float = 60.0 # 召唤时间
+var summon_progress: float = 0.0 # 召唤进度
+var is_summoning: bool = false # 是否正在召唤
+var bound_demon: Node = null # 绑定的恶魔
+var is_locked: bool = false # 锁定状态
 
 
 func _init():
@@ -19,11 +19,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "恶魔巢穴"
-	building_type = BuildingTypes.DEMON_LAIR
+	building_type = BuildingTypes.BuildingType.DEMON_LAIR
 	max_health = 500
 	health = max_health
 	armor = 6
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 300
 	engineer_cost = 150
 	build_time = 180.0
@@ -40,37 +40,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = false,   # 无窗户（邪恶建筑）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = false
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（邪恶风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.3, 0.1, 0.1),    # 深红色墙体
-		roof = Color(0.2, 0.05, 0.05),   # 更深红色屋顶
-		floor = Color(0.4, 0.15, 0.15)    # 暗红色地板
-	)
+	building_3d_config.wall_color = Color(0.3, 0.1, 0.1) # 深红色墙体
+	building_3d_config.roof_color = Color(0.2, 0.05, 0.05) # 更深红色屋顶
+	building_3d_config.floor_color = Color(0.4, 0.15, 0.15) # 暗红色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取恶魔巢穴建筑模板"""
-	var template = BuildingTemplate.new("恶魔巢穴")
-	template.building_type = BuildingTypes.DEMON_LAIR
+	var template = BuildingTemplateClass.new("恶魔巢穴")
+	template.building_type = BuildingTypes.BuildingType.DEMON_LAIR
 	template.description = "邪恶的3x3x3恶魔巢穴，散发着地狱的气息"
 	
 	# 创建魔法结构
-	template.create_magic_structure(BuildingTypes.DEMON_LAIR)
+	template.create_magic_structure(BuildingTypes.BuildingType.DEMON_LAIR)
 	
 	# 自定义恶魔巢穴元素
 	# 顶层：恶魔角和召唤阵
@@ -122,11 +116,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.3, 0.1, 0.1)  # 深红色
-	config.roof_color = Color(0.2, 0.05, 0.05)    # 更深红色
-	config.floor_color = Color(0.4, 0.15, 0.15)   # 暗红色
-	config.window_color = Color.LIGHT_BLUE       # 不使用窗户
-	config.door_color = Color(0.1, 0.05, 0.05)    # 深黑色门
+	config.wall_color = Color(0.3, 0.1, 0.1) # 深红色
+	config.roof_color = Color(0.2, 0.05, 0.05) # 更深红色
+	config.floor_color = Color(0.4, 0.15, 0.15) # 暗红色
+	config.window_color = Color.LIGHT_BLUE # 不使用窗户
+	config.door_color = Color(0.1, 0.05, 0.05) # 深黑色门
 	
 	return config
 
@@ -167,7 +161,7 @@ func _start_summoning_system():
 	# 设置召唤更新定时器
 	var summon_timer = Timer.new()
 	summon_timer.name = "SummoningTimer"
-	summon_timer.wait_time = 0.5  # 每0.5秒更新一次
+	summon_timer.wait_time = 0.5 # 每0.5秒更新一次
 	summon_timer.timeout.connect(_update_summoning)
 	summon_timer.autostart = true
 	add_child(summon_timer)
@@ -319,7 +313,7 @@ func _update_demon_core_glow(delta: float):
 		var light = effect_manager.light_systems["demon_light"]
 		if light and light.visible:
 			light.light_energy = 0.5 + summon_ratio * 1.5
-			light.light_color = Color(1.0, 0.2, 0.2)  # 红色恶魔光
+			light.light_color = Color(1.0, 0.2, 0.2) # 红色恶魔光
 
 
 func _update_functional_effects(delta: float):
@@ -342,7 +336,7 @@ func _update_demon_lair_effects(delta: float):
 		if light and light.visible:
 			# 恶魔脉冲
 			light.light_energy = 0.6 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.4
-			light.light_color = Color(1.0, 0.2, 0.2)  # 红色恶魔光
+			light.light_color = Color(1.0, 0.2, 0.2) # 红色恶魔光
 
 
 func get_building_info() -> Dictionary:

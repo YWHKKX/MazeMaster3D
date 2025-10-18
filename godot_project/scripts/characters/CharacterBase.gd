@@ -8,13 +8,13 @@
 ##
 ## 场景结构：
 ## CharacterBase (CharacterBody3D)
+class_name CharacterBase
 ## ├── Model (MeshInstance3D)
 ## ├── CollisionShape (CollisionShape3D)
 ## ├── NavigationAgent (NavigationAgent3D)
 ## ├── StateMachine (StateMachine)
 ## ├── AnimationPlayer (AnimationPlayer)
 ## └── StatusIndicator (Control)
-class_name CharacterBase
 extends CharacterBody3D
 
 ## ============================================================================
@@ -34,7 +34,7 @@ signal attacked(attacker: CharacterBase, damage: float)
 signal target_acquired(target: Node3D)
 
 ## 状态变化信号
-signal status_changed(old_status: Enums.CreatureStatus, new_status: Enums.CreatureStatus)
+signal status_changed(old_status: int, new_status: int)
 
 ## ============================================================================
 ## 导出属性（可在编辑器中配置）
@@ -44,7 +44,7 @@ signal status_changed(old_status: Enums.CreatureStatus, new_status: Enums.Creatu
 @export var character_data: CharacterData
 
 ## 阵营
-@export var faction: Enums.Faction = Enums.Faction.MONSTERS
+@export var faction: int = 2 # MonstersTypes.Faction.MONSTERS
 
 ## 是否启用调试模式
 @export var debug_mode: bool = false
@@ -136,7 +136,7 @@ var immunities: int = 0
 ## ============================================================================
 
 ## 当前状态
-var current_status: Enums.CreatureStatus = Enums.CreatureStatus.IDLE
+var current_status: int = 0 # MonstersTypes.MonsterStatus.IDLE
 
 ## 是否存活
 var is_alive: bool = true
@@ -180,6 +180,10 @@ func _ready() -> void:
 		_init_from_character_data()
 	else:
 		_init_default_values()
+	
+	# 验证生物类型
+	if not validate_creature_type():
+		push_warning("角色 %s 的生物类型无效: %s" % [name, get_creature_type()])
 	
 	# 设置物理属性
 	_setup_physics()
@@ -232,7 +236,7 @@ func _physics_process(delta: float) -> void:
 			
 			# 🔍 调试：检查是否真的移动了
 			var pos_after = global_position
-			var moved_distance = pos_before.distance_to(pos_after)
+			var _moved_distance = pos_before.distance_to(pos_after)
 			# 检查单位移动状态（调试用）
 	
 	# 子类可以重写此方法添加自定义物理逻辑
@@ -403,13 +407,13 @@ func _setup_collision_layers() -> void:
 	
 	# 根据阵营设置碰撞层
 	match faction:
-		Enums.Faction.MONSTERS:
+		2: # MonstersTypes.Faction.MONSTERS
 			set_collision_layer_value(2, true) # 怪物阵营层
-		Enums.Faction.HEROES:
+		1: # HeroesTypes.Faction.HEROES
 			set_collision_layer_value(3, true) # 英雄阵营层
-		Enums.Faction.BEASTS:
+		3: # BeastsTypes.Faction.BEASTS
 			set_collision_layer_value(4, true) # 野兽阵营层
-		Enums.Faction.NEUTRAL:
+		4: # Faction.NEUTRAL
 			set_collision_layer_value(5, true) # 中立阵营层
 	
 	# 设置碰撞掩码：检测哪些层
@@ -496,7 +500,7 @@ func die() -> void:
 	
 	is_alive = false
 	current_health = 0.0
-	current_status = Enums.CreatureStatus.IDLE # 死亡后重置状态
+	current_status = 0 # MonstersTypes.MonsterStatus.IDLE - 死亡后重置状态
 	died.emit()
 	
 	# 角色死亡
@@ -535,7 +539,7 @@ func is_target_valid() -> bool:
 ## ============================================================================
 
 ## 改变状态
-func change_status(new_status: Enums.CreatureStatus) -> void:
+func change_status(new_status: int) -> void:
 	if current_status != new_status:
 		var old_status = current_status
 		current_status = new_status
@@ -544,17 +548,17 @@ func change_status(new_status: Enums.CreatureStatus) -> void:
 		# 角色状态变化
 
 ## 状态转字符串（调试用）
-func _status_to_string(status: Enums.CreatureStatus) -> String:
+func _status_to_string(status: int) -> String:
 	match status:
-		Enums.CreatureStatus.IDLE: return "IDLE"
-		Enums.CreatureStatus.WANDERING: return "WANDERING"
-		Enums.CreatureStatus.MOVING: return "MOVING"
-		Enums.CreatureStatus.FIGHTING: return "FIGHTING"
-		Enums.CreatureStatus.FLEEING: return "FLEEING"
-		Enums.CreatureStatus.MINING: return "MINING"
-		Enums.CreatureStatus.BUILDING: return "BUILDING"
-		Enums.CreatureStatus.DEPOSITING: return "DEPOSITING"
-		Enums.CreatureStatus.FETCHING: return "FETCHING"
+		0: return "IDLE" # MonstersTypes.MonsterStatus.IDLE
+		1: return "WANDERING" # MonstersTypes.MonsterStatus.WANDERING
+		2: return "MOVING" # MonstersTypes.MonsterStatus.MOVING
+		3: return "FIGHTING" # MonstersTypes.MonsterStatus.FIGHTING
+		4: return "FLEEING" # MonstersTypes.MonsterStatus.FLEEING
+		5: return "MINING" # MonstersTypes.MonsterStatus.MINING
+		6: return "BUILDING" # MonstersTypes.MonsterStatus.BUILDING
+		7: return "DEPOSITING" # MonstersTypes.MonsterStatus.DEPOSITING
+		8: return "FETCHING" # MonstersTypes.MonsterStatus.FETCHING
 		_: return "UNKNOWN"
 
 ## ============================================================================
@@ -568,7 +572,7 @@ func is_enemy_of(other: CharacterBase) -> bool:
 	
 	# 统一阵营系统：不同阵营即为敌人
 	# 特殊情况：野兽阵营对所有阵营都是中立的
-	if faction == Enums.Faction.BEASTS or other.faction == Enums.Faction.BEASTS:
+	if faction == 3 or other.faction == 3: # BeastsTypes.Faction.BEASTS
 		return false
 	
 	return faction != other.faction
@@ -587,11 +591,11 @@ func is_neutral_to(other: CharacterBase) -> bool:
 		return false
 	
 	# 野兽阵营对所有阵营都是中立的
-	if faction == Enums.Faction.BEASTS or other.faction == Enums.Faction.BEASTS:
+	if faction == 3: # BeastsTypes.Faction.BEASTS or other.faction == 3 # BeastsTypes.Faction.BEASTS:
 		return true
 	
 	# 中立阵营对所有阵营都是中立的
-	if faction == Enums.Faction.NEUTRAL or other.faction == Enums.Faction.NEUTRAL:
+	if faction == 4: # Faction.NEUTRAL or other.faction == 4 # Faction.NEUTRAL:
 		return true
 	
 	return false
@@ -605,6 +609,32 @@ func get_character_name() -> String:
 	if character_data:
 		return character_data.character_name
 	return "Unknown"
+
+## 获取生物类型
+func get_creature_type() -> int:
+	if character_data:
+		return character_data.creature_type
+	return 0
+
+## 获取生物类型名称
+func get_creature_type_name() -> String:
+	# 简化实现，返回类型编号
+	return "Type_%d" % get_creature_type()
+
+## 获取生物类型图标
+func get_creature_type_icon() -> String:
+	# 简化实现，返回默认图标
+	return "default_icon"
+
+## 检查是否为特定生物类型
+func is_creature_type(creature_type: int) -> bool:
+	return get_creature_type() == creature_type
+
+## 验证生物类型是否有效
+func validate_creature_type() -> bool:
+	var creature_type = get_creature_type()
+	# 检查是否为有效的生物类型
+	return creature_type != null and creature_type >= 0
 
 ## 获取生命值百分比
 func get_health_percent() -> float:
@@ -624,7 +654,7 @@ func get_character_info() -> Dictionary:
 	
 	return {
 		"name": get_character_name(),
-		"faction": Enums.faction_to_string(faction),
+		"faction": "Faction_%d" % faction,
 		"status": _status_to_string(current_status),
 		"health": "%d/%d" % [current_health, max_health],
 		"position": global_position,
@@ -757,11 +787,11 @@ func execute_ranged_attack(target: CharacterBase, projectile_manager: Node) -> v
 	
 	# 根据攻击类型生成不同投射物
 	match get("attack_type"):
-		Enums.AttackType.RANGED_BOW:
+		CombatTypes.AttackType.RANGED_BOW:
 			projectile_manager.spawn_arrow(muzzle_pos, target.global_position, self, attack)
-		Enums.AttackType.RANGED_GUN:
+		CombatTypes.AttackType.RANGED_GUN:
 			projectile_manager.spawn_bullet(muzzle_pos, target.global_position, self, attack)
-		Enums.AttackType.MAGIC_SINGLE:
+		CombatTypes.AttackType.MAGIC_SINGLE:
 			projectile_manager.spawn_fireball(muzzle_pos, target.global_position, self, attack)
 		_:
 			# 默认使用箭矢
@@ -783,7 +813,7 @@ func set_movement_target(target_position: Vector3) -> void:
 		velocity = direction * speed
 
 ## 移动到目标位置
-func move_towards(target_position: Vector3, delta: float) -> void:
+func move_towards(target_position: Vector3, _delta: float) -> void:
 	"""移动到目标位置"""
 	var direction = (target_position - global_position).normalized()
 	velocity = direction * speed
@@ -813,14 +843,14 @@ func restore_health(amount: float) -> void:
 	health_changed.emit(current_health - amount, current_health)
 
 ## 恢复饥饿度（野兽用）
-func restore_hunger(amount: float) -> void:
+func restore_hunger(_amount: float) -> void:
 	"""恢复饥饿度"""
 	# 默认实现：无操作
 	# 子类可以重写此方法
 	pass
 
 ## 恢复体力（野兽用）
-func restore_stamina(amount: float) -> void:
+func restore_stamina(_amount: float) -> void:
 	"""恢复体力"""
 	# 默认实现：无操作
 	# 子类可以重写此方法
@@ -846,8 +876,56 @@ func is_dead() -> bool:
 	return not is_alive
 
 ## 治疗目标（英雄用）
-func heal(target: Node) -> void:
+func heal_target(target: Node) -> void:
 	"""治疗目标"""
 	if target and target.has_method("restore_health"):
-		var heal_amount = attack * 0.5  # 治疗量基于攻击力
+		var heal_amount = attack * 0.5 # 治疗量基于攻击力
 		target.restore_health(heal_amount)
+
+## ============================================================================
+## 生物类型特殊行为
+## ============================================================================
+
+## 检查是否为野兽类型
+func is_beast() -> bool:
+	# 简化实现，基于阵营判断
+	return faction == 3 # BeastsTypes.Faction.BEASTS
+
+## 检查是否为怪物类型
+func is_monster() -> bool:
+	# 简化实现，基于阵营判断
+	return faction == 2 # MonstersTypes.Faction.MONSTERS
+
+## 检查是否为英雄类型
+func is_hero() -> bool:
+	# 简化实现，基于阵营判断
+	return faction == 1 # HeroesTypes.Faction.HEROES
+
+## 检查是否为水生生物
+func is_aquatic() -> bool:
+	# 简化实现，基于阵营和类型判断
+	return is_beast() and get_creature_type() in [10, 11, 12, 13, 14, 15, 16] # 水生生物类型编号
+
+## 检查是否为飞行生物
+func can_fly() -> bool:
+	if character_data and character_data.has_method("get") and character_data.get("can_fly"):
+		return character_data.can_fly
+	return false
+
+## 检查是否为掠食者
+func is_predator() -> bool:
+	if character_data and character_data.has_method("get") and character_data.get("is_predator"):
+		return character_data.is_predator
+	return false
+
+## 获取生物类型描述
+func get_creature_description() -> String:
+	# 简化实现，返回通用描述
+	if is_beast():
+		return "生态系统中的野生动物"
+	elif is_monster():
+		return "敌对怪物单位"
+	elif is_hero():
+		return "友方英雄单位"
+	else:
+		return "未知生物类型"

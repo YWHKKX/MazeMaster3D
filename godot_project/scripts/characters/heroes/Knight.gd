@@ -11,14 +11,14 @@ func _ready() -> void:
 		_init_knight_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("knights")
+	add_to_group(GameGroups.KNIGHTS)
 	
 	# 状态机会在HeroBase._ready()中自动创建
 
 func _init_knight_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "骑士"
-	data.creature_type = Enums.CreatureType.KNIGHT
+	data.creature_type = HeroesTypes.HeroType.KNIGHT
 	data.max_health = 900
 	data.attack = 18
 	data.armor = 5

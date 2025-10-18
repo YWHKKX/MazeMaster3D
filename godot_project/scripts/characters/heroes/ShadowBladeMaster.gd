@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_shadow_blade_master_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("shadow_blade_masters")
+	add_to_group(GameGroups.SHADOW_BLADE_MASTERS)
 
 func _init_shadow_blade_master_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "暗影剑圣"
-	data.creature_type = Enums.CreatureType.SHADOW_BLADE_MASTER
+	data.creature_type = HeroesTypes.HeroType.SHADOW_BLADE_MASTER
 	data.max_health = 1400
 	data.attack = 58
 	data.armor = 8

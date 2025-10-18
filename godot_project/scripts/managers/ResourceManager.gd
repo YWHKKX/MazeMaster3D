@@ -222,7 +222,7 @@ func consume_gold(amount: int, priority_sources: Array = []) -> Dictionary:
 	"""
 	# 🔧 使用 BuildingTypes autoload 常量
 	if priority_sources.is_empty():
-		priority_sources = [BuildingTypes.DUNGEON_HEART, BuildingTypes.TREASURY]
+		priority_sources = [BuildingTypes.BuildingType.DUNGEON_HEART, BuildingTypes.BuildingType.TREASURY]
 	
 	var remaining_amount = amount
 	var consumed_sources = []
@@ -300,7 +300,7 @@ func consume_mana(amount: int, priority_sources: Array = []) -> Dictionary:
 	"""
 	# 🔧 使用 BuildingTypes autoload 常量
 	if priority_sources.is_empty():
-		priority_sources = [BuildingTypes.DUNGEON_HEART, BuildingTypes.MAGIC_ALTAR]
+		priority_sources = [BuildingTypes.BuildingType.DUNGEON_HEART, BuildingTypes.BuildingType.MAGIC_ALTAR]
 	
 	var remaining_amount = amount
 	var consumed_sources = []
@@ -395,7 +395,7 @@ func add_gold(amount: int, target_building = null) -> Dictionary:
 		for building in gold_buildings:
 			var building_type = building.building_type if "building_type" in building else null
 			# 🔧 使用 BuildingTypes autoload 常量
-			if building_type != null and building_type == BuildingTypes.DUNGEON_HEART:
+			if building_type != null and building_type == BuildingTypes.BuildingType.DUNGEON_HEART:
 				target_building = building
 				break
 	
@@ -442,7 +442,7 @@ func add_mana(amount: int, target_building = null) -> Dictionary:
 		for building in mana_buildings:
 			var building_type = building.building_type if "building_type" in building else null
 			# 🔧 使用 BuildingTypes autoload 常量
-			if building_type != null and building_type == BuildingTypes.DUNGEON_HEART:
+			if building_type != null and building_type == BuildingTypes.BuildingType.DUNGEON_HEART:
 				target_building = building
 				break
 	

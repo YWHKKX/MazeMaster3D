@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name FireLizard
+extends MonsterBase
 
 ## 火蜥蜴 - 远程火力，具有溅射伤害
 ## 战斗等级: ⭐⭐⭐
@@ -14,15 +14,13 @@ func _ready() -> void:
 	
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("fire_lizards")
-	
-	if debug_mode:
-		print("[FireLizard] 火蜥蜴初始化完成 - 位置: %v" % global_position)
+	add_to_group(GameGroups.FIRE_LIZARDS)
+
 
 func _init_fire_lizard_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "火蜥蜴"
-	data.creature_type = Enums.CreatureType.FIRE_LIZARD
+	data.creature_type = MonstersTypes.MonsterType.FIRE_LIZARD
 	data.max_health = 1000
 	data.attack = 28
 	data.armor = 3
@@ -34,7 +32,7 @@ func _init_fire_lizard_data() -> void:
 	data.cost_gold = GameBalance.FIRE_LIZARD_COST
 	data.upkeep = GameBalance.FIRE_LIZARD_UPKEEP
 	data.color = Color(1.0, 0.4, 0.2) # 火焰橙色
-	data.attack_type = Enums.AttackType.RANGED
+	data.attack_type = CombatTypes.AttackType.RANGED
 	
 	character_data = data
 	_init_from_character_data()

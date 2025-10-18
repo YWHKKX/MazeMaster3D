@@ -26,7 +26,7 @@ buses/default_bus_layout="res://audio/default_bus_layout.tres"
 
 [autoload]
 
-LogManager="*res://scripts/managers/LogManager.gd"
+LogManager="*res://autoload/LogManager.gd"
 GameServices="*res://autoload/GameServices.gd"
 GameEvents="*res://autoload/GameEvents.gd"
 GameGroups="*res://autoload/GameGroups.gd"
@@ -34,14 +34,20 @@ GridPathFinder="*res://autoload/GridPathFinder.gd"
 BuildingTypes="*res://autoload/BuildingTypes.gd"
 BuildingStatus="*res://autoload/BuildingStatus.gd"
 TileTypes="*res://autoload/TileTypes.gd"
-CharacterTypes="*res://autoload/CharacterTypes.gd"
+MapConfig="*res://autoload/MapConfig.gd"
+HeroesTypes="*res://autoload/HeroesTypes.gd"
+MonstersTypes="*res://autoload/MonstersTypes.gd"
 CombatTypes="*res://autoload/CombatTypes.gd"
-CreatureTypes="*res://autoload/CreatureTypes.gd"
+BeastsTypes="*res://autoload/BeastsTypes.gd"
 EcosystemRegion="*res://autoload/EcosystemRegion.gd"
 ResourceTypes="*res://autoload/ResourceTypes.gd"
+CavityConfig="*res://autoload/CavityConfig.gd"
+CavityManager="*res://scripts/map_system/cavity_system/CavityManager.gd"
+CavityHighlightSystem="*res://scripts/map_system/cavity_system/highlight/CavityHighlightSystem.gd"
 AvoidanceManager="*res://scripts/core/AvoidanceManager.gd"
 MovementHelper="*res://scripts/core/MovementHelper.gd"
 BuildingFinder="*res://scripts/core/BuildingFinder.gd"
+StateManager="*res://scripts/characters/StateManager.gd"
 
 [input]
 

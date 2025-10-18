@@ -277,25 +277,25 @@ func _get_building_color() -> Color:
 	"""
 	# 使用建筑类型枚举
 	match building_type:
-		BuildingTypes.TREASURY:
+		BuildingTypes.BuildingType.TREASURY:
 			return Color(1.0, 0.84, 0.0) # 金黄色 (#FFD700)
-		BuildingTypes.TRAINING_ROOM:
+		BuildingTypes.BuildingType.TRAINING_ROOM:
 			return Color(0.44, 0.5, 0.56) # 铁灰色 (#708090)
-		BuildingTypes.LIBRARY:
+		BuildingTypes.BuildingType.LIBRARY:
 			return Color(0.1, 0.1, 0.44) # 深蓝色 (#191970)
-		BuildingTypes.LAIR:
+		BuildingTypes.BuildingType.LAIR:
 			return Color(0.4, 0.26, 0.13) # 深棕色 (#654321)
-		BuildingTypes.DEMON_LAIR:
+		BuildingTypes.BuildingType.DEMON_LAIR:
 			return Color(0.29, 0.0, 0.51) # 靛青色 (#4B0082)
-		BuildingTypes.ORC_LAIR:
+		BuildingTypes.BuildingType.ORC_LAIR:
 			return Color(0.55, 0.27, 0.07) # 马鞍棕色 (#8B4513)
-		BuildingTypes.ARROW_TOWER:
+		BuildingTypes.BuildingType.ARROW_TOWER:
 			return Color(0.83, 0.83, 0.83) # 石灰色 (#D3D3D3)
-		BuildingTypes.ARCANE_TOWER:
+		BuildingTypes.BuildingType.ARCANE_TOWER:
 			return Color(0.54, 0.17, 0.89) # 紫色 (#8A2BE2)
-		BuildingTypes.MAGIC_ALTAR:
+		BuildingTypes.BuildingType.MAGIC_ALTAR:
 			return Color(0.6, 0.4, 0.8) # 浅紫色（魔法）
-		BuildingTypes.WORKSHOP:
+		BuildingTypes.BuildingType.WORKSHOP:
 			return Color(0.6, 0.5, 0.4) # 工坊棕
 		_:
 			return Color(0.5, 0.4, 0.3) # 默认建筑棕色
@@ -596,7 +596,7 @@ func _setup_storage_status_bar() -> void:
 
 func _is_storage_building() -> bool:
 	"""检查是否为存储建筑"""
-	return building_type in [BuildingTypes.DUNGEON_HEART, BuildingTypes.TREASURY]
+	return building_type in [BuildingTypes.BuildingType.DUNGEON_HEART, BuildingTypes.BuildingType.TREASURY]
 
 
 func _update_storage_display() -> void:

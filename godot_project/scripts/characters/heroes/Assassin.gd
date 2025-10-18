@@ -11,14 +11,14 @@ func _ready() -> void:
 		_init_assassin_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("assassins")
+	add_to_group(GameGroups.ASSASSINS)
 	
 	# 状态机会在HeroBase._ready()中自动创建
 
 func _init_assassin_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "刺客"
-	data.creature_type = Enums.CreatureType.ASSASSIN
+	data.creature_type = HeroesTypes.HeroType.ASSASSIN
 	data.max_health = 900
 	data.attack = 38
 	data.armor = 3

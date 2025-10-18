@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name Hellhound
+extends MonsterBase
 
 ## 地狱犬 - 高速猎手，适合追击
 ## 战斗等级: ⭐⭐⭐
@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_hellhound_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("hellhounds")
+	add_to_group(GameGroups.HELLHOUNDS)
 
 func _init_hellhound_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "地狱犬"
-	data.creature_type = Enums.CreatureType.HELLHOUND
+	data.creature_type = MonstersTypes.MonsterType.HELLHOUND
 	data.max_health = 1100
 	data.attack = 30
 	data.armor = 3

@@ -18,7 +18,9 @@ var max_wander_time: float = 8.0
 var wander_radius: float = 10.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 播放移动动画
 	if beast.has_node("Model") and beast.get_node("Model").has_method("play_animation"):
@@ -39,11 +41,10 @@ func enter(_data: Dictionary = {}) -> void:
 	# 选择游荡目标点
 	_choose_wander_target(beast)
 	
-	if state_machine.debug_mode:
-		print("[BeastWanderState] 野兽开始游荡 | 目标: %s" % str(target_position))
-
 func update(_delta: float) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 优先级1: 安全检查 - 检测威胁
 	if _has_nearby_threats(beast):
@@ -82,11 +83,23 @@ func _choose_wander_target(beast: Node) -> void:
 
 func _move_to_target(beast: Node, delta: float) -> void:
 	"""移动到目标点"""
-	if not beast.has_method("move_towards"):
-		return
+	# 🔧 [统一移动API] 使用 MovementHelper.process_navigation 处理游荡移动
+	var move_result = MovementHelper.process_navigation(
+		beast,
+		target_position,
+		delta,
+		"BeastWanderState" if state_machine.debug_mode else ""
+	)
 	
-	# 使用角色的移动方法
-	beast.move_towards(target_position, delta)
+	# 处理移动结果
+	match move_result:
+		MovementHelper.MoveResult.REACHED:
+			# 到达目标点，选择新的游荡目标
+			_choose_wander_target(beast)
+		MovementHelper.MoveResult.FAILED_NO_PATH, MovementHelper.MoveResult.FAILED_STUCK:
+			# 移动失败，选择新的游荡目标
+			_choose_wander_target(beast)
+		# MovementHelper.MoveResult.MOVING: 继续移动
 
 func _reached_target(beast: Node) -> bool:
 	"""检查是否到达目标点"""
@@ -104,7 +117,7 @@ func _has_nearby_threats(beast: Node) -> bool:
 					return true
 	return false
 
-func _find_nearest_food(beast: Node) -> Node:
+func _find_nearest_food(_beast: Node) -> Node:
 	"""寻找最近的食物源"""
 	# 这里可以扩展为寻找实际的资源点
 	# 暂时返回null，让野兽继续游荡

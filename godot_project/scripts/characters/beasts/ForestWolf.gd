@@ -15,14 +15,14 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("forest_wolves")
+	add_to_group(GameGroups.FOREST_WOLVES)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_forest_wolf_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "森林狼"
-	data.creature_type = Enums.CreatureType.FOREST_WOLF
+	data.creature_type = BeastsTypes.BeastType.FOREST_WOLF
 	data.max_health = 600
 	data.attack = 25
 	data.armor = 3
@@ -31,7 +31,7 @@ func _init_forest_wolf_data() -> void:
 	data.attack_range = 3.0
 	data.attack_cooldown = 1.2
 	data.detection_range = 10.0
-	data.color = Color(0.3, 0.3, 0.3)  # 灰色
+	data.color = Color(0.3, 0.3, 0.3) # 灰色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,4 +41,4 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 1.2  # 活跃地巡逻
+	return 1.2 # 活跃地巡逻

@@ -15,7 +15,11 @@ var mining_timer: Timer = null
 var mining_interval: float = 1.0 # 🔧 挖矿速度：每1秒挖一次，配合mining_power=4实现4金币/秒
 
 func enter(data: Dictionary = {}) -> void:
-	var worker = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		LogManager.warning("GoblinWorkerMiningState - state_machine 或 owner_node 为空")
+		return
+	
+	var worker = state_machine.owner_node
 	
 	# 获取目标金矿
 	if data.has("target_mine"):
@@ -45,7 +49,7 @@ func enter(data: Dictionary = {}) -> void:
 	# 开始挖矿
 
 func update(_delta: float) -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 检查金矿是否有效
 	if not is_instance_valid(target_mine) or target_mine.is_exhausted():
@@ -66,7 +70,7 @@ func update(_delta: float) -> void:
 
 func _on_mining_tick() -> void:
 	"""挖矿定时器触发"""
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 从金矿采集金币（使用 mine_gold 而非 extract_gold）
 	var gold_gathered = target_mine.mine_gold(worker.mining_power)

@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name Treant
+extends MonsterBase
 
 ## 树人守护者 - 防守专家，具有控制能力
 ## 战斗等级: ⭐⭐⭐⭐
@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_treant_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("treants")
+	add_to_group(GameGroups.TREANTS)
 
 func _init_treant_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "树人守护者"
-	data.creature_type = Enums.CreatureType.TREANT
+	data.creature_type = MonstersTypes.MonsterType.TREANT
 	data.max_health = 2000
 	data.attack = 35
 	data.armor = 10

@@ -17,7 +17,9 @@ var seek_duration: float = 0.0
 var max_seek_time: float = 15.0
 
 func enter(data: Dictionary = {}) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 播放觅食动画
 	if beast.has_node("Model") and beast.get_node("Model").has_method("play_animation"):
@@ -41,11 +43,10 @@ func enter(data: Dictionary = {}) -> void:
 	add_child(seek_timer)
 	seek_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[BeastSeekFoodState] 野兽开始觅食 | 目标食物: %s" % str(target_food))
-
 func update(_delta: float) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 优先级1: 安全检查 - 检测威胁
 	if _has_nearby_threats(beast):
@@ -66,7 +67,7 @@ func update(_delta: float) -> void:
 	if _reached_food(beast):
 		state_finished.emit("ConsumeFoodState", {"target_food": target_food})
 
-func _find_nearest_food(beast: Node) -> Node:
+func _find_nearest_food(_beast: Node) -> Node:
 	"""寻找最近的食物源"""
 	# 这里可以扩展为寻找实际的资源点
 	# 暂时返回null，让野兽继续其他行为
@@ -74,11 +75,26 @@ func _find_nearest_food(beast: Node) -> Node:
 
 func _move_to_food(beast: Node, delta: float) -> void:
 	"""移动到食物位置"""
-	if not beast.has_method("move_towards") or not target_food:
+	if not target_food:
 		return
 	
-	# 移动到食物位置
-	beast.move_towards(target_food.global_position, delta)
+	# 🔧 [统一移动API] 使用 MovementHelper.process_navigation 处理觅食移动
+	var move_result = MovementHelper.process_navigation(
+		beast,
+		target_food.global_position,
+		delta,
+		"SeekFoodState" if state_machine.debug_mode else ""
+	)
+	
+	# 处理移动结果
+	match move_result:
+		MovementHelper.MoveResult.REACHED:
+			# 到达食物位置，开始进食
+			state_finished.emit("ConsumeFoodState", {"target_food": target_food})
+		MovementHelper.MoveResult.FAILED_NO_PATH, MovementHelper.MoveResult.FAILED_STUCK:
+			# 觅食失败，返回游荡
+			state_finished.emit("WanderState", {})
+		# MovementHelper.MoveResult.MOVING: 继续移动
 
 func _reached_food(beast: Node) -> bool:
 	"""检查是否到达食物位置"""

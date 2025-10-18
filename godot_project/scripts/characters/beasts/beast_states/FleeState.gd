@@ -17,7 +17,9 @@ var max_flee_time: float = 10.0
 var flee_speed_multiplier: float = 1.5
 
 func enter(data: Dictionary = {}) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 播放逃跑动画
 	if beast.has_node("Model") and beast.get_node("Model").has_method("play_animation"):
@@ -45,11 +47,10 @@ func enter(data: Dictionary = {}) -> void:
 	# 计算逃跑方向
 	_calculate_flee_direction(beast)
 	
-	if state_machine.debug_mode:
-		print("[BeastFleeState] 野兽开始逃跑 | 威胁位置: %s" % str(threat_position))
-
 func update(_delta: float) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 检查威胁是否仍然存在
 	if not _threat_still_present(beast):
@@ -89,7 +90,7 @@ func _threat_still_present(beast: Node) -> bool:
 		if enemy != beast and is_instance_valid(enemy):
 			if beast.is_enemy_of(enemy):
 				var distance = beast.global_position.distance_to(enemy.global_position)
-				if distance < beast.detection_range * 1.5:  # 逃跑时检测范围更大
+				if distance < beast.detection_range * 1.5: # 逃跑时检测范围更大
 					return true
 	return false
 
@@ -99,7 +100,7 @@ func _calculate_flee_direction(beast: Node) -> void:
 	var flee_direction = (current_pos - threat_position).normalized()
 	
 	# 添加一些随机性，避免所有野兽朝同一方向逃跑
-	var random_angle = randf_range(-PI/4, PI/4)
+	var random_angle = randf_range(-PI / 4, PI / 4)
 	var rotation_matrix = Transform3D().rotated(Vector3.UP, random_angle)
 	flee_direction = rotation_matrix * flee_direction
 	
@@ -110,20 +111,31 @@ func _calculate_flee_direction(beast: Node) -> void:
 
 func _move_away_from_threat(beast: Node, delta: float) -> void:
 	"""远离威胁移动"""
-	if not beast.has_method("move_towards"):
-		return
-	
-	# 使用逃跑速度
-	var original_speed = beast.speed
-	beast.speed = original_speed * flee_speed_multiplier
-	
-	# 移动到逃跑目标
+	# 计算逃跑目标
 	var flee_direction = (beast.global_position - threat_position).normalized()
 	var flee_target = beast.global_position + flee_direction * 20.0
-	beast.move_towards(flee_target, delta)
 	
-	# 恢复原始速度
-	beast.speed = original_speed
+	# 🔧 [统一移动API] 使用 MovementHelper.process_navigation 处理逃跑移动
+	var move_result = MovementHelper.process_navigation(
+		beast,
+		flee_target,
+		delta,
+		"FleeState" if state_machine.debug_mode else ""
+	)
+	
+	# 处理移动结果
+	match move_result:
+		MovementHelper.MoveResult.REACHED:
+			# 到达逃跑目标，检查是否安全
+			if not _threat_still_present(beast):
+				state_finished.emit("IdleState", {})
+			else:
+				# 威胁仍在，选择新的逃跑目标
+				_calculate_flee_direction(beast)
+		MovementHelper.MoveResult.FAILED_NO_PATH, MovementHelper.MoveResult.FAILED_STUCK:
+			# 逃跑失败，尝试新的逃跑方向
+			_calculate_flee_direction(beast)
+		# MovementHelper.MoveResult.MOVING: 继续逃跑
 
 func _on_flee_timeout() -> void:
 	"""逃跑时间结束"""

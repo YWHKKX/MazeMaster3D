@@ -77,6 +77,42 @@ const SKELETONS = "skeletons"
 const ZOMBIES = "zombies"
 const DEMONS = "demons"
 const SHADOW_BEASTS = "shadow_beasts"
+const STONE_BEETLES = "stone_beetles"
+const SHADOW_TIGERS = "shadow_tigers"
+const SHADOW_SPIDERS = "shadow_spiders"
+const POISON_SCORPIONS = "poison_scorpions"
+const CLAW_BEARS = "claw_bears"
+const CAVE_BATS = "cave_bats"
+
+# 湖泊生态系统野兽Groups
+const WATER_GRASS_FISH = "water_grass_fish"
+const PLANKTON = "plankton"
+const WATER_SNAKES = "water_snakes"
+const WATER_BIRDS = "water_birds"
+const LAKE_MONSTERS = "lake_monsters"
+
+# 荒地生态系统野兽Groups
+const RADIOACTIVE_SCORPIONS = "radioactive_scorpions"
+const SANDSTORM_WOLVES = "sandstorm_wolves"
+const MUTANT_RATS = "mutant_rats"
+const CORRUPTED_WORMS = "corrupted_worms"
+
+# 死地生态系统野兽Groups
+const SHADOW_WOLVES = "shadow_wolves"
+const CORRUPTED_BOARS = "corrupted_boars"
+const MAGIC_VULTURES = "magic_vultures"
+const SHADOW_PANTHERS = "shadow_panthers"
+const ABYSS_DRAGONS = "abyss_dragons"
+
+# 原始生态系统野兽Groups
+const HORN_SHIELD_BEASTS = "horn_shield_beasts"
+const SPINE_BACK_BEASTS = "spine_back_beasts"
+const SCALE_ARMOR_BEASTS = "scale_armor_beasts"
+const CLAW_HUNTER_BEASTS = "claw_hunter_beasts"
+const RAGE_BEASTS = "rage_beasts"
+const SHADOW_DRAGONS = "shadow_dragons"
+const DRAGON_BLOOD_BEASTS = "dragon_blood_beasts"
+const ANCIENT_DRAGON_OVERLORDS = "ancient_dragon_overlords"
 
 # === 交互Groups ===
 const INTERACTABLE = "interactable"

@@ -16,7 +16,9 @@ var idle_duration: float = 0.0
 var max_idle_time: float = 5.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 播放待机动画
 	if beast.has_node("Model") and beast.get_node("Model").has_method("play_animation"):
@@ -37,11 +39,11 @@ func enter(_data: Dictionary = {}) -> void:
 	add_child(idle_timer)
 	idle_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[BeastIdleState] 野兽进入空闲状态 | 阵营: %s" % Enums.faction_to_string(beast.faction))
 
 func update(_delta: float) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 优先级1: 安全检查 - 检测威胁
 	if _has_nearby_threats(beast):
@@ -62,7 +64,8 @@ func update(_delta: float) -> void:
 
 func _on_idle_timeout() -> void:
 	"""空闲时间结束"""
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
 	
 	# 随机选择下一个行为
 	var behaviors = ["WanderState", "SeekFoodState", "RestState"]
@@ -92,7 +95,7 @@ func _should_seek_food(beast: Node) -> bool:
 		# 随机觅食概率
 		return randf() < 0.3
 
-func _find_nearest_food(beast: Node) -> Node:
+func _find_nearest_food(_beast: Node) -> Node:
 	"""寻找最近的食物源"""
 	# 这里可以扩展为寻找实际的资源点
 	# 暂时返回null，让野兽游荡

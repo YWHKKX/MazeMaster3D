@@ -40,10 +40,6 @@ func _deposit_gold(worker: Node) -> void:
 		# 使用 ResourceManager 存储金币到指定建筑
 		if worker.resource_manager and target_base:
 			var result = worker.resource_manager.add_gold(worker.carried_gold, target_base)
-			if state_machine.debug_mode:
-				if not result.get("success", false):
-					# 存储失败，记录错误但不中断流程
-					pass
 		elif worker.resource_manager:
 			# 后备方案：存储到默认建筑（地牢之心）
 			worker.resource_manager.add_gold(worker.carried_gold)

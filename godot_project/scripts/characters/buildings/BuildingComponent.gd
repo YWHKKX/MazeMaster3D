@@ -4,17 +4,13 @@ class_name BuildingComponent
 ## 🏗️ 建筑构件基类
 ## 用于3x3x3建筑系统的构件
 
-@export var component_type: String = "floor"  # floor, wall, corner, door, window, decoration
-@export var component_material: String = "stone"  # stone, wood, metal, magic, military
+@export var component_type: String = "floor" # floor, wall, corner, door, window, decoration
+@export var component_material: String = "stone" # stone, wood, metal, magic, military
 @export var component_id: int = 0
 
 func _ready():
 	"""构件准备就绪"""
 	name = "BuildingComponent"
-	
-	# 设置碰撞层
-	collision_layer = 0
-	collision_mask = 0
 	
 	# 创建碰撞体
 	_create_collision_shape()
@@ -27,7 +23,7 @@ func _create_collision_shape():
 	
 	# 设置碰撞层
 	static_body.collision_layer = 0
-	static_body.set_collision_layer_value(4, true)  # 建筑层
+	static_body.set_collision_layer_value(4, true) # 建筑层
 	
 	# 创建碰撞形状
 	var collision_shape = CollisionShape3D.new()

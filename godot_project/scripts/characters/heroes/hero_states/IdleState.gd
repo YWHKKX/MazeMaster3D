@@ -16,7 +16,11 @@ var idle_duration: float = 0.0
 var max_idle_time: float = 3.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var hero = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		LogManager.warning("HeroIdleState - state_machine 或 owner_node 为空")
+		return
+	
+	var hero = state_machine.owner_node
 	
 	# 播放待机动画
 	if hero.has_node("Model") and hero.get_node("Model").has_method("play_animation"):
@@ -37,11 +41,8 @@ func enter(_data: Dictionary = {}) -> void:
 	add_child(idle_timer)
 	idle_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[HeroIdleState] 英雄进入待命状态 | 阵营: %s" % Enums.faction_to_string(hero.faction))
-
 func update(_delta: float) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 优先级1: 战斗准备 - 检测敌人
 	if _has_nearby_enemies(hero):
@@ -81,9 +82,9 @@ func _has_injured_allies(hero: Node) -> bool:
 		if ally != hero and is_instance_valid(ally):
 			if hero.is_friend_of(ally):
 				var distance = hero.global_position.distance_to(ally.global_position)
-				if distance < hero.detection_range * 1.5:  # 支援范围更大
+				if distance < hero.detection_range * 1.5: # 支援范围更大
 					if ally.has_method("get_health_percentage"):
-						if ally.get_health_percentage() < 0.8:  # 80%以下算受伤
+						if ally.get_health_percentage() < 0.8: # 80%以下算受伤
 							return true
 	return false
 
@@ -113,7 +114,7 @@ func _should_patrol(hero: Node) -> bool:
 
 func _on_idle_timeout() -> void:
 	"""空闲时间结束"""
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 随机选择下一个行为
 	var behaviors = ["PatrolState", "IdleState"]

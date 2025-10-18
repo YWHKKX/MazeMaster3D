@@ -4,7 +4,7 @@ class_name GoldMineManager
 # 金矿管理器 - 管理所有金矿的生成、状态和挖掘逻辑
 # 参考 MINING_SYSTEM.md
 
-const LogManager = preload("res://scripts/managers/LogManager.gd")
+# LogManager 现在是 autoload，直接使用
 
 # 金矿状态枚举
 enum MineStatus {UNDISCOVERED, ACTIVE, BEING_MINED, EXHAUSTED} # 未发现  # 活跃中  # 正在挖掘  # 已枯竭
@@ -180,7 +180,7 @@ func _scan_gold_mines():
 			var tile_data = tile_manager.get_tile_data(pos)
 			scanned_tiles += 1
 			
-			if tile_data and tile_data.type == tile_manager.TileType.GOLD_MINE:
+			if tile_data and tile_data.type == TileTypes.TileType.GOLD_MINE:
 				# 找到金矿瓦片，创建对应的逻辑金矿对象
 				_create_gold_mine_from_tile(pos, tile_data)
 				found_mines += 1
@@ -361,7 +361,7 @@ func _is_valid_mine_position(pos: Vector3) -> bool:
 		return false
 
 	# 必须是石质地面或未挖掘区域
-	if tile_data.type != tile_manager.TileType.STONE_FLOOR and tile_data.type != tile_manager.TileType.UNEXCAVATED:
+	if tile_data.type != TileTypes.TileType.STONE_FLOOR and tile_data.type != TileTypes.TileType.UNEXCAVATED:
 		return false
 
 	# 检查周围是否有其他金矿（最小距离）
@@ -379,7 +379,7 @@ func _create_gold_mine(pos: Vector3):
 	gold_mines.append(mine)
 
 	# 更新地块类型为金矿
-	tile_manager.set_tile_type(pos, tile_manager.TileType.GOLD_MINE)
+	tile_manager.set_tile_type(pos, TileTypes.TileType.GOLD_MINE)
 
 func _create_gold_mine_from_tile(pos: Vector3, tile_data):
 	"""从现有金矿瓦片创建逻辑金矿对象"""
@@ -502,17 +502,17 @@ func _update_mine_visual(mine: GoldMine):
 	if not tile_data:
 		return
 
-	# 根据状态更新地块外观
+		# 根据状态更新地块外观
 	match mine.status:
 		MineStatus.UNDISCOVERED:
 			# 未发现的金矿显示为普通石质地面
-			tile_manager.set_tile_type(mine.position, tile_manager.TileType.STONE_FLOOR)
+			tile_manager.set_tile_type(mine.position, TileTypes.TileType.STONE_FLOOR)
 		MineStatus.ACTIVE:
 			# 活跃的金矿显示为金矿地块
-			tile_manager.set_tile_type(mine.position, tile_manager.TileType.GOLD_MINE)
+			tile_manager.set_tile_type(mine.position, TileTypes.TileType.GOLD_MINE)
 		MineStatus.EXHAUSTED:
 			# 枯竭的金矿显示为棕色地面
-			tile_manager.set_tile_type(mine.position, tile_manager.TileType.DIRT_FLOOR)
+			tile_manager.set_tile_type(mine.position, TileTypes.TileType.DIRT_FLOOR)
 
 
 func cleanup_exhausted_mines():
@@ -695,3 +695,15 @@ func _generate_work_slots(mine_pos: Vector3) -> Array:
 			slots.append(Vector3(work_x, 0.05, work_z))
 	
 	return slots
+
+func clear_all_mines():
+	"""清空所有金矿"""
+	LogManager.info("GoldMineManager - 清空所有金矿...")
+	
+	# 清空金矿列表
+	gold_mines.clear()
+	
+	# 清空缓存
+	reachable_mines_cache.clear()
+	
+	LogManager.info("GoldMineManager - 所有金矿已清空")

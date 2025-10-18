@@ -15,7 +15,9 @@ var rest_duration: float = 0.0
 var max_rest_time: float = 10.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 停止移动
 	beast.velocity = Vector3.ZERO
@@ -36,11 +38,10 @@ func enter(_data: Dictionary = {}) -> void:
 	add_child(rest_timer)
 	rest_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[BeastRestState] 野兽开始休息 | 休息时间: %.1f秒" % rest_duration)
-
 func update(_delta: float) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 优先级1: 安全检查 - 检测威胁
 	if _has_nearby_threats(beast):
@@ -54,7 +55,7 @@ func _restore_stamina(beast: Node, delta: float) -> void:
 	"""恢复体力"""
 	if beast.has_method("restore_stamina"):
 		# 使用角色的体力恢复方法
-		beast.restore_stamina(delta * 0.1)  # 每秒恢复10%体力
+		beast.restore_stamina(delta * 0.1) # 每秒恢复10%体力
 	else:
 		# 默认体力恢复逻辑
 		if beast.has_method("get_stamina_level"):

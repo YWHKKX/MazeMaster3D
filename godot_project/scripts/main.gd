@@ -3,7 +3,7 @@ extends Node3D
 # 负责初始化游戏系统和协调各个管理器
 
 # 导入必要的类
-# const Character = preload("res://scripts/characters/Character.gd")  # 已废弃
+# Character 类已废弃，使用 CharacterBase 作为角色基类
 const GridManager = preload("res://scripts/managers/GridManager.gd")
 
 @onready var game_manager = $GameManager
@@ -11,6 +11,7 @@ const GridManager = preload("res://scripts/managers/GridManager.gd")
 @onready var map_generator = $MapGenerator
 @onready var character_manager = $CharacterManager
 @onready var grid_manager = $GridManager
+var terrain_manager: Node = null
 @onready var camera = $World/Camera3D
 @onready var world = $World
 @onready var ui = $UI
@@ -34,17 +35,17 @@ const GridManager = preload("res://scripts/managers/GridManager.gd")
 
 # 预加载管理器类型
 const MiningManager = preload("res://scripts/managers/MiningManager.gd")
-const StatusIndicatorManager = preload("res://scripts/managers/StatusIndicatorManager.gd")
+# StatusIndicatorManager 已删除，状态指示器功能已整合到角色系统中
 const ResourceManager = preload("res://scripts/managers/ResourceManager.gd")
-const PhysicsSystem = preload("res://scripts/managers/PhysicsSystem.gd")
+# PhysicsSystem 已删除，使用 Godot 内置物理系统
 const PlacementSystem = preload("res://scripts/managers/PlacementSystem.gd")
 const BuildingManager = preload("res://scripts/managers/BuildingManager.gd")
 const BuildingSelectionUI = preload("res://scripts/ui/BuildingSelectionUI.gd")
 const CharacterAtlasUI = preload("res://scripts/ui/CharacterAtlasUI.gd")
 
 # 管理器（动态创建）
-var status_indicator_manager: StatusIndicatorManager = null
-var physics_system: PhysicsSystem = null
+# status_indicator_manager 已删除，状态指示器功能已整合到角色系统中
+# physics_system 已删除，使用 Godot 内置物理系统
 var placement_system: PlacementSystem = null
 var building_selection_ui: BuildingSelectionUI = null
 var character_atlas_ui: CharacterAtlasUI = null
@@ -55,6 +56,10 @@ var mining_manager: MiningManager = null
 # 资源管理器（动态创建）
 var resource_manager: ResourceManager = null
 
+# 地形高亮系统（通过MapGenerator获取）
+var terrain_highlight_system: Node = null
+var terrain_display_enabled: bool = false
+
 # 游戏状态
 var is_game_running = false
 var is_paused = false
@@ -64,6 +69,7 @@ var is_main_menu_visible = true
 # 选择的数据
 var selected_logistics_data: Dictionary = {}
 var selected_building_data: Dictionary = {}
+var selected_monster_data: Dictionary = {}
 
 # 输入状态
 var mouse_position = Vector2.ZERO
@@ -99,15 +105,16 @@ func initialize_game():
 	# 初始化挖矿管理器
 	_setup_mining_manager()
 	
-	# 初始化状态指示器管理器
-	_setup_status_indicator_manager()
+	# 状态指示器管理器已删除，状态指示器功能已整合到角色系统中
 	
-	# 初始化物理系统
-	_setup_physics_system()
+	# 物理系统已删除，使用 Godot 内置物理系统
 	_setup_placement_system()
 	_setup_building_manager()
 	_setup_building_selection_ui()
 	_setup_character_atlas_ui()
+	
+	# 初始化地形管理器
+	_setup_terrain_manager()
 	
 	# 初始化游戏管理器
 	game_manager.initialize()
@@ -122,8 +129,8 @@ func initialize_game():
 	# 初始化UI系统
 	setup_ui()
 
-	# 创建初始地牢环境（🔧 必须await，确保地牢之心在游戏开始前创建完成）
-	await create_initial_dungeon()
+	# 不在这里创建地牢环境，等待用户点击开始游戏或重新生成地图
+	LogManager.info("游戏初始化完成，等待用户操作")
 	
 	# ✅ 注册@onready管理器到GameServices
 	_register_scene_managers()
@@ -157,6 +164,13 @@ func _register_scene_managers():
 	
 	if auto_assigner:
 		GameServices.register("auto_assigner", auto_assigner)
+	
+	# 🔧 [新增] 获取地形高亮系统引用
+	if map_generator and map_generator.terrain_highlight_system:
+		terrain_highlight_system = map_generator.terrain_highlight_system
+		LogManager.info("地形高亮系统引用已获取")
+	else:
+		LogManager.warning("无法获取地形高亮系统引用")
 	
 	LogManager.info("GameServices - 所有场景管理器已注册")
 
@@ -195,23 +209,9 @@ func _setup_mining_manager():
 		LogManager.info("挖矿管理器已初始化")
 
 
-func _setup_status_indicator_manager():
-	"""设置状态指示器管理器"""
-	status_indicator_manager = preload("res://scripts/managers/StatusIndicatorManager.gd").new()
-	status_indicator_manager.name = "StatusIndicatorManager"
-	add_child(status_indicator_manager)
-	
-	GameServices.register("status_indicator_manager", status_indicator_manager) # ✅ 注册服务
-	LogManager.info("状态指示器管理器已初始化")
+# _setup_status_indicator_manager() 已删除，状态指示器功能已整合到角色系统中
 
-func _setup_physics_system():
-	"""设置物理系统"""
-	physics_system = PhysicsSystem.new()
-	physics_system.name = "PhysicsSystem"
-	add_child(physics_system)
-	
-	GameServices.register("physics_system", physics_system) # ✅ 注册服务
-	LogManager.info("物理系统已初始化")
+# _setup_physics_system() 已删除，使用 Godot 内置物理系统
 
 func _setup_placement_system():
 	"""设置统一放置系统"""
@@ -251,6 +251,20 @@ func _setup_building_selection_ui():
 	
 	LogManager.info("建筑选择UI已初始化")
 
+func _setup_terrain_manager():
+	"""设置地形管理器"""
+	# 如果场景中没有 TerrainManager 节点，创建一个
+	if not terrain_manager:
+		var TerrainManagerClass = preload("res://scripts/map_system/TerrainManager.gd")
+		terrain_manager = TerrainManagerClass.new()
+		terrain_manager.name = "TerrainManager"
+		add_child(terrain_manager)
+	
+	# 初始化系统引用
+	if terrain_manager:
+		GameServices.register("terrain_manager", terrain_manager) # ✅ 注册服务
+		LogManager.info("地形管理器已初始化")
+
 func _setup_character_atlas_ui():
 	"""设置角色图鉴UI"""
 	character_atlas_ui = CharacterAtlasUI.new()
@@ -277,6 +291,13 @@ func start_game():
 	if main_menu_ui:
 		main_menu_ui.hide_ui()
 
+	# 检查是否已有地图，如果没有则生成
+	if not _has_existing_map():
+		LogManager.info("未检测到现有地图，开始生成地图...")
+		await create_initial_dungeon()
+	else:
+		LogManager.info("检测到现有地图，直接开始游戏")
+
 	# 显示游戏UI
 	if game_ui:
 		game_ui.show_ui()
@@ -289,10 +310,126 @@ func start_game():
 	is_game_running = true
 	LogManager.info("开始游戏")
 
+func _has_existing_map() -> bool:
+	"""检查是否已有地图"""
+	if not tile_manager:
+		return false
+	
+	# 检查是否有非空的地形数据
+	var map_size = tile_manager.get_map_size()
+	for x in range(int(map_size.x)):
+		for z in range(int(map_size.z)):
+			var tile_data = tile_manager.get_tile_data(Vector3(x, 0, z))
+			if tile_data and tile_data.type != TileTypes.TileType.EMPTY:
+				return true
+	
+	return false
+
+func regenerate_map():
+	"""重新生成地图"""
+	LogManager.info("重新生成地图...")
+	
+	# 清理现有地图
+	if map_generator:
+		# 清理现有地形
+		_clear_existing_map()
+		
+		# 重新生成地图
+		var config = MapGenerator.MapGeneratorConfig.new(MapConfig.get_map_size())
+		await map_generator.generate_map(config)
+		
+		# 注册地形到地形管理器
+		register_terrain_from_cavities()
+		
+		# 重新创建地牢之心
+		create_dungeon_heart()
+		
+		# 重置摄像机位置
+		setup_camera()
+		
+		LogManager.info("地图重新生成完成")
+	else:
+		LogManager.error("MapGenerator 未找到，无法重新生成地图")
+
+func register_terrain_from_cavities():
+	"""从空洞系统注册地形到地形管理器"""
+	LogManager.info("=== 开始地形注册过程 ===")
+	
+	if not terrain_manager:
+		LogManager.warning("TerrainManager 未初始化，无法注册地形")
+		return
+	
+	# 获取空洞管理器
+	var cavity_manager = get_node("MapGenerator/CavityManager")
+	if not cavity_manager:
+		LogManager.warning("CavityManager 未找到，无法注册地形")
+		LogManager.info("尝试从 MapGenerator 子节点中查找 CavityManager...")
+		if map_generator and map_generator.has_node("CavityManager"):
+			cavity_manager = map_generator.get_node("CavityManager")
+			LogManager.info("✅ 从 MapGenerator 中找到 CavityManager")
+		else:
+			LogManager.warning("❌ 在 MapGenerator 中也未找到 CavityManager")
+			return
+	
+	LogManager.info("找到 CavityManager，开始获取空洞列表...")
+	
+	# 获取所有空洞
+	var all_cavities = cavity_manager.get_all_cavities()
+	LogManager.info("CavityManager 返回了 %d 个空洞" % all_cavities.size())
+	
+	if all_cavities.size() == 0:
+		LogManager.warning("⚠️ 没有找到任何空洞！可能的原因:")
+		LogManager.warning("  1. 空洞生成失败")
+		LogManager.warning("  2. 空洞未正确注册到 CavityManager")
+		LogManager.warning("  3. 地图生成过程中断")
+		return
+	
+	LogManager.info("开始注册 %d 个空洞到地形管理器..." % all_cavities.size())
+	
+	var registered_count = 0
+	for i in range(all_cavities.size()):
+		var cavity = all_cavities[i]
+		
+		if terrain_manager.register_terrain_from_cavity(cavity.id):
+			registered_count += 1
+			LogManager.info("✅ 空洞 %s 注册成功" % cavity.id)
+		else:
+			LogManager.warning("❌ 空洞 %s 注册失败" % cavity.id)
+	
+	LogManager.info("地形注册完成: %d/%d 个空洞成功注册" % [registered_count, all_cavities.size()])
+	
+	# 调试地形信息
+	if terrain_manager.has_method("debug_terrain_info"):
+		terrain_manager.debug_terrain_info()
+	
+	LogManager.info("=== 地形注册过程完成 ===")
+
+func _clear_existing_map():
+	"""清理现有地图"""
+	LogManager.info("清理现有地图...")
+	
+	# 清理地形瓦片
+	if tile_manager:
+		tile_manager.clear_all_tiles()
+	
+	# 清理建筑物
+	if building_manager:
+		building_manager.clear_all_buildings()
+	
+	# 清理角色
+	if character_manager:
+		character_manager.clear_all_characters()
+	
+	# 清理金矿
+	if gold_mine_manager:
+		gold_mine_manager.clear_all_mines()
+	
+	LogManager.info("现有地图清理完成")
+
 
 func setup_camera():
 	"""设置摄像机"""
-	var size = tile_manager.get_map_size() if tile_manager else Vector3(200, 1, 200)
+	var size = tile_manager.get_map_size() if tile_manager else MapConfig.get_map_size()
 	var center = Vector3(int(size.x) / 2, 0, int(size.z) / 2)
 	# 将摄像机放置在地图中心上方，并向中心看
 	camera.position = center + Vector3(0, 35, 40)
@@ -363,8 +500,12 @@ func create_initial_dungeon():
 	"""创建初始地牢环境"""
 	if map_generator:
 		# 🔧 直接调用 generate_map（便捷函数已删除）
-		var config = map_generator.MapConfig.new(map_generator.MapType.STANDARD_DUNGEON)
+		var config = MapGenerator.MapGeneratorConfig.new(MapConfig.get_map_size())
 		await map_generator.generate_map(config)
+		
+		# 注册地形到地形管理器
+		register_terrain_from_cavities()
+		
 		# 生成后重置摄像机到地图中心
 		setup_camera()
 	else:
@@ -377,13 +518,13 @@ func create_initial_dungeon():
 func create_dungeon_heart():
 	"""创建地牢之心建筑对象"""
 	# 获取地图中心位置（地牢之心的位置）
-	var map_size = tile_manager.get_map_size() if tile_manager else Vector3(100, 1, 100)
+	var map_size = tile_manager.get_map_size() if tile_manager else MapConfig.get_map_size()
 	var center_x = int(map_size.x / 2)
 	var center_z = int(map_size.z / 2)
 	var heart_position = Vector3(center_x, 0.05, center_z)
 	
-	# 创建地牢之心建筑对象
-	var DungeonHeartScript = preload("res://scripts/characters/buildings/DungeonHeart.gd")
+	# 创建地牢之心建筑对象（使用3D版本）
+	var DungeonHeartScript = preload("res://scripts/characters/buildings/DungeonHeart3D.gd")
 	var dungeon_heart = DungeonHeartScript.new()
 	# 🔧 2x2 建筑，位置直接设置在2x2区域的几何中心
 	# 2x2区域占据 (50,50) 到 (51,51)，中心在 (51.0, 0.05, 51.0)
@@ -498,6 +639,8 @@ func handle_input(event: InputEvent):
 	if event is InputEventMouseMotion:
 		mouse_position = event.position
 		update_world_position()
+		
+		# 地形显示鼠标交互功能已移除，现在使用TerrainHighlightSystem
 
 	elif event is InputEventMouseButton:
 		handle_mouse_click(event)
@@ -612,11 +755,13 @@ func _get_current_entity_id() -> String:
 		"dig":
 			return "dig"
 		"summon_monster":
-			# 这里需要根据选中的怪物类型返回对应的ID
-			# 暂时返回默认值，实际应该根据UI选择返回
+			# 根据选中的怪物数据返回对应的ID
+			if not selected_monster_data.is_empty():
+				var monster_name = selected_monster_data.get("name", "")
+				return _map_monster_name_to_entity_id(monster_name)
 			return "imp" # 默认返回imp
 		"summon_logistics":
-			# 根据选中的后勤单位返回ID
+			# 根据选中的后勤单位返回ID - 使用MonstersTypes常量
 			if not selected_logistics_data.is_empty():
 				var logistics_type = selected_logistics_data.get("type", "worker")
 				match logistics_type:
@@ -671,6 +816,9 @@ const HOTKEY_CONFIG = {
 	# 测试功能
 	"test_highlight": KEY_H, # 测试高亮系统
 	"save_map": KEY_F9, # 保存地图为场景（用于编辑器预览）
+	
+	# 地形高亮
+	"terrain_display_toggle": KEY_V, # 地形显示切换（开启/清除）
 }
 
 func _on_building_selected(building_data: Dictionary):
@@ -707,6 +855,35 @@ func _get_building_entity_id_from_data(building_data: Dictionary) -> String:
 	var building_name = building_data.get("name", "")
 	return _map_building_name_to_entity_id(building_name)
 
+
+func _map_monster_name_to_entity_id(monster_name: String) -> String:
+	"""怪物名称到实体ID的映射 - 使用MonstersTypes常量"""
+	match monster_name:
+		"小恶魔":
+			return "imp"
+		"兽人战士":
+			return "orc_warrior"
+		"石像鬼":
+			return "gargoyle"
+		"地狱犬":
+			return "hellhound"
+		"火蜥蜴":
+			return "fire_lizard"
+		"树人守护者":
+			return "treant"
+		"魅魔":
+			return "succubus"
+		"暗影领主":
+			return "shadow_lord"
+		"石魔像":
+			return "stone_golem"
+		"骨龙":
+			return "bone_dragon"
+		"暗影法师":
+			return "shadow_mage"
+		_:
+			LogManager.warning("未知怪物名称: " + monster_name)
+			return "imp" # 默认返回imp
 
 func _map_building_name_to_entity_id(building_name: String) -> String:
 	"""建筑名称到实体ID的映射（完整版本）
@@ -828,6 +1005,10 @@ func handle_key_input(event: InputEventKey):
 			map_generator.save_map_to_scene()
 			LogManager.info("📁 地图保存完成，可在 scenes/GeneratedDungeon.tscn 中查看")
 	
+	# === 地形高亮控制 ===
+	elif keycode == HOTKEY_CONFIG.terrain_display_toggle:
+		toggle_terrain_display()
+	
 	elif keycode == HOTKEY_CONFIG.cancel:
 		current_build_mode = "none"
 		# 🔧 直接隐藏高亮
@@ -835,6 +1016,62 @@ func handle_key_input(event: InputEventKey):
 			selection_highlight.hide_highlight()
 		_close_all_ui()
 
+# ============================================================================
+# 地形高亮控制功能
+# ============================================================================
+
+func toggle_terrain_display():
+	"""切换地形显示状态"""
+	if not terrain_highlight_system:
+		LogManager.warning("地形高亮系统未初始化")
+		return
+	
+	terrain_display_enabled = !terrain_display_enabled
+	
+	if terrain_display_enabled:
+		# 开启地形高亮显示 - 使用异步版本避免卡顿
+		if terrain_highlight_system.has_method("highlight_all_terrain_types_async"):
+			terrain_highlight_system.highlight_all_terrain_types_async()
+			LogManager.info("🎯 地形高亮已开启 (快捷键: V) - 异步处理中...")
+			_show_terrain_highlight_status("开启")
+		elif terrain_highlight_system.has_method("highlight_all_terrain_types"):
+			terrain_highlight_system.highlight_all_terrain_types()
+			LogManager.info("🎯 地形高亮已开启 (快捷键: V)")
+			_show_terrain_highlight_status("开启")
+		else:
+			LogManager.warning("地形高亮系统不支持全部地形高亮功能")
+			terrain_display_enabled = false
+	else:
+		# 清除所有地形高亮
+		if terrain_highlight_system.has_method("clear_all_highlights"):
+			terrain_highlight_system.clear_all_highlights()
+			LogManager.info("🧹 地形高亮已清除 (快捷键: V)")
+			_show_terrain_highlight_status("清除")
+		else:
+			LogManager.warning("地形高亮系统不支持清除高亮功能")
+
+func _show_terrain_highlight_status(terrain_type: String):
+	"""显示地形高亮状态提示"""
+	var status_label = Label.new()
+	status_label.text = "🎯 地形高亮: %s" % terrain_type
+	status_label.position = Vector2(20, 50)
+	status_label.add_theme_font_size_override("font_size", 16)
+	status_label.modulate = Color.WHITE
+	
+	add_child(status_label)
+	
+	# 2秒后自动移除
+	var timer = Timer.new()
+	timer.wait_time = 2.0
+	timer.one_shot = true
+	timer.timeout.connect(func():
+		if status_label and is_instance_valid(status_label):
+			status_label.queue_free()
+		if timer and is_instance_valid(timer):
+			timer.queue_free()
+	)
+	add_child(timer)
+	timer.start()
 
 # 废弃函数已删除 - 统一使用PlacementSystem
 
@@ -910,8 +1147,12 @@ func _unhandled_input(event: InputEvent) -> void:
 func _on_monster_selected(monster_data: Dictionary):
 	"""怪物选择回调"""
 	LogManager.info("召唤怪物: " + str(monster_data.name) + " 成本: " + str(monster_data.cost))
+	
+	# 存储选择的怪物数据
+	selected_monster_data = monster_data
 	current_build_mode = "summon_monster"
-	# 这里可以添加实际的怪物召唤逻辑
+	
+	LogManager.info("已选择怪物: " + monster_data.name + " (类型: " + monster_data.get("type", "unknown") + ")")
 
 
 func _on_logistics_selected(logistics_data: Dictionary):

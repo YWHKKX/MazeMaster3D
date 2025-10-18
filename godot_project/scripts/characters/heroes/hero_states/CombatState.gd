@@ -17,7 +17,7 @@ var attack_interval: float = 1.0
 var last_attack_time: float = 0.0
 
 func enter(data: Dictionary = {}) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 获取目标敌人
 	if data.has("target_enemy"):
@@ -42,11 +42,8 @@ func enter(data: Dictionary = {}) -> void:
 	add_child(combat_timer)
 	combat_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[HeroCombatState] 英雄进入战斗状态 | 目标: %s" % str(target_enemy))
-
 func update(_delta: float) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 检查目标敌人是否仍然有效
 	if not target_enemy or not is_instance_valid(target_enemy):
@@ -90,7 +87,7 @@ func _find_nearest_enemy(hero: Node) -> Node:
 func _is_seriously_injured(hero: Node) -> bool:
 	"""检查是否受伤严重"""
 	if hero.has_method("get_health_percentage"):
-		return hero.get_health_percentage() < 0.3  # 30%以下算严重受伤
+		return hero.get_health_percentage() < 0.3 # 30%以下算严重受伤
 	return false
 
 func _move_to_attack_range(hero: Node, delta: float) -> void:
@@ -122,7 +119,7 @@ func _in_attack_range(hero: Node) -> bool:
 
 func _on_attack_tick() -> void:
 	"""攻击定时器触发"""
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 检查目标是否仍然有效
 	if not target_enemy or not is_instance_valid(target_enemy):
@@ -145,8 +142,6 @@ func _perform_attack(hero: Node, enemy: Node) -> void:
 	"""执行攻击"""
 	if hero.has_method("attack"):
 		hero.attack(enemy)
-		if state_machine.debug_mode:
-			print("[HeroCombatState] 英雄攻击敌人: %s" % str(enemy))
 	else:
 		# 默认攻击逻辑
 		if enemy.has_method("take_damage"):

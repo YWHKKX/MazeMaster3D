@@ -5,7 +5,7 @@ class_name Treasury3D
 ## 基于Building3D，实现金库的3x3x3渲染
 
 # 存储系统（继承原有逻辑）
-var gold_storage_capacity: int = 500
+# gold_storage_capacity 已在父类 Building 中定义
 
 
 func _init():
@@ -14,11 +14,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "金库"
-	building_type = BuildingTypes.TREASURY
+	building_type = BuildingTypes.BuildingType.TREASURY
 	max_health = 400
 	health = max_health
 	armor = 6
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 100
 	engineer_cost = 50
 	build_time = 60.0
@@ -35,37 +35,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = false,   # 无窗户（安全性）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = false
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（金色风格）
-	building_3d_config.set_material_config(
-		wall = Color(1.0, 0.84, 0.0),   # 金黄色墙体
-		roof = Color(0.8, 0.6, 0.2),    # 深金色屋顶
-		floor = Color(0.9, 0.7, 0.1)    # 金色地板
-	)
+	building_3d_config.wall_color = Color(1.0, 0.84, 0.0) # 金黄色墙体
+	building_3d_config.roof_color = Color(0.8, 0.6, 0.2) # 深金色屋顶
+	building_3d_config.floor_color = Color(0.9, 0.7, 0.1) # 金色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取金库建筑模板"""
-	var template = BuildingTemplate.new("金库")
-	template.building_type = BuildingTypes.TREASURY
+	var template = BuildingTemplateClass.new("金库")
+	template.building_type = BuildingTypes.BuildingType.TREASURY
 	template.description = "安全的3x3x3金币存储建筑，具有豪华的金色外观"
 	
 	# 创建简单房屋结构
-	template.create_simple_house(BuildingTypes.TREASURY)
+	template.create_simple_house(BuildingTypes.BuildingType.TREASURY)
 	
 	# 自定义金库元素
 	# 顶层：金币堆
@@ -111,11 +105,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(1.0, 0.84, 0.0)  # 金黄色
-	config.roof_color = Color(0.8, 0.6, 0.2)    # 深金色
-	config.floor_color = Color(0.9, 0.7, 0.1)   # 金色
-	config.window_color = Color.LIGHT_BLUE       # 不使用窗户
-	config.door_color = Color(0.6, 0.4, 0.2)    # 深棕色门
+	config.wall_color = Color(1.0, 0.84, 0.0) # 金黄色
+	config.roof_color = Color(0.8, 0.6, 0.2) # 深金色
+	config.floor_color = Color(0.9, 0.7, 0.1) # 金色
+	config.window_color = Color.LIGHT_BLUE # 不使用窗户
+	config.door_color = Color(0.6, 0.4, 0.2) # 深棕色门
 	
 	return config
 
@@ -154,7 +148,7 @@ func _start_storage_system():
 	# 设置存储更新定时器
 	var storage_timer = Timer.new()
 	storage_timer.name = "StorageTimer"
-	storage_timer.wait_time = 1.0  # 每秒更新一次
+	storage_timer.wait_time = 1.0 # 每秒更新一次
 	storage_timer.timeout.connect(_update_storage_display)
 	storage_timer.autostart = true
 	add_child(storage_timer)

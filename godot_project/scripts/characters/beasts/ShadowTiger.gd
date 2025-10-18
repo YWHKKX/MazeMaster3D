@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("shadow_tigers")
+	add_to_group(GameGroups.SHADOW_TIGERS)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_shadow_tiger_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "影刃虎"
-	data.creature_type = Enums.CreatureType.SHADOW_TIGER
+	data.creature_type = BeastsTypes.BeastType.SHADOW_TIGER
 	data.max_health = 800
-	data.attack = 85  # 高攻击力
+	data.attack = 85 # 高攻击力
 	data.armor = 25
-	data.speed = 75  # 速度很快
+	data.speed = 75 # 速度很快
 	data.size = 35
 	data.attack_range = 3.5
 	data.attack_cooldown = 1.5
 	data.detection_range = 15.0
-	data.color = Color(0.2, 0.2, 0.3)  # 暗色
+	data.color = Color(0.2, 0.2, 0.3) # 暗色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,7 +41,7 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 1.2  # 快速移动寻找猎物
+	return 1.2 # 快速移动寻找猎物
 
 ## 潜伏伏击能力
 func perform_ambush_attack() -> void:

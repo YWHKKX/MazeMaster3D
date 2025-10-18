@@ -6,8 +6,8 @@ class_name BuildingTemplate
 
 var name: String = ""
 var building_type: int = 0
-var size: Vector3 = Vector3(3, 3, 3)  # 3x3x3空间
-var components: Array[Array] = []  # 3D数组，存储每个位置的构件ID
+var size: Vector3 = Vector3(3, 3, 3) # 3x3x3空间
+var components: Array[Array] = [] # 3D数组，存储每个位置的构件ID
 
 # 模板元数据
 var description: String = ""
@@ -117,7 +117,7 @@ func add_decoration(x: int, y: int, z: int, decoration_type: int):
 		set_component(x, y, z, decoration_type)
 
 
-func create_simple_tower(tower_type: int = BuildingTypes.ARROW_TOWER):
+func create_simple_tower(tower_type: int = BuildingTypes.BuildingType.ARROW_TOWER):
 	"""创建简单塔楼模板"""
 	name = "Simple Tower"
 	building_type = tower_type
@@ -128,11 +128,11 @@ func create_simple_tower(tower_type: int = BuildingTypes.ARROW_TOWER):
 	
 	# 中层：石质墙体，中心留空
 	fill_walls(BuildingComponents.ID_WALL_STONE)
-	set_component(1, 1, 1, BuildingComponents.ID_FLOOR_STONE)  # 中心地板
+	set_component(1, 1, 1, BuildingComponents.ID_FLOOR_STONE) # 中心地板
 	
 	# 顶层：屋顶
 	fill_layer(2, BuildingComponents.ID_ROOF_SLOPE)
-	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK)  # 中心尖顶
+	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK) # 中心尖顶
 	
 	# 添加门（正面中央）
 	add_door(1, 0, 0)
@@ -143,7 +143,7 @@ func create_simple_tower(tower_type: int = BuildingTypes.ARROW_TOWER):
 	add_window(2, 1, 1)
 
 
-func create_simple_house(house_type: int = BuildingTypes.LAIR):
+func create_simple_house(house_type: int = BuildingTypes.BuildingType.LAIR):
 	"""创建简单房屋模板"""
 	name = "Simple House"
 	building_type = house_type
@@ -154,11 +154,11 @@ func create_simple_house(house_type: int = BuildingTypes.LAIR):
 	
 	# 中层：木质墙体，中心留空
 	fill_walls(BuildingComponents.ID_WALL_WOOD)
-	set_component(1, 1, 1, BuildingComponents.ID_FLOOR_WOOD)  # 中心地板
+	set_component(1, 1, 1, BuildingComponents.ID_FLOOR_WOOD) # 中心地板
 	
 	# 顶层：屋顶
 	fill_layer(2, BuildingComponents.ID_ROOF_SLOPE)
-	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK)  # 中心尖顶
+	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK) # 中心尖顶
 	
 	# 添加门（正面中央）
 	add_door(1, 0, 0)
@@ -169,7 +169,7 @@ func create_simple_house(house_type: int = BuildingTypes.LAIR):
 	add_window(2, 1, 1)
 
 
-func create_magic_structure(magic_type: int = BuildingTypes.ARCANE_TOWER):
+func create_magic_structure(magic_type: int = BuildingTypes.BuildingType.ARCANE_TOWER):
 	"""创建魔法结构模板"""
 	name = "Magic Structure"
 	building_type = magic_type
@@ -180,11 +180,11 @@ func create_magic_structure(magic_type: int = BuildingTypes.ARCANE_TOWER):
 	
 	# 中层：石质墙体，中心魔法核心
 	fill_walls(BuildingComponents.ID_WALL_STONE)
-	set_component(1, 1, 1, BuildingComponents.ID_STATUE_STONE)  # 中心魔法核心
+	set_component(1, 1, 1, BuildingComponents.ID_STATUE_STONE) # 中心魔法核心
 	
 	# 顶层：魔法屋顶
 	fill_layer(2, BuildingComponents.ID_ROOF_SLOPE)
-	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK)  # 中心尖顶
+	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK) # 中心尖顶
 	
 	# 添加魔法门
 	add_door(1, 0, 0, BuildingComponents.ID_GATE_STONE)
@@ -199,7 +199,7 @@ func create_magic_structure(magic_type: int = BuildingTypes.ARCANE_TOWER):
 	add_decoration(1, 1, 0, BuildingComponents.ID_TORCH_WALL)
 
 
-func create_military_structure(military_type: int = BuildingTypes.BARRACKS):
+func create_military_structure(military_type: int = BuildingTypes.BuildingType.TRAINING_ROOM):
 	"""创建军事结构模板"""
 	name = "Military Structure"
 	building_type = military_type
@@ -210,11 +210,11 @@ func create_military_structure(military_type: int = BuildingTypes.BARRACKS):
 	
 	# 中层：金属墙体，中心训练场
 	fill_walls(BuildingComponents.ID_WALL_METAL)
-	set_component(1, 1, 1, BuildingComponents.ID_FLOOR_METAL)  # 中心训练场
+	set_component(1, 1, 1, BuildingComponents.ID_FLOOR_METAL) # 中心训练场
 	
 	# 顶层：军事屋顶
 	fill_layer(2, BuildingComponents.ID_ROOF_SLOPE)
-	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK)  # 中心尖顶
+	set_component(1, 2, 1, BuildingComponents.ID_ROOF_PEAK) # 中心尖顶
 	
 	# 添加军事门
 	add_door(1, 0, 0, BuildingComponents.ID_DOOR_METAL)
@@ -258,7 +258,7 @@ func from_dict(data: Dictionary):
 func print_template():
 	"""打印模板结构（调试用）"""
 	LogManager.info("=== Building Template: %s ===" % name)
-	for y in range(2, -1, -1):  # 从顶层开始打印
+	for y in range(2, -1, -1): # 从顶层开始打印
 		LogManager.info("Layer %d (Y=%d):" % [y, y])
 		for z in range(3):
 			var row = ""

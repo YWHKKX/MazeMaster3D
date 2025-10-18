@@ -5,9 +5,9 @@ class_name Barracks3D
 ## 基于Building3D，实现训练室的3x3x3渲染
 
 # 训练系统
-var training_speed_multiplier: float = 1.5  # 训练速度倍率
-var max_trainees: int = 3                   # 最多同时训练3个怪物
-var current_trainees: Array = []            # 当前训练中的怪物
+var training_speed_multiplier: float = 1.5 # 训练速度倍率
+var max_trainees: int = 3 # 最多同时训练3个怪物
+var current_trainees: Array = [] # 当前训练中的怪物
 
 
 func _init():
@@ -16,11 +16,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "训练室"
-	building_type = BuildingTypes.TRAINING_ROOM
+	building_type = BuildingTypes.BuildingType.TRAINING_ROOM
 	max_health = 300
 	health = max_health
 	armor = 6
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 200
 	engineer_cost = 100
 	build_time = 120.0
@@ -37,37 +37,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有窗户（通风）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（军事风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.5, 0.4, 0.3),    # 棕色墙体
-		roof = Color(0.4, 0.3, 0.2),    # 深棕色屋顶
-		floor = Color(0.6, 0.5, 0.4)     # 浅棕色地板
-	)
+	building_3d_config.wall_color = Color(0.5, 0.4, 0.3) # 棕色墙体
+	building_3d_config.roof_color = Color(0.4, 0.3, 0.2) # 深棕色屋顶
+	building_3d_config.floor_color = Color(0.6, 0.5, 0.4) # 浅棕色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取训练室建筑模板"""
-	var template = BuildingTemplate.new("训练室")
-	template.building_type = BuildingTypes.TRAINING_ROOM
+	var template = BuildingTemplateClass.new("训练室")
+	template.building_type = BuildingTypes.BuildingType.TRAINING_ROOM
 	template.description = "坚固的3x3x3军事训练建筑，提升怪物战斗力"
 	
 	# 创建军事结构
-	template.create_military_structure(BuildingTypes.TRAINING_ROOM)
+	template.create_military_structure(BuildingTypes.BuildingType.TRAINING_ROOM)
 	
 	# 自定义训练室元素
 	# 顶层：旗帜和训练台
@@ -119,11 +113,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.5, 0.4, 0.3)  # 棕色
-	config.roof_color = Color(0.4, 0.3, 0.2)    # 深棕色
-	config.floor_color = Color(0.6, 0.5, 0.4)   # 浅棕色
-	config.window_color = Color(0.8, 0.8, 0.9)  # 淡灰色窗户
-	config.door_color = Color(0.3, 0.2, 0.1)    # 深棕色门
+	config.wall_color = Color(0.5, 0.4, 0.3) # 棕色
+	config.roof_color = Color(0.4, 0.3, 0.2) # 深棕色
+	config.floor_color = Color(0.6, 0.5, 0.4) # 浅棕色
+	config.window_color = Color(0.8, 0.8, 0.9) # 淡灰色窗户
+	config.door_color = Color(0.3, 0.2, 0.1) # 深棕色门
 	
 	return config
 
@@ -162,7 +156,7 @@ func _start_training_system():
 	# 设置训练更新定时器
 	var training_timer = Timer.new()
 	training_timer.name = "TrainingTimer"
-	training_timer.wait_time = 0.5  # 每0.5秒更新一次
+	training_timer.wait_time = 0.5 # 每0.5秒更新一次
 	training_timer.timeout.connect(_update_training)
 	training_timer.autostart = true
 	add_child(training_timer)
@@ -288,7 +282,7 @@ func _update_banner_animation(delta: float):
 		var light = effect_manager.light_systems["banner_light"]
 		if light and light.visible:
 			light.light_energy = 0.3 + training_intensity * 0.7
-			light.light_color = Color(0.8, 0.6, 0.4)  # 温暖的军事光
+			light.light_color = Color(0.8, 0.6, 0.4) # 温暖的军事光
 
 
 func _update_functional_effects(delta: float):
@@ -311,7 +305,7 @@ func _update_barracks_effects(delta: float):
 		if light and light.visible:
 			# 训练脉冲
 			light.light_energy = 0.5 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.3
-			light.light_color = Color(0.8, 0.6, 0.4)  # 军事训练光
+			light.light_color = Color(0.8, 0.6, 0.4) # 军事训练光
 
 
 func get_building_info() -> Dictionary:

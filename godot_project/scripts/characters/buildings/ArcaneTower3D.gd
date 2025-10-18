@@ -18,11 +18,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "奥术塔"
-	building_type = BuildingTypes.ARCANE_TOWER
+	building_type = BuildingTypes.BuildingType.ARCANE_TOWER
 	max_health = 800
 	health = max_health
 	armor = 5
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 200
 	engineer_cost = 100
 	build_time = 100.0
@@ -39,37 +39,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有窗户
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（魔法风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.54, 0.17, 0.89),  # 紫色墙体
-		roof = Color(0.8, 0.2, 0.9),     # 深紫色屋顶
-		floor = Color(0.3, 0.1, 0.4)     # 深紫色地板
-	)
+	building_3d_config.wall_color = Color(0.54, 0.17, 0.89) # 紫色墙体
+	building_3d_config.roof_color = Color(0.8, 0.2, 0.9) # 深紫色屋顶
+	building_3d_config.floor_color = Color(0.3, 0.1, 0.4) # 深紫色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取奥术塔建筑模板"""
-	var template = BuildingTemplate.new("奥术塔")
-	template.building_type = BuildingTypes.ARCANE_TOWER
+	var template = BuildingTemplateClass.new("奥术塔")
+	template.building_type = BuildingTypes.BuildingType.ARCANE_TOWER
 	template.description = "神秘的3x3x3魔法防御塔，具有强大的奥术攻击能力"
 	
 	# 创建魔法塔楼结构
-	template.create_magic_structure(BuildingTypes.ARCANE_TOWER)
+	template.create_magic_structure(BuildingTypes.BuildingType.ARCANE_TOWER)
 	
 	# 自定义魔法元素
 	# 顶层：魔法水晶和奥术核心
@@ -113,11 +107,11 @@ func _get_building_config() -> BuildingConfig:
 	config.tower_height = 1.5
 	
 	# 材质配置
-	config.wall_color = Color(0.54, 0.17, 0.89)  # 紫色
-	config.roof_color = Color(0.8, 0.2, 0.9)     # 深紫色
-	config.floor_color = Color(0.3, 0.1, 0.4)    # 深紫色
-	config.window_color = Color.CYAN              # 青色窗户
-	config.door_color = Color.DARK_MAGENTA        # 深紫色门
+	config.wall_color = Color(0.54, 0.17, 0.89) # 紫色
+	config.roof_color = Color(0.8, 0.2, 0.9) # 深紫色
+	config.floor_color = Color(0.3, 0.1, 0.4) # 深紫色
+	config.window_color = Color.CYAN # 青色窗户
+	config.door_color = Color.DARK_MAGENTA # 深紫色门
 	
 	return config
 

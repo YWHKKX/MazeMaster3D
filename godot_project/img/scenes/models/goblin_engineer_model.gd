@@ -35,10 +35,6 @@ func _ready():
 	if animation_player:
 		# 自动播放待机动画
 		play_animation("idle")
-		if OS.is_debug_build():
-			print("GoblinEngineerModel [%s]: 已加载 AnimationPlayer，动画列表: %s" % [
-				get_instance_id(), animation_player.get_animation_list()
-			])
 	else:
 		push_error("GoblinEngineerModel [%s]: 严重错误 - 未找到 AnimationPlayer！" % get_instance_id())
 

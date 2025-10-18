@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name StoneGolem
+extends MonsterBase
 
 ## 石魔像 - 无敌坦克，最高防御力
 ## 战斗等级: ⭐⭐⭐⭐⭐
@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_stone_golem_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("stone_golems")
+	add_to_group(GameGroups.STONE_GOLEMS)
 
 func _init_stone_golem_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "石魔像"
-	data.creature_type = Enums.CreatureType.STONE_GOLEM
+	data.creature_type = MonstersTypes.MonsterType.STONE_GOLEM
 	data.max_health = 4500
 	data.attack = 45
 	data.armor = 25

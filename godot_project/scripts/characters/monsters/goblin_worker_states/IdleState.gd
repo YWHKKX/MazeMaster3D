@@ -12,7 +12,11 @@ class_name GoblinWorkerIdleState
 ## 4. 游荡（无事可做）
 
 func enter(_data: Dictionary = {}) -> void:
-	var worker = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		LogManager.warning("GoblinWorkerIdleState - state_machine 或 owner_node 为空")
+		return
+	
+	var worker = state_machine.owner_node
 	
 	# 播放待机动画
 	if worker.has_node("Model") and worker.get_node("Model").has_method("play_animation"):
@@ -20,13 +24,9 @@ func enter(_data: Dictionary = {}) -> void:
 	elif worker.animation_player:
 		worker.animation_player.play("idle")
 	
-	if state_machine.debug_mode:
-		print("[IdleState] 进入空闲状态 | 携带金币: %d/%d" % [
-			worker.carried_gold, worker.worker_config.carry_capacity
-		])
 
 func update(_delta: float) -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 优先级1: 安全检查 - 附近是否有敌人
 	if _has_nearby_enemies(worker):

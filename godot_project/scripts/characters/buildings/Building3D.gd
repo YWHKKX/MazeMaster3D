@@ -5,25 +5,33 @@ class_name Building3D
 ## 基于原有Building类，扩展支持3x3x3空间的精细化建筑设计
 ## 参考 docs/3X3X3_BUILDING_DESIGN.md
 
+# 预加载依赖类
+const GridMapRendererClass = preload("res://scripts/characters/buildings/GridMapRenderer.gd")
+const ProceduralRendererClass = preload("res://scripts/characters/buildings/ProceduralRenderer.gd")
+const BuildingRenderModeClass = preload("res://scripts/characters/buildings/BuildingRenderMode.gd")
+const BuildingAnimatorClass = preload("res://scripts/characters/buildings/BuildingAnimator.gd")
+const BuildingEffectManagerClass = preload("res://scripts/characters/buildings/BuildingEffectManager.gd")
+const BuildingTemplateClass = preload("res://scripts/characters/buildings/BuildingTemplate.gd")
+
 # 3x3x3建筑配置
 var building_3d_config: Building3DConfig
-var cell_size: float = 0.33  # 每个子瓦片的尺寸
-var grid_size: Vector3 = Vector3(3, 3, 3)  # 3x3x3网格
+var cell_size: float = 0.33 # 每个子瓦片的尺寸
+var grid_size: Vector3 = Vector3(3, 3, 3) # 3x3x3网格
 
 # 渲染系统
-var gridmap_renderer: GridMapRenderer = null
-var procedural_renderer: ProceduralRenderer = null
-var render_mode: BuildingRenderMode = BuildingRenderMode.GRIDMAP
+var gridmap_renderer = null
+var procedural_renderer = null
+var render_mode = 0 # 0=GRIDMAP, 1=PROCEDURAL
 
 # 建筑构件库
 var mesh_library: MeshLibrary = null
 
 # 动画和特效
-var construction_animator: BuildingAnimator = null
-var effect_manager: BuildingEffectManager = null
+var construction_animator = null
+var effect_manager = null
 
 # LOD系统
-var lod_level: int = 2  # 0=最低, 1=中等, 2=最高
+var lod_level: int = 2 # 0=最低, 1=中等, 2=最高
 var distance_to_camera: float = 0.0
 
 
@@ -123,7 +131,7 @@ func _add_component_to_library(component_name: String, component_id: int):
 		return
 	
 	# 加载构件场景
-	var component_scene = preload(component_path)
+	var component_scene = load(component_path)
 	var component_instance = component_scene.instantiate()
 	
 	# 获取构件的MeshInstance3D
@@ -140,9 +148,6 @@ func _add_component_to_library(component_name: String, component_id: int):
 	# 清理临时实例
 	component_instance.queue_free()
 	
-	LogManager.debug("✅ [Building3D] 已加载构件: %s (ID: %d)" % [component_name, component_id])
-
-
 func _find_mesh_instance(node: Node) -> MeshInstance3D:
 	"""递归查找MeshInstance3D节点"""
 	if node is MeshInstance3D:
@@ -159,24 +164,24 @@ func _find_mesh_instance(node: Node) -> MeshInstance3D:
 func _setup_render_system():
 	"""初始化渲染系统"""
 	match render_mode:
-		BuildingRenderMode.GRIDMAP:
+		0: # GRIDMAP
 			_setup_gridmap_renderer()
-		BuildingRenderMode.PROCEDURAL:
+		1: # PROCEDURAL
 			_setup_procedural_renderer()
 
 
 func _setup_gridmap_renderer():
 	"""设置GridMap渲染器"""
-	gridmap_renderer = GridMapRenderer.new()
+	gridmap_renderer = GridMapRendererClass.new()
 	gridmap_renderer.name = "GridMapRenderer"
-	gridmap_renderer.cell_size = Vector3(cell_size, cell_size, cell_size)
-	gridmap_renderer.mesh_library = mesh_library
+	gridmap_renderer.building_cell_size = Vector3(cell_size, cell_size, cell_size)
+	gridmap_renderer.set_building_mesh_library(mesh_library)
 	add_child(gridmap_renderer)
 
 
 func _setup_procedural_renderer():
 	"""设置程序化渲染器"""
-	procedural_renderer = ProceduralRenderer.new()
+	procedural_renderer = ProceduralRendererClass.new()
 	procedural_renderer.name = "ProceduralRenderer"
 	procedural_renderer.building_config = building_3d_config
 	add_child(procedural_renderer)
@@ -184,14 +189,14 @@ func _setup_procedural_renderer():
 
 func _setup_animation_system():
 	"""初始化动画系统"""
-	construction_animator = BuildingAnimator.new()
+	construction_animator = BuildingAnimatorClass.new()
 	construction_animator.name = "ConstructionAnimator"
 	add_child(construction_animator)
 
 
 func _setup_effect_system():
 	"""初始化特效系统"""
-	effect_manager = BuildingEffectManager.new()
+	effect_manager = BuildingEffectManagerClass.new()
 	effect_manager.name = "EffectManager"
 	add_child(effect_manager)
 
@@ -199,9 +204,9 @@ func _setup_effect_system():
 func _generate_building():
 	"""生成建筑（根据渲染模式）"""
 	match render_mode:
-		BuildingRenderMode.GRIDMAP:
+		0: # GRIDMAP
 			_generate_gridmap_building()
-		BuildingRenderMode.PROCEDURAL:
+		1: # PROCEDURAL
 			_generate_procedural_building()
 
 
@@ -230,10 +235,10 @@ func _generate_procedural_building():
 	procedural_renderer.generate_from_config(config)
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取建筑模板（子类重写）"""
 	# 默认返回空模板，子类需要重写
-	return BuildingTemplate.new()
+	return BuildingTemplateClass.new()
 
 
 func _get_building_config() -> BuildingConfig:
@@ -282,11 +287,11 @@ func update_lod(distance: float):
 func _calculate_lod_level(distance: float) -> int:
 	"""计算LOD级别"""
 	if distance > 50.0:
-		return 0  # 最低细节
+		return 0 # 最低细节
 	elif distance > 20.0:
-		return 1  # 中等细节
+		return 1 # 中等细节
 	else:
-		return 2  # 最高细节
+		return 2 # 最高细节
 
 
 func _switch_lod_level(new_lod: int):
@@ -343,7 +348,7 @@ func get_building_info() -> Dictionary:
 	var base_info = super.get_building_info()
 	
 	# 添加3D建筑信息
-	base_info["render_mode"] = BuildingRenderMode.keys()[render_mode]
+	base_info["render_mode"] = "GRIDMAP" if render_mode == 0 else "PROCEDURAL"
 	base_info["lod_level"] = lod_level
 	base_info["distance_to_camera"] = distance_to_camera
 	base_info["has_gridmap_renderer"] = gridmap_renderer != null

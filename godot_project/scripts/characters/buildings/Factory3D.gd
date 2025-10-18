@@ -5,15 +5,15 @@ class_name Factory3D
 ## 基于Building3D，实现工厂的3x3x3渲染
 
 # 生产系统
-var production_lines: int = 4                     # 生产线数量
-var production_efficiency: float = 2.0           # 生产效率倍率
-var automation_level: float = 0.8                # 自动化程度（80%）
-var quality_control_bonus: float = 0.25          # 质量控制加成（25%）
+var production_lines: int = 4 # 生产线数量
+var production_efficiency: float = 2.0 # 生产效率倍率
+var automation_level: float = 0.8 # 自动化程度（80%）
+var quality_control_bonus: float = 0.25 # 质量控制加成（25%）
 
 # 生产状态
-var active_production_lines: Array = []          # 当前活跃生产线
-var production_queue: Array = []                 # 生产队列
-var resource_consumption_rate: float = 1.5       # 资源消耗速度
+var active_production_lines: Array = [] # 当前活跃生产线
+var production_queue: Array = [] # 生产队列
+var resource_consumption_rate: float = 1.5 # 资源消耗速度
 
 
 func _init():
@@ -22,11 +22,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "工厂"
-	building_type = BuildingTypes.FACTORY
+	building_type = BuildingTypes.BuildingType.FACTORY
 	max_health = 500
 	health = max_health
 	armor = 6
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 1200
 	engineer_cost = 600
 	build_time = 400.0
@@ -43,37 +43,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有窗户（通风）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（工业风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.4, 0.4, 0.4),    # 灰色墙体
-		roof = Color(0.3, 0.3, 0.3),    # 深灰色屋顶
-		floor = Color(0.5, 0.5, 0.5)     # 浅灰色地板
-	)
+	building_3d_config.wall_color = Color(0.4, 0.4, 0.4) # 灰色墙体
+	building_3d_config.roof_color = Color(0.3, 0.3, 0.3) # 深灰色屋顶
+	building_3d_config.floor_color = Color(0.5, 0.5, 0.5) # 浅灰色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取工厂建筑模板"""
-	var template = BuildingTemplate.new("工厂")
-	template.building_type = BuildingTypes.FACTORY
+	var template = BuildingTemplateClass.new("工厂")
+	template.building_type = BuildingTypes.BuildingType.FACTORY
 	template.description = "现代化的3x3x3工业工厂，散发着机械的气息"
 	
 	# 创建工业结构
-	template.create_factory_structure(BuildingTypes.FACTORY)
+	template.create_factory_structure(BuildingTypes.BuildingType.FACTORY)
 	
 	# 自定义工厂元素
 	# 顶层：烟囱和通风系统
@@ -129,11 +123,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.4, 0.4, 0.4)  # 灰色
-	config.roof_color = Color(0.3, 0.3, 0.3)    # 深灰色
-	config.floor_color = Color(0.5, 0.5, 0.5)   # 浅灰色
-	config.window_color = Color(0.7, 0.7, 0.7)  # 淡灰色窗户
-	config.door_color = Color(0.3, 0.3, 0.3)    # 深灰色门
+	config.wall_color = Color(0.4, 0.4, 0.4) # 灰色
+	config.roof_color = Color(0.3, 0.3, 0.3) # 深灰色
+	config.floor_color = Color(0.5, 0.5, 0.5) # 浅灰色
+	config.window_color = Color(0.7, 0.7, 0.7) # 淡灰色窗户
+	config.door_color = Color(0.3, 0.3, 0.3) # 深灰色门
 	
 	return config
 
@@ -178,7 +172,7 @@ func _start_production_system():
 	# 设置生产更新定时器
 	var production_timer = Timer.new()
 	production_timer.name = "ProductionTimer"
-	production_timer.wait_time = 0.5  # 每0.5秒更新一次
+	production_timer.wait_time = 0.5 # 每0.5秒更新一次
 	production_timer.timeout.connect(_update_production)
 	production_timer.autostart = true
 	add_child(production_timer)
@@ -186,7 +180,7 @@ func _start_production_system():
 	# 设置质量控制定时器
 	var quality_timer = Timer.new()
 	quality_timer.name = "QualityTimer"
-	quality_timer.wait_time = 3.0  # 每3秒更新一次
+	quality_timer.wait_time = 3.0 # 每3秒更新一次
 	quality_timer.timeout.connect(_update_quality_control)
 	quality_timer.autostart = true
 	add_child(quality_timer)
@@ -364,7 +358,7 @@ func _update_smokestack_animation(delta: float):
 		var light = effect_manager.light_systems["smokestack_light"]
 		if light and light.visible:
 			light.light_energy = 0.5 + production_intensity * 0.8
-			light.light_color = Color(0.8, 0.8, 0.8)  # 灰白色烟囱光
+			light.light_color = Color(0.8, 0.8, 0.8) # 灰白色烟囱光
 
 
 func _update_assembly_line_activity(delta: float):
@@ -403,7 +397,7 @@ func _update_factory_specific_effects(delta: float):
 		if light and light.visible:
 			# 工厂脉冲
 			light.light_energy = 0.6 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.3
-			light.light_color = Color(0.8, 0.8, 0.8)  # 灰白色工厂光
+			light.light_color = Color(0.8, 0.8, 0.8) # 灰白色工厂光
 
 
 func get_building_info() -> Dictionary:

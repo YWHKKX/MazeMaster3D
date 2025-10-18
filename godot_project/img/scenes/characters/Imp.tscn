@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bqvx8y7wqj2v1"]
+
+[ext_resource type="Script" path="res://scripts/characters/monsters/Imp.gd" id="1_8j5k2"]
+
+[node name="Imp" type="CharacterBody3D"]
+script = ExtResource("1_8j5k2")

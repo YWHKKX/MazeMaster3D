@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name GoblinWorker
+extends MonsterBase
 
 ## 哥布林苦工 - 专门负责挖掘金矿的非战斗单位
 ## 
@@ -58,7 +58,7 @@ func _ready() -> void:
 	# 加入组（使用 GameGroups 常量）
 	add_to_group(GameGroups.MONSTERS)
 	add_to_group(GameGroups.WORKERS)
-	add_to_group("goblin_workers")
+	add_to_group(GameGroups.GOBLIN_WORKERS)
 	
 	# 🔧 启用调试模式（排查地牢之心交互问题）
 	debug_mode = true # CharacterBase 的 debug_mode
@@ -72,7 +72,7 @@ func _ready() -> void:
 func _init_goblin_worker_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "哥布林苦工"
-	data.creature_type = Enums.CreatureType.GOBLIN_WORKER
+	data.creature_type = MonstersTypes.MonsterType.GOBLIN_WORKER
 	data.max_health = 600
 	data.attack = 8
 	data.armor = 0

@@ -17,7 +17,7 @@ var work_timer: Timer = null
 var work_interval: float = 1.0 # 🔧 [文档] 每1秒投入一次金币
 
 func enter(data: Dictionary = {}) -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 获取目标建筑
 	if data.has("target_building"):
@@ -46,7 +46,7 @@ func enter(data: Dictionary = {}) -> void:
 	# 开始工作
 
 func update(_delta: float) -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 检查建筑是否有效
 	if not is_instance_valid(target_building) or target_building.is_destroyed():
@@ -61,7 +61,7 @@ func update(_delta: float) -> void:
 
 func _on_work_tick() -> void:
 	"""工作定时器触发"""
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 检查建筑是否还需要金币
 	if not _building_needs_work():

@@ -30,7 +30,7 @@ func _ready():
 	"""场景准备就绪"""
 	# 创建Tween
 	animation_tween = create_tween()
-	animation_tween.set_parallel(true)  # 允许并行动画
+	animation_tween.set_parallel(true) # 允许并行动画
 
 
 func set_target_building(building: Building3D):
@@ -129,11 +129,11 @@ func _animate_construction_progress(progress: float):
 	
 	# 根据建筑类型播放不同的建造动画
 	match target_building.building_type:
-		BuildingTypes.ARROW_TOWER:
+		BuildingTypes.BuildingType.ARROW_TOWER:
 			_animate_tower_construction(progress)
-		BuildingTypes.ARCANE_TOWER:
+		BuildingTypes.BuildingType.ARCANE_TOWER:
 			_animate_magic_construction(progress)
-		BuildingTypes.TREASURY:
+		BuildingTypes.BuildingType.TREASURY:
 			_animate_treasury_construction(progress)
 		_:
 			_animate_generic_construction(progress)

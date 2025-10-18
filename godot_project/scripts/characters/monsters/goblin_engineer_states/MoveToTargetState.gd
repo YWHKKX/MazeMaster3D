@@ -17,7 +17,7 @@ var target_position: Vector3 = Vector3.ZERO # 🔧 目标可通行位置（建�
 # 不再需要手动管理 current_path 和 current_waypoint
 
 func enter(data: Dictionary = {}) -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 获取目标建筑
 	if data.has("target_building"):
@@ -28,8 +28,6 @@ func enter(data: Dictionary = {}) -> void:
 	
 	# 🔧 修复：检查目标建筑是否有效
 	if not target_building or not is_instance_valid(target_building):
-		if state_machine.debug_mode:
-			print("[MoveToTargetState] 目标建筑无效，返回空闲")
 		state_finished.emit("IdleState", {})
 		return
 	
@@ -45,18 +43,12 @@ func enter(data: Dictionary = {}) -> void:
 	# 🔧 使用 current_building 而非 target_building
 	engineer.current_building = target_building
 	
-	if state_machine.debug_mode:
-		print("[MoveToTargetState] 移动到建筑 | 目标: %s | 金币: %d" % [
-			str(target_building.global_position), engineer.carried_gold
-		])
 
 func physics_update(_delta: float) -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 检查建筑是否有效
 	if not is_instance_valid(target_building) or target_building.is_destroyed():
-		if state_machine.debug_mode:
-			print("[MoveToTargetState] 建筑失效，返回空闲")
 		state_finished.emit("IdleState", {})
 		return
 	
@@ -77,19 +69,15 @@ func physics_update(_delta: float) -> void:
 	match move_result:
 		MovementHelper.InteractionMoveResult.REACHED_INTERACTION:
 			# 已到达交互范围，开始工作
-			if state_machine.debug_mode:
-				print("[MoveToTargetState] Engineer进入建筑Area3D，开始工作")
 			state_finished.emit("WorkState", {"target_building": target_building})
 			return
 		MovementHelper.InteractionMoveResult.FAILED_NO_PATH, MovementHelper.InteractionMoveResult.FAILED_STUCK:
 			# 寻路失败或卡住，返回空闲
-			if state_machine.debug_mode:
-				print("[MoveToTargetState] 无法到达建筑，返回空闲")
 			state_finished.emit("IdleState", {})
 		# MOVING_TO_ADJACENT 和 MOVING_TO_INTERACTION 继续移动
 
 func exit() -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	engineer.velocity = Vector3.ZERO
 
 func _has_nearby_enemies(engineer: Node) -> bool:

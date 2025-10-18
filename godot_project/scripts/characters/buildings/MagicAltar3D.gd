@@ -5,7 +5,7 @@ class_name MagicAltar3D
 ## 基于Building3D，实现魔法祭坛的3x3x3渲染
 
 # 魔力生成系统
-var mana_generation_rate: float = 0.5  # 每秒生成0.5法力
+var mana_generation_rate: float = 0.5 # 每秒生成0.5法力
 
 
 func _init():
@@ -14,11 +14,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "魔法祭坛"
-	building_type = BuildingTypes.MAGIC_ALTAR
+	building_type = BuildingTypes.BuildingType.MAGIC_ALTAR
 	max_health = 300
 	health = max_health
 	armor = 4
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 120
 	engineer_cost = 60
 	build_time = 160.0
@@ -35,37 +35,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = false,   # 无窗户（祭坛结构）
-		door = false,      # 无门（开放结构）
-		roof = false,      # 无屋顶（开放天空）
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = false
+	building_3d_config.has_door = false
+	building_3d_config.has_roof = false
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（神秘紫色风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.4, 0.2, 0.6),    # 紫色墙体
-		roof = Color(0.3, 0.1, 0.4),    # 深紫色
-		floor = Color(0.2, 0.1, 0.3)     # 暗紫色地板
-	)
+	building_3d_config.wall_color = Color(0.4, 0.2, 0.6) # 紫色墙体
+	building_3d_config.roof_color = Color(0.3, 0.1, 0.4) # 深紫色
+	building_3d_config.floor_color = Color(0.2, 0.1, 0.3) # 暗紫色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取魔法祭坛建筑模板"""
-	var template = BuildingTemplate.new("魔法祭坛")
-	template.building_type = BuildingTypes.MAGIC_ALTAR
+	var template = BuildingTemplateClass.new("魔法祭坛")
+	template.building_type = BuildingTypes.BuildingType.MAGIC_ALTAR
 	template.description = "神秘的3x3x3魔法祭坛，散发着魔力能量"
 	
 	# 创建魔法结构
-	template.create_magic_structure(BuildingTypes.MAGIC_ALTAR)
+	template.create_magic_structure(BuildingTypes.BuildingType.MAGIC_ALTAR)
 	
 	# 自定义祭坛元素
 	# 顶层：魔法符文和祭坛
@@ -121,11 +115,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.4, 0.2, 0.6)  # 紫色
-	config.roof_color = Color(0.3, 0.1, 0.4)    # 深紫色
-	config.floor_color = Color(0.2, 0.1, 0.3)   # 暗紫色
-	config.window_color = Color.LIGHT_BLUE       # 不使用窗户
-	config.door_color = Color.DARK_GRAY          # 不使用门
+	config.wall_color = Color(0.4, 0.2, 0.6) # 紫色
+	config.roof_color = Color(0.3, 0.1, 0.4) # 深紫色
+	config.floor_color = Color(0.2, 0.1, 0.3) # 暗紫色
+	config.window_color = Color.LIGHT_BLUE # 不使用窗户
+	config.door_color = Color.DARK_GRAY # 不使用门
 	
 	return config
 
@@ -164,7 +158,7 @@ func _start_mana_generation():
 	# 设置魔力生成定时器
 	var mana_timer = Timer.new()
 	mana_timer.name = "ManaGenerationTimer"
-	mana_timer.wait_time = 1.0  # 每秒生成一次
+	mana_timer.wait_time = 1.0 # 每秒生成一次
 	mana_timer.timeout.connect(_generate_mana)
 	mana_timer.autostart = true
 	add_child(mana_timer)
@@ -275,7 +269,7 @@ func _update_magic_altar_effects(delta: float):
 		if light and light.visible:
 			# 魔力脉冲
 			light.light_energy = 0.8 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.4
-			light.light_color = Color(0.8, 0.4, 1.0)  # 紫色光
+			light.light_color = Color(0.8, 0.4, 1.0) # 紫色光
 
 
 func get_building_info() -> Dictionary:

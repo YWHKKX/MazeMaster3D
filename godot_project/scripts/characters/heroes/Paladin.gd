@@ -11,14 +11,14 @@ func _ready() -> void:
 		_init_paladin_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("paladins")
+	add_to_group(GameGroups.PALADINS)
 	
 	# 状态机会在HeroBase._ready()中自动创建
 
 func _init_paladin_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "圣骑士"
-	data.creature_type = Enums.CreatureType.PALADIN
+	data.creature_type = HeroesTypes.HeroType.PALADIN
 	data.max_health = 1600
 	data.attack = 28
 	data.armor = 10

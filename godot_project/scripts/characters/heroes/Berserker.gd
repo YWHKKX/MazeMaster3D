@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_berserker_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("berserkers")
+	add_to_group(GameGroups.BERSERKERS)
 
 func _init_berserker_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "狂战士"
-	data.creature_type = Enums.CreatureType.BERSERKER
+	data.creature_type = HeroesTypes.HeroType.BERSERKER
 	data.max_health = 1200
 	data.attack = 42
 	data.armor = 3

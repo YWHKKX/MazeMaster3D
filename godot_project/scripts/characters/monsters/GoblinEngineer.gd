@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name GoblinEngineer
+extends MonsterBase
 
 ## 地精工程师 - 专门负责建造和维护建筑的非战斗单位
 ## 
@@ -49,7 +49,7 @@ func _ready() -> void:
 	# 加入组（使用 GameGroups 常量）
 	add_to_group(GameGroups.MONSTERS)
 	add_to_group(GameGroups.ENGINEERS)
-	add_to_group("goblin_engineers") # 特定单位组
+	add_to_group(GameGroups.GOBLIN_ENGINEERS) # 特定单位组
 	
 	# 设置管理器
 	call_deferred("_setup_managers")
@@ -57,7 +57,7 @@ func _ready() -> void:
 func _init_goblin_engineer_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "地精工程师"
-	data.creature_type = Enums.CreatureType.GOBLIN_ENGINEER
+	data.creature_type = MonstersTypes.MonsterType.GOBLIN_ENGINEER
 	data.max_health = 800
 	data.attack = 12
 	data.armor = 2

@@ -3,7 +3,7 @@ extends Object
 
 ## 工人常量定义 - GoblinWorker 和 GoblinEngineer 的状态常量
 ##
-## 使用独立的常量类避免与 Enums.CreatureStatus 冲突
+## 使用独立的常量类避免与 MonstersTypes.MonsterStatus 冲突
 ## 这些是专门为工人系统设计的业务状态
 
 # 苦工状态常量

@@ -16,7 +16,9 @@ var consume_duration: float = 0.0
 var consume_interval: float = 2.0
 
 func enter(data: Dictionary = {}) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 获取目标食物
 	if data.has("target_food"):
@@ -44,11 +46,10 @@ func enter(data: Dictionary = {}) -> void:
 	add_child(consume_timer)
 	consume_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[BeastConsumeFoodState] 野兽开始进食 | 食物: %s" % str(target_food))
-
 func update(_delta: float) -> void:
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 优先级1: 安全检查 - 检测威胁
 	if _has_nearby_threats(beast):
@@ -62,7 +63,9 @@ func update(_delta: float) -> void:
 
 func _on_consume_tick() -> void:
 	"""进食定时器触发"""
-	var beast = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	var beast = state_machine.owner_node
 	
 	# 检查食物是否仍然有效
 	if not target_food or not is_instance_valid(target_food):
@@ -76,9 +79,6 @@ func _on_consume_tick() -> void:
 			# 恢复野兽的饥饿度
 			if beast.has_method("restore_hunger"):
 				beast.restore_hunger(consumed * 0.1)
-			
-			if state_machine.debug_mode:
-				print("[BeastConsumeFoodState] 野兽消耗食物: %d" % consumed)
 		else:
 			# 食物被消耗完
 			state_finished.emit("IdleState", {})

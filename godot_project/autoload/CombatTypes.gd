@@ -5,27 +5,67 @@ extends Node
 ## 统一管理战斗相关的类型、状态、效果等常量
 
 # ============================================================================
-# 伤害类型
+# 伤害类型枚举（从Enums.gd迁移）
 # ============================================================================
 
-const PHYSICAL_DAMAGE = 0 # 物理伤害
-const MAGIC_DAMAGE = 1 # 魔法伤害
+enum DamageType {
+	PHYSICAL, ## 物理伤害
+	MAGICAL, ## 魔法伤害
+	TRUE ## 真实伤害（无视护甲）
+}
+
+# 攻击类型枚举（从Enums.gd迁移）
+enum AttackType {
+	NORMAL, ## 普通攻击
+	HEAVY, ## 重击攻击
+	AREA, ## 范围攻击
+	MAGIC, ## 魔法攻击
+	PIERCING, ## 穿透攻击
+	RANGED, ## 远程攻击
+	## 详细分类（参考战斗系统.md）
+	MELEE_SWORD, ## 近战-剑类
+	MELEE_SPEAR, ## 近战-矛类
+	MELEE_AXE, ## 近战-斧类
+	RANGED_BOW, ## 远程-弓箭
+	RANGED_GUN, ## 远程-火枪
+	RANGED_CROSSBOW, ## 远程-弩
+	MAGIC_SINGLE, ## 单体魔法
+	MAGIC_AOE, ## 范围魔法
+	MAGIC_HEAL, ## 治疗魔法
+	## 空洞系统攻击类型
+	CAVITY_EXCAVATE ## 空洞挖掘攻击
+}
+
+# 击退类型枚举（从Enums.gd迁移）
+enum KnockbackType {
+	NONE, ## 无击退
+	WEAK, ## 弱击退
+	NORMAL, ## 普通击退
+	STRONG ## 强击退
+}
+
+# 技能类型枚举（从Enums.gd迁移）
+enum SkillType {
+	PASSIVE, ## 被动技能
+	ACTIVE, ## 主动技能
+	ULTIMATE ## 终极技能
+}
+
+# ============================================================================
+# 扩展伤害类型（向后兼容）
+# ============================================================================
+
 const FIRE_DAMAGE = 2 # 火焰伤害
 const ICE_DAMAGE = 3 # 冰霜伤害
 const LIGHTNING_DAMAGE = 4 # 闪电伤害
 const POISON_DAMAGE = 5 # 毒素伤害
 const HOLY_DAMAGE = 6 # 神圣伤害
 const SHADOW_DAMAGE = 7 # 暗影伤害
-const TRUE_DAMAGE = 8 # 真实伤害（无视护甲）
 
 # ============================================================================
-# 攻击类型
+# 扩展攻击类型（向后兼容）
 # ============================================================================
 
-const MELEE_ATTACK = 0 # 近战攻击
-const RANGED_ATTACK = 1 # 远程攻击
-const MAGIC_ATTACK = 2 # 魔法攻击
-const AREA_ATTACK = 3 # 范围攻击
 const SPLASH_ATTACK = 4 # 溅射攻击
 
 # ============================================================================
@@ -119,9 +159,9 @@ func _ready():
 ## 获取伤害类型名称（中文）
 static func get_damage_type_name(damage_type: int) -> String:
 	match damage_type:
-		PHYSICAL_DAMAGE:
+		DamageType.PHYSICAL:
 			return "物理伤害"
-		MAGIC_DAMAGE:
+		DamageType.MAGICAL:
 			return "魔法伤害"
 		FIRE_DAMAGE:
 			return "火焰伤害"
@@ -135,7 +175,7 @@ static func get_damage_type_name(damage_type: int) -> String:
 			return "神圣伤害"
 		SHADOW_DAMAGE:
 			return "暗影伤害"
-		TRUE_DAMAGE:
+		DamageType.TRUE:
 			return "真实伤害"
 		_:
 			return "未知伤害"
@@ -143,9 +183,9 @@ static func get_damage_type_name(damage_type: int) -> String:
 ## 获取伤害类型颜色
 static func get_damage_type_color(damage_type: int) -> Color:
 	match damage_type:
-		PHYSICAL_DAMAGE:
+		DamageType.PHYSICAL:
 			return Color(0.8, 0.8, 0.8) # 灰白
-		MAGIC_DAMAGE:
+		DamageType.MAGICAL:
 			return Color(0.5, 0.5, 1.0) # 蓝色
 		FIRE_DAMAGE:
 			return Color(1.0, 0.3, 0.0) # 橙红
@@ -159,14 +199,14 @@ static func get_damage_type_color(damage_type: int) -> Color:
 			return Color(1.0, 0.9, 0.5) # 金黄
 		SHADOW_DAMAGE:
 			return Color(0.4, 0.2, 0.6) # 暗紫
-		TRUE_DAMAGE:
+		DamageType.TRUE:
 			return Color(1.0, 1.0, 1.0) # 纯白
 		_:
 			return Color(1.0, 0.0, 1.0) # 品红
 
 ## 检查伤害类型是否是魔法系
 static func is_magical_damage(damage_type: int) -> bool:
-	return damage_type in [MAGIC_DAMAGE, FIRE_DAMAGE, ICE_DAMAGE, LIGHTNING_DAMAGE, HOLY_DAMAGE, SHADOW_DAMAGE]
+	return damage_type in [DamageType.MAGICAL, FIRE_DAMAGE, ICE_DAMAGE, LIGHTNING_DAMAGE, HOLY_DAMAGE, SHADOW_DAMAGE]
 
 ## 检查伤害类型是否是元素系
 static func is_elemental_damage(damage_type: int) -> bool:
@@ -179,13 +219,13 @@ static func is_elemental_damage(damage_type: int) -> bool:
 ## 获取攻击类型名称（中文）
 static func get_attack_type_name(attack_type: int) -> String:
 	match attack_type:
-		MELEE_ATTACK:
+		AttackType.NORMAL:
 			return "近战攻击"
-		RANGED_ATTACK:
+		AttackType.RANGED:
 			return "远程攻击"
-		MAGIC_ATTACK:
+		AttackType.MAGIC:
 			return "魔法攻击"
-		AREA_ATTACK:
+		AttackType.AREA:
 			return "范围攻击"
 		SPLASH_ATTACK:
 			return "溅射攻击"
@@ -286,7 +326,7 @@ static func calculate_armor_reduction(armor: int) -> float:
 ## 计算实际伤害
 static func calculate_actual_damage(base_damage: float, armor: int, damage_type: int) -> float:
 	"""计算考虑护甲后的实际伤害"""
-	if damage_type == TRUE_DAMAGE:
+	if damage_type == DamageType.TRUE:
 		return base_damage # 真实伤害无视护甲
 	
 	var reduction = calculate_armor_reduction(armor)

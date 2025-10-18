@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("claw_bears")
+	add_to_group(GameGroups.CLAW_BEARS)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_claw_bear_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "巨爪熊"
-	data.creature_type = Enums.CreatureType.CLAW_BEAR
+	data.creature_type = BeastsTypes.BeastType.CLAW_BEAR
 	data.max_health = 1000
-	data.attack = 90  # 极高攻击力
+	data.attack = 90 # 极高攻击力
 	data.armor = 30
-	data.speed = 45  # 较慢但力量巨大
+	data.speed = 45 # 较慢但力量巨大
 	data.size = 40
 	data.attack_range = 4.0
 	data.attack_cooldown = 2.0
 	data.detection_range = 12.0
-	data.color = Color(0.4, 0.3, 0.2)  # 棕色
+	data.color = Color(0.4, 0.3, 0.2) # 棕色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,7 +41,7 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 0.7  # 缓慢但有力
+	return 0.7 # 缓慢但有力
 
 ## 杂食行为 - 既吃植物也捕食其他动物
 func omnivorous_behavior() -> void:

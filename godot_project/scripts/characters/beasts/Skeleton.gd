@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("skeletons")
+	add_to_group(GameGroups.SKELETONS)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_skeleton_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "骷髅"
-	data.creature_type = Enums.CreatureType.SKELETON
+	data.creature_type = BeastsTypes.BeastType.SKELETON
 	data.max_health = 400
 	data.attack = 25
 	data.armor = 1
-	data.speed = 30        # 移动缓慢
+	data.speed = 30 # 移动缓慢
 	data.size = 16
 	data.attack_range = 2.5
 	data.attack_cooldown = 2.0
 	data.detection_range = 7.0
-	data.color = Color(0.8, 0.8, 0.8)  # 白色/灰色
+	data.color = Color(0.8, 0.8, 0.8) # 白色/灰色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,4 +41,4 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 0.7  # 缓慢移动
+	return 0.7 # 缓慢移动

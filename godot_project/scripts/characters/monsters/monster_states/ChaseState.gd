@@ -18,7 +18,7 @@ var max_chase_time: float = 15.0
 var chase_speed_multiplier: float = 1.3
 
 func enter(data: Dictionary = {}) -> void:
-	var monster = state_machine.owner
+	var monster = state_machine.owner_node
 	
 	# 获取目标敌人
 	if data.has("target_enemy"):
@@ -45,12 +45,10 @@ func enter(data: Dictionary = {}) -> void:
 	chase_timer.timeout.connect(_on_chase_timeout)
 	add_child(chase_timer)
 	chase_timer.start()
-	
-	if state_machine.debug_mode:
-		print("[MonsterChaseState] 怪物开始追击 | 目标: %s" % str(target_enemy))
+		
 
 func update(_delta: float) -> void:
-	var monster = state_machine.owner
+	var monster = state_machine.owner_node
 	
 	# 检查目标敌人是否仍然有效
 	if not target_enemy or not is_instance_valid(target_enemy):
@@ -77,7 +75,7 @@ func _find_nearest_enemy(monster: Node) -> Node:
 		if enemy != monster and is_instance_valid(enemy):
 			if monster.is_enemy_of(enemy):
 				var distance = monster.global_position.distance_to(enemy.global_position)
-				if distance < monster.detection_range * 1.5 and distance < min_distance:  # 追击时检测范围更大
+				if distance < monster.detection_range * 1.5 and distance < min_distance: # 追击时检测范围更大
 					min_distance = distance
 					nearest_enemy = enemy
 	
@@ -94,18 +92,26 @@ func _in_attack_range(monster: Node) -> bool:
 
 func _chase_enemy(monster: Node, delta: float) -> void:
 	"""追击敌人"""
-	if not monster.has_method("move_towards") or not target_enemy:
+	if not target_enemy:
 		return
 	
-	# 使用追击速度
-	var original_speed = monster.speed
-	monster.speed = original_speed * chase_speed_multiplier
+	# 🔧 [统一移动API] 使用 MovementHelper.process_navigation 处理追击移动
+	var move_result = MovementHelper.process_navigation(
+		monster,
+		target_enemy.global_position,
+		delta,
+		"ChaseState" if state_machine.debug_mode else ""
+	)
 	
-	# 移动到敌人位置
-	monster.move_towards(target_enemy.global_position, delta)
-	
-	# 恢复原始速度
-	monster.speed = original_speed
+	# 处理移动结果
+	match move_result:
+		MovementHelper.MoveResult.REACHED:
+			# 到达敌人位置，进入战斗状态
+			state_finished.emit("CombatState", {"target_enemy": target_enemy})
+		MovementHelper.MoveResult.FAILED_NO_PATH, MovementHelper.MoveResult.FAILED_STUCK:
+			# 追击失败，返回空闲状态
+			state_finished.emit("IdleState", {})
+		# MovementHelper.MoveResult.MOVING: 继续追击
 
 func _on_chase_timeout() -> void:
 	"""追击超时"""

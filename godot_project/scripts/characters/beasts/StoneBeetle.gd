@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("stone_beetles")
+	add_to_group(GameGroups.STONE_BEETLES)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_stone_beetle_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "石甲虫"
-	data.creature_type = Enums.CreatureType.STONE_BEETLE
+	data.creature_type = BeastsTypes.BeastType.STONE_BEETLE
 	data.max_health = 400
-	data.attack = 60  # 中等攻击力
-	data.armor = 35  # 高护甲
-	data.speed = 40  # 较慢
+	data.attack = 60 # 中等攻击力
+	data.armor = 35 # 高护甲
+	data.speed = 40 # 较慢
 	data.size = 15
 	data.attack_range = 2.0
 	data.attack_cooldown = 1.5
 	data.detection_range = 8.0
-	data.color = Color(0.4, 0.4, 0.4)  # 灰色
+	data.color = Color(0.4, 0.4, 0.4) # 灰色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,7 +41,7 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 0.8  # 较慢移动
+	return 0.8 # 较慢移动
 
 ## 甲壳防御 - 坚硬的外壳提供保护
 func shell_defense() -> void:

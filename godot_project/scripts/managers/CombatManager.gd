@@ -18,14 +18,8 @@ enum CombatState {
 	PATROLLING # 巡逻中
 }
 
-# 攻击类型枚举
-enum AttackType {
-	MELEE, # 近战攻击
-	RANGED, # 远程攻击
-	MAGIC, # 魔法攻击
-	AREA_DAMAGE, # 范围伤害
-	AREA_HEAL # 范围治疗
-}
+# 🔧 使用autoload中的枚举类型
+# AttackType 现在从 CombatTypes autoload 获取
 
 # 战斗配置
 var config = {
@@ -227,7 +221,7 @@ func _get_enemy_units(character: CharacterBase) -> Array:
 		return []
 
 	# 根据阵营获取敌对单位
-	if character.faction == Enums.Faction.HEROES:
+	if character.faction == HeroesTypes.Faction.HEROES:
 		return GameGroups.get_nodes(GameGroups.MONSTERS)
 	
 	return GameGroups.get_nodes(GameGroups.HEROES)
@@ -239,9 +233,9 @@ func _detect_building_targets(unit: CombatUnit):
 		return
 
 	# 英雄可以攻击建筑
-	if unit.character.faction == Enums.Faction.HEROES:
+	if unit.character.faction == HeroesTypes.Faction.HEROES:
 		for building in building_manager.buildings:
-			if building and building.status != BuildingManager.BuildingStatus.DESTROYED:
+			if building and building.status != BuildingTypes.BuildingStatus.DESTROYED:
 				var distance = unit.character.position.distance_to(building.position)
 				if distance <= 150.0: # 使用固定值替代config
 					# 将建筑作为攻击目标（需要特殊处理）
@@ -318,11 +312,11 @@ func _execute_attack_sequence(unit: CombatUnit, target: CharacterBase, _delta: f
 func _is_ranged_attack(attack_type) -> bool:
 	"""检查是否为远程攻击"""
 	return attack_type in [
-		Enums.AttackType.RANGED,
-		Enums.AttackType.RANGED_BOW,
-		Enums.AttackType.RANGED_GUN,
-		Enums.AttackType.RANGED_CROSSBOW,
-		Enums.AttackType.MAGIC_SINGLE
+		CombatTypes.AttackType.RANGED,
+		CombatTypes.AttackType.RANGED_BOW,
+		CombatTypes.AttackType.RANGED_GUN,
+		CombatTypes.AttackType.RANGED_CROSSBOW,
+		CombatTypes.AttackType.MAGIC_SINGLE
 	]
 
 func _execute_ranged_attack(attacker: CharacterBase, target: CharacterBase):
@@ -348,13 +342,13 @@ func _execute_knockback_effect(attacker: CharacterBase, target: CharacterBase, _
 	# 根据攻击类型决定击退力度
 	var knockback_force = 15.0 # 默认中等击退
 	var attack_type = attacker.get("attack_type")
-	if attack_type == Enums.AttackType.MELEE_AXE:
+	if attack_type == CombatTypes.AttackType.MELEE_AXE:
 		knockback_force = 30.0 # 斧类强击退
-	elif attack_type == Enums.AttackType.MELEE_SPEAR:
+	elif attack_type == CombatTypes.AttackType.MELEE_SPEAR:
 		knockback_force = 20.0 # 矛类中强击退
-	elif attack_type == Enums.AttackType.MAGIC_AOE or attack_type == Enums.AttackType.AREA:
+	elif attack_type == CombatTypes.AttackType.MAGIC_AOE or attack_type == CombatTypes.AttackType.AREA:
 		knockback_force = 25.0 # AOE魔法强击退
-	elif attack_type == Enums.AttackType.HEAVY:
+	elif attack_type == CombatTypes.AttackType.HEAVY:
 		knockback_force = 25.0 # 重击强击退
 	
 	# 应用击退
@@ -424,9 +418,9 @@ func _handle_non_combat_behavior(unit: CombatUnit, _delta: float):
 		return
 
 	# 根据单位类型处理不同行为
-	if character.get("creature_type") == Enums.CreatureType.GOBLIN_WORKER:
+	if character.get("creature_type") == MonstersTypes.MonsterType.GOBLIN_WORKER:
 		_handle_worker_behavior(unit, _delta)
-	elif character.get("creature_type") == Enums.CreatureType.GOBLIN_ENGINEER:
+	elif character.get("creature_type") == MonstersTypes.MonsterType.GOBLIN_ENGINEER:
 		_handle_engineer_behavior(unit, _delta)
 	else:
 		_handle_generic_non_combat_behavior(unit, _delta)

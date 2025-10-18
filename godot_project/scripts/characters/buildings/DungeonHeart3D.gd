@@ -7,7 +7,10 @@ class_name DungeonHeart3D
 # 存储系统（继承原有逻辑）
 var stored_mana: int = 500
 var mana_storage_capacity: int = 2000
-var mana_generation_rate: float = 1.0  # 每秒生成1点魔力
+var mana_generation_rate: float = 1.0 # 每秒生成1点魔力
+
+# 🔧 [新增] 金币存储配置（在_init中设置，避免与父类冲突）
+# stored_gold 和 gold_storage_capacity 在父类 Building 中已定义
 
 
 func _init():
@@ -16,16 +19,20 @@ func _init():
 	
 	# 基础属性
 	building_name = "地牢之心"
-	building_type = BuildingTypes.DUNGEON_HEART
+	building_type = BuildingTypes.BuildingType.DUNGEON_HEART
 	max_health = 1000
 	health = max_health
 	armor = 10
-	building_size = Vector2(2, 2)  # 保持原有2x2尺寸用于碰撞检测
-	cost_gold = 0  # 地牢之心不需要建造
+	building_size = Vector2(2, 2) # 保持原有2x2尺寸用于碰撞检测
+	cost_gold = 0 # 地牢之心不需要建造
 	engineer_cost = 0
 	build_time = 0
 	engineer_required = 0
-	status = BuildingStatus.COMPLETED  # 直接完成
+	status = BuildingStatus.COMPLETED # 直接完成
+	
+	# 🔧 [新增] 设置金币存储配置
+	stored_gold = 1000 # 初始金币
+	gold_storage_capacity = 5000 # 金币存储容量
 	
 	# 3D配置
 	_setup_3d_config()
@@ -37,37 +44,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = false,   # 无窗户（核心建筑）
-		door = false,      # 无门（核心建筑）
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = false
+	building_3d_config.has_door = false
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（深红色风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.8, 0.2, 0.2),    # 深红色墙体
-		roof = Color(0.6, 0.1, 0.1),    # 更深红色屋顶
-		floor = Color(0.4, 0.1, 0.1)     # 暗红色地板
-	)
+	building_3d_config.wall_color = Color(0.8, 0.2, 0.2) # 深红色墙体
+	building_3d_config.roof_color = Color(0.6, 0.1, 0.1) # 更深红色屋顶
+	building_3d_config.floor_color = Color(0.4, 0.1, 0.1) # 暗红色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取地牢之心建筑模板"""
-	var template = BuildingTemplate.new("地牢之心")
-	template.building_type = BuildingTypes.DUNGEON_HEART
+	var template = BuildingTemplateClass.new("地牢之心")
+	template.building_type = BuildingTypes.BuildingType.DUNGEON_HEART
 	template.description = "巨大的3x3x3核心建筑，散发着强大的能量"
 	
 	# 创建魔法结构
-	template.create_magic_structure(BuildingTypes.DUNGEON_HEART)
+	template.create_magic_structure(BuildingTypes.BuildingType.DUNGEON_HEART)
 	
 	# 自定义核心元素
 	# 顶层：能量水晶和魔力核心
@@ -119,11 +120,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.8, 0.2, 0.2)  # 深红色
-	config.roof_color = Color(0.6, 0.1, 0.1)    # 更深红色
-	config.floor_color = Color(0.4, 0.1, 0.1)   # 暗红色
-	config.window_color = Color.LIGHT_BLUE       # 不使用窗户
-	config.door_color = Color.DARK_GRAY          # 不使用门
+	config.wall_color = Color(0.8, 0.2, 0.2) # 深红色
+	config.roof_color = Color(0.6, 0.1, 0.1) # 更深红色
+	config.floor_color = Color(0.4, 0.1, 0.1) # 暗红色
+	config.window_color = Color.LIGHT_BLUE # 不使用窗户
+	config.door_color = Color.DARK_GRAY # 不使用门
 	
 	return config
 
@@ -164,7 +165,7 @@ func _start_core_system():
 	# 设置魔力生成定时器
 	var mana_timer = Timer.new()
 	mana_timer.name = "ManaTimer"
-	mana_timer.wait_time = 1.0  # 每秒更新一次
+	mana_timer.wait_time = 1.0 # 每秒更新一次
 	mana_timer.timeout.connect(_generate_mana)
 	mana_timer.autostart = true
 	add_child(mana_timer)
@@ -296,6 +297,9 @@ func get_building_info() -> Dictionary:
 	base_info["mana_storage_capacity"] = mana_storage_capacity
 	base_info["mana_generation_rate"] = mana_generation_rate
 	base_info["mana_ratio"] = float(stored_mana) / float(mana_storage_capacity)
+	base_info["stored_gold"] = stored_gold
+	base_info["gold_storage_capacity"] = gold_storage_capacity
+	base_info["gold_ratio"] = float(stored_gold) / float(gold_storage_capacity)
 	base_info["total_storage_ratio"] = (float(stored_mana) + float(stored_gold)) / (float(mana_storage_capacity) + float(gold_storage_capacity))
 	
 	return base_info

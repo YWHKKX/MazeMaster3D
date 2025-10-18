@@ -33,9 +33,6 @@ func enter(_data: Dictionary = {}) -> void:
 	add_child(wander_timer)
 	wander_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[WanderState] 开始游荡 | 目标: %s" % str(wander_target))
-
 func physics_update(_delta: float) -> void:
 	var worker = state_machine.owner
 	

@@ -8,19 +8,20 @@ extends Node
 # ============================================================================
 
 enum EcosystemType {
-	FOREST,     # 森林
-	GRASSLAND,  # 草地
-	LAKE,       # 湖泊
-	CAVE,       # 洞穴
-	WASTELAND,  # 荒地
-	DEAD_LAND   # 死地
+	FOREST, # 森林
+	GRASSLAND, # 草地
+	LAKE, # 湖泊
+	CAVE, # 洞穴
+	WASTELAND, # 荒地
+	DEAD_LAND, # 死地
+	PRIMITIVE # 原始
 }
 
 # ============================================================================
 # 生态区域数据结构
 # ============================================================================
 
-class EcosystemRegion:
+class RegionData:
 	var position: Vector2i
 	var size: Vector2i
 	var ecosystem_type: EcosystemType
@@ -74,38 +75,38 @@ class RegionFeature:
 # ============================================================================
 
 class EcosystemRegionManager:
-	var regions: Array[EcosystemRegion] = []
-	var active_regions: Array[EcosystemRegion] = []
+	var regions: Array[RegionData] = []
+	var active_regions: Array[RegionData] = []
 	
-	func add_region(region: EcosystemRegion):
+	func add_region(region: RegionData):
 		"""添加生态区域"""
 		regions.append(region)
 		if region.is_active:
 			active_regions.append(region)
 	
-	func remove_region(region: EcosystemRegion):
+	func remove_region(region: RegionData):
 		"""移除生态区域"""
 		regions.erase(region)
 		active_regions.erase(region)
 	
-	func get_regions_by_type(ecosystem_type: EcosystemType) -> Array[EcosystemRegion]:
+	func get_regions_by_type(ecosystem_type: EcosystemType) -> Array[RegionData]:
 		"""根据类型获取区域"""
-		var filtered_regions: Array[EcosystemRegion] = []
+		var filtered_regions: Array[RegionData] = []
 		for region in regions:
 			if region.ecosystem_type == ecosystem_type:
 				filtered_regions.append(region)
 		return filtered_regions
 	
-	func get_region_at_position(pos: Vector2i) -> EcosystemRegion:
+	func get_region_at_position(pos: Vector2i) -> RegionData:
 		"""获取指定位置的区域"""
 		for region in regions:
 			if region.contains_point(pos):
 				return region
 		return null
 	
-	func get_nearby_regions(center: Vector2i, radius: float) -> Array[EcosystemRegion]:
+	func get_nearby_regions(center: Vector2i, radius: float) -> Array[RegionData]:
 		"""获取指定位置附近的区域"""
-		var nearby_regions: Array[EcosystemRegion] = []
+		var nearby_regions: Array[RegionData] = []
 		for region in regions:
 			var distance = region.get_center().distance_to(center)
 			if distance <= radius:
@@ -116,7 +117,7 @@ class EcosystemRegionManager:
 # 生态区域特性生成
 # ============================================================================
 
-static func generate_region_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func generate_region_features(region: RegionData) -> Array[RegionFeature]:
 	"""为生态区域生成特殊特性"""
 	var features: Array[RegionFeature] = []
 	
@@ -136,7 +137,7 @@ static func generate_region_features(region: EcosystemRegion) -> Array[RegionFea
 	
 	return features
 
-static func _generate_forest_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func _generate_forest_features(region: RegionData) -> Array[RegionFeature]:
 	"""生成森林特性"""
 	var features: Array[RegionFeature] = []
 	
@@ -158,7 +159,7 @@ static func _generate_forest_features(region: EcosystemRegion) -> Array[RegionFe
 	
 	return features
 
-static func _generate_grassland_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func _generate_grassland_features(region: RegionData) -> Array[RegionFeature]:
 	"""生成草地特性"""
 	var features: Array[RegionFeature] = []
 	
@@ -174,7 +175,7 @@ static func _generate_grassland_features(region: EcosystemRegion) -> Array[Regio
 	
 	return features
 
-static func _generate_lake_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func _generate_lake_features(region: RegionData) -> Array[RegionFeature]:
 	"""生成湖泊特性"""
 	var features: Array[RegionFeature] = []
 	
@@ -190,7 +191,7 @@ static func _generate_lake_features(region: EcosystemRegion) -> Array[RegionFeat
 	
 	return features
 
-static func _generate_cave_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func _generate_cave_features(region: RegionData) -> Array[RegionFeature]:
 	"""生成洞穴特性"""
 	var features: Array[RegionFeature] = []
 	
@@ -207,7 +208,7 @@ static func _generate_cave_features(region: EcosystemRegion) -> Array[RegionFeat
 	
 	return features
 
-static func _generate_wasteland_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func _generate_wasteland_features(region: RegionData) -> Array[RegionFeature]:
 	"""生成荒地特性"""
 	var features: Array[RegionFeature] = []
 	
@@ -223,7 +224,7 @@ static func _generate_wasteland_features(region: EcosystemRegion) -> Array[Regio
 	
 	return features
 
-static func _generate_dead_land_features(region: EcosystemRegion) -> Array[RegionFeature]:
+static func _generate_dead_land_features(region: RegionData) -> Array[RegionFeature]:
 	"""生成死地特性"""
 	var features: Array[RegionFeature] = []
 	

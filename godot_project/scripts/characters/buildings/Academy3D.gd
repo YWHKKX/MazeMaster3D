@@ -5,16 +5,16 @@ class_name Academy3D
 ## 基于Building3D，实现学院的3x3x3渲染
 
 # 教育系统
-var student_capacity: int = 8                    # 学生容量
-var knowledge_generation_rate: float = 1.8       # 知识生成速度
-var teaching_efficiency: float = 1.6             # 教学效率倍率
-var research_bonus: float = 0.4                  # 研究加成（40%）
+var student_capacity: int = 8 # 学生容量
+var knowledge_generation_rate: float = 1.8 # 知识生成速度
+var teaching_efficiency: float = 1.6 # 教学效率倍率
+var research_bonus: float = 0.4 # 研究加成（40%）
 
 # 教育状态
-var current_students: Array = []                  # 当前学生
-var research_projects: Array = []                 # 研究项目
-var academy_prestige: float = 0.0                # 学院声望
-var knowledge_storage: int = 0                    # 知识存储
+var current_students: Array = [] # 当前学生
+var research_projects: Array = [] # 研究项目
+var academy_prestige: float = 0.0 # 学院声望
+var knowledge_storage: int = 0 # 知识存储
 
 
 func _init():
@@ -23,11 +23,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "学院"
-	building_type = BuildingTypes.ACADEMY
+	building_type = BuildingTypes.BuildingType.ACADEMY
 	max_health = 320
 	health = max_health
 	armor = 4
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 700
 	engineer_cost = 350
 	build_time = 280.0
@@ -44,37 +44,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有窗户（采光）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（学术风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.8, 0.8, 0.9),    # 浅蓝色墙体
-		roof = Color(0.6, 0.7, 0.8),    # 深蓝色屋顶
-		floor = Color(0.9, 0.9, 0.95)    # 白色地板
-	)
+	building_3d_config.wall_color = Color(0.8, 0.8, 0.9) # 浅蓝色墙体
+	building_3d_config.roof_color = Color(0.6, 0.7, 0.8) # 深蓝色屋顶
+	building_3d_config.floor_color = Color(0.9, 0.9, 0.95) # 白色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取学院建筑模板"""
-	var template = BuildingTemplate.new("学院")
-	template.building_type = BuildingTypes.ACADEMY
+	var template = BuildingTemplateClass.new("学院")
+	template.building_type = BuildingTypes.BuildingType.ACADEMY
 	template.description = "庄严的3x3x3教育学院，散发着智慧的气息"
 	
 	# 创建学术结构
-	template.create_academy_structure(BuildingTypes.ACADEMY)
+	template.create_academy_structure(BuildingTypes.BuildingType.ACADEMY)
 	
 	# 自定义学院元素
 	# 顶层：钟楼和学术旗帜
@@ -130,11 +124,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.8, 0.8, 0.9)  # 浅蓝色
-	config.roof_color = Color(0.6, 0.7, 0.8)    # 深蓝色
-	config.floor_color = Color(0.9, 0.9, 0.95)   # 白色
-	config.window_color = Color(0.9, 0.95, 1.0)  # 淡蓝色窗户
-	config.door_color = Color(0.7, 0.7, 0.8)    # 蓝色门
+	config.wall_color = Color(0.8, 0.8, 0.9) # 浅蓝色
+	config.roof_color = Color(0.6, 0.7, 0.8) # 深蓝色
+	config.floor_color = Color(0.9, 0.9, 0.95) # 白色
+	config.window_color = Color(0.9, 0.95, 1.0) # 淡蓝色窗户
+	config.door_color = Color(0.7, 0.7, 0.8) # 蓝色门
 	
 	return config
 
@@ -178,7 +172,7 @@ func _start_education_system():
 	# 设置教育更新定时器
 	var education_timer = Timer.new()
 	education_timer.name = "EducationTimer"
-	education_timer.wait_time = 1.0  # 每秒更新一次
+	education_timer.wait_time = 1.0 # 每秒更新一次
 	education_timer.timeout.connect(_update_education)
 	education_timer.autostart = true
 	add_child(education_timer)
@@ -186,7 +180,7 @@ func _start_education_system():
 	# 设置知识生成定时器
 	var knowledge_timer = Timer.new()
 	knowledge_timer.name = "KnowledgeTimer"
-	knowledge_timer.wait_time = 3.0  # 每3秒生成一次
+	knowledge_timer.wait_time = 3.0 # 每3秒生成一次
 	knowledge_timer.timeout.connect(_generate_knowledge)
 	knowledge_timer.autostart = true
 	add_child(knowledge_timer)
@@ -238,7 +232,7 @@ func _teach_student(student: Node, delta: float):
 	if student.has_method("apply_teaching"):
 		var teaching_amount = teaching_efficiency * delta
 		if academy_prestige > 80.0:
-			teaching_amount *= 1.2  # 高声望加成
+			teaching_amount *= 1.2 # 高声望加成
 		
 		student.apply_teaching(teaching_amount)
 		
@@ -285,7 +279,7 @@ func _generate_knowledge():
 	"""生成知识"""
 	var knowledge_generated = int(knowledge_generation_rate * (1.0 + academy_prestige * 0.01))
 	knowledge_storage += knowledge_generated
-	knowledge_storage = min(knowledge_storage, 1000)  # 最大存储1000
+	knowledge_storage = min(knowledge_storage, 1000) # 最大存储1000
 	
 	# 播放知识生成特效
 	_play_knowledge_generation_effect()
@@ -335,7 +329,7 @@ func admit_student(student: Node) -> bool:
 func graduate_student(student: Node):
 	"""毕业学生"""
 	current_students.erase(student)
-	academy_prestige += 5.0  # 毕业生增加声望
+	academy_prestige += 5.0 # 毕业生增加声望
 
 
 func start_research_project(project_name: String, project_type: String, project_value: int) -> bool:
@@ -386,14 +380,14 @@ func _update_wisdom_tower_animation(delta: float):
 		construction_animator.play_function_animation("wisdom_tower")
 	
 	# 根据学生数量和研究项目调整智慧塔发光
-	var academic_intensity = (float(current_students.size()) / float(student_capacity) + 
+	var academic_intensity = (float(current_students.size()) / float(student_capacity) +
 							 float(research_projects.size()) / 3.0) * 0.5
 	
 	if effect_manager and effect_manager.light_systems.has("wisdom_tower_light"):
 		var light = effect_manager.light_systems["wisdom_tower_light"]
 		if light and light.visible:
 			light.light_energy = 0.7 + academic_intensity * 1.0
-			light.light_color = Color(0.7, 0.8, 1.0)  # 淡蓝色智慧光
+			light.light_color = Color(0.7, 0.8, 1.0) # 淡蓝色智慧光
 
 
 func _update_classroom_activity(delta: float):
@@ -432,7 +426,7 @@ func _update_academy_specific_effects(delta: float):
 		if light and light.visible:
 			# 学院脉冲
 			light.light_energy = 0.6 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.3
-			light.light_color = Color(0.8, 0.9, 1.0)  # 淡蓝色学院光
+			light.light_color = Color(0.8, 0.9, 1.0) # 淡蓝色学院光
 
 
 func get_building_info() -> Dictionary:

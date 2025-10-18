@@ -23,8 +23,6 @@ func enter(_data: Dictionary = {}) -> void:
 	# 🔧 修复：检查金库是否有效
 	if not target_treasury or not is_instance_valid(target_treasury):
 		# 没有金库，直接清空金币（不应该发生）
-		if state_machine.debug_mode:
-			print("[ReturnGoldState] 找不到金库，金币丢失: %d" % engineer.carried_gold)
 		engineer.carried_gold = 0
 		state_finished.emit("IdleState", {})
 		return
@@ -36,18 +34,12 @@ func enter(_data: Dictionary = {}) -> void:
 	if engineer.has_node("Model") and engineer.get_node("Model").has_method("play_animation"):
 		engineer.get_node("Model").play_animation("move")
 	
-	if state_machine.debug_mode:
-		print("[ReturnGoldState] 归还金币 | 数量: %d | 目标: %s" % [
-			engineer.carried_gold, str(target_treasury.global_position)
-		])
 
 func physics_update(_delta: float) -> void:
 	var engineer = state_machine.owner
 	
 	# 检查金库是否有效
 	if not is_instance_valid(target_treasury):
-		if state_machine.debug_mode:
-			print("[ReturnGoldState] 金库失效，金币丢失")
 		engineer.carried_gold = 0
 		state_finished.emit("IdleState", {})
 		return
@@ -69,14 +61,10 @@ func physics_update(_delta: float) -> void:
 	match move_result:
 		MovementHelper.InteractionMoveResult.REACHED_INTERACTION:
 			# 已到达交互范围，存入金币
-			if state_machine.debug_mode:
-				print("[ReturnGoldState] Engineer进入金库交互范围，存入金币")
 			_deposit_gold(engineer)
 			state_finished.emit("IdleState", {})
 		MovementHelper.InteractionMoveResult.FAILED_NO_PATH, MovementHelper.InteractionMoveResult.FAILED_STUCK:
 			# 寻路失败或卡住，金币丢失，返回空闲
-			if state_machine.debug_mode:
-				print("❌ [ReturnGoldState] 无法到达金库，金币丢失: %d" % engineer.carried_gold)
 			engineer.carried_gold = 0
 			state_finished.emit("IdleState", {})
 		# MOVING_TO_ADJACENT 和 MOVING_TO_INTERACTION 继续移动
@@ -85,9 +73,7 @@ func _deposit_gold(engineer: Node) -> void:
 	"""将金币存入金库"""
 	if engineer.resource_manager:
 		engineer.resource_manager.add_gold(engineer.carried_gold)
-		if state_machine.debug_mode:
-			print("[ReturnGoldState] 归还 %d 金币到金库" % engineer.carried_gold)
-	
+
 	engineer.carried_gold = 0
 	
 	# 🔧 [状态栏系统] 更新金币显示

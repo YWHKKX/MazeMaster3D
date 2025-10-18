@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name OrcWarrior
+extends MonsterBase
 
 ## 兽人战士 - 狂暴战士，低血量时进入狂暴状态
 ## 战斗等级: ⭐⭐
@@ -14,15 +14,13 @@ func _ready() -> void:
 	
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("orc_warriors")
+	add_to_group(GameGroups.ORC_WARRIORS)
 	
-	if debug_mode:
-		print("[OrcWarrior] 兽人战士初始化完成 - 位置: %v" % global_position)
 
 func _init_orc_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "兽人战士"
-	data.creature_type = Enums.CreatureType.ORC_WARRIOR
+	data.creature_type = MonstersTypes.MonsterType.ORC_WARRIOR
 	data.max_health = 900
 	data.attack = 22
 	data.armor = 4

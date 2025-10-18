@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("poison_scorpions")
+	add_to_group(GameGroups.POISON_SCORPIONS)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_poison_scorpion_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "毒刺蝎"
-	data.creature_type = Enums.CreatureType.POISON_SCORPION
+	data.creature_type = BeastsTypes.BeastType.POISON_SCORPION
 	data.max_health = 200
-	data.attack = 45  # 中等攻击力
+	data.attack = 45 # 中等攻击力
 	data.armor = 15
-	data.speed = 55  # 中等速度
+	data.speed = 55 # 中等速度
 	data.size = 8
 	data.attack_range = 2.5
 	data.attack_cooldown = 1.0
 	data.detection_range = 6.0
-	data.color = Color(0.3, 0.2, 0.1)  # 深棕色
+	data.color = Color(0.3, 0.2, 0.1) # 深棕色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,7 +41,7 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 1.0  # 正常速度
+	return 1.0 # 正常速度
 
 ## 毒性攻击 - 使用毒刺攻击猎物
 func perform_poison_attack() -> void:

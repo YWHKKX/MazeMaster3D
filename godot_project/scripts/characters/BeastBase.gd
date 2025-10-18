@@ -69,7 +69,7 @@ func _ready() -> void:
 	super._ready()
 	
 	# 设置野兽阵营
-	faction = Enums.Faction.BEASTS
+	faction = BeastsTypes.Faction.BEASTS
 	
 	# 野兽默认不是战斗单位（除非是攻击性的）
 	is_combat_unit = is_aggressive
@@ -78,9 +78,6 @@ func _ready() -> void:
 	if enable_state_machine and not state_machine:
 		state_machine = StateManager.get_instance().create_state_machine_for_character(self)
 	
-	if debug_mode:
-		print("[BeastBase] 野兽初始化: %s (攻击性: %s)" % [get_character_name(), is_aggressive])
-
 func _process(delta: float) -> void:
 	if not is_alive:
 		return
@@ -103,7 +100,7 @@ func _physics_process(delta: float) -> void:
 	update_regeneration(delta)
 	
 	# 检查是否需要逃跑（受到攻击时）
-	if is_low_health() and current_status != Enums.CreatureStatus.FLEEING:
+	if is_low_health() and current_status != BeastsTypes.BeastStatus.FLEEING:
 		start_fleeing()
 
 ## ============================================================================
@@ -112,15 +109,12 @@ func _physics_process(delta: float) -> void:
 
 ## 开始觅食
 func start_foraging() -> void:
-	change_status(Enums.CreatureStatus.WANDERING)
+	change_status(BeastsTypes.BeastStatus.WANDERING)
 	is_foraging = true
 	foraging_timer = 0.0
 	_generate_foraging_target()
 	foraging_started.emit()
 	
-	if debug_mode:
-		print("[BeastBase] %s 开始觅食" % get_character_name())
-
 ## 停止觅食
 func stop_foraging() -> void:
 	is_foraging = false
@@ -128,9 +122,6 @@ func stop_foraging() -> void:
 	foraging_object = null
 	foraging_completed.emit()
 	
-	if debug_mode:
-		print("[BeastBase] %s 停止觅食" % get_character_name())
-
 ## 生成觅食目标
 func _generate_foraging_target() -> void:
 	foraging_target = global_position + Vector3(
@@ -139,26 +130,17 @@ func _generate_foraging_target() -> void:
 		randf_range(-foraging_radius, foraging_radius)
 	)
 	
-	if debug_mode:
-		print("[BeastBase] %s 生成觅食目标: %v" % [get_character_name(), foraging_target])
-
 ## 开始逃跑
 func start_fleeing() -> void:
-	change_status(Enums.CreatureStatus.FLEEING)
+	change_status(BeastsTypes.BeastStatus.FLEEING)
 	flee_started.emit()
 	_generate_flee_target()
 	
-	if debug_mode:
-		print("[BeastBase] %s 开始逃跑" % get_character_name())
-
 ## 停止逃跑
 func stop_fleeing() -> void:
 	flee_ended.emit()
-	change_status(Enums.CreatureStatus.IDLE)
+	change_status(BeastsTypes.BeastStatus.IDLE)
 	
-	if debug_mode:
-		print("[BeastBase] %s 停止逃跑" % get_character_name())
-
 ## 生成逃跑目标
 func _generate_flee_target() -> void:
 	# 远离威胁源逃跑
@@ -171,9 +153,6 @@ func _generate_flee_target() -> void:
 	
 	flee_target = global_position + threat_direction * flee_distance
 	
-	if debug_mode:
-		print("[BeastBase] %s 生成逃跑目标: %v" % [get_character_name(), flee_target])
-
 ## ============================================================================
 ## 查找方法
 ## ============================================================================
@@ -229,7 +208,7 @@ func take_damage(damage: float, attacker: CharacterBase = null) -> void:
 	super.take_damage(damage, attacker)
 	
 	# 野兽受到攻击时逃跑
-	if is_alive and current_status != Enums.CreatureStatus.FLEEING:
+	if is_alive and current_status != BeastsTypes.BeastStatus.FLEEING:
 		start_fleeing()
 
 func die() -> void:

@@ -17,7 +17,7 @@ var target_position: Vector3 = Vector3.ZERO # 🔧 目标可通行位置
 # 不再需要手动管理 current_path 和 current_waypoint
 
 func enter(data: Dictionary = {}) -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 获取目标基地
 	if data.has("target_base"):
@@ -48,12 +48,10 @@ func enter(data: Dictionary = {}) -> void:
 	worker.has_deposited = false # 重置存储标志
 
 func physics_update(delta: float) -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 检查基地是否有效
 	if not is_instance_valid(target_base):
-		if state_machine.debug_mode:
-			print("[ReturnToBaseState] 基地失效，返回空闲")
 		state_finished.emit(GameGroups.STATE_IDLE, {})
 		return
 	
@@ -74,19 +72,15 @@ func physics_update(delta: float) -> void:
 	match move_result:
 		MovementHelper.InteractionMoveResult.REACHED_INTERACTION:
 			# 已到达交互范围，开始存放金币
-			if state_machine.debug_mode:
-				print("[ReturnToBaseState] Worker进入基地Area3D，存放金币")
 			state_finished.emit("DepositGoldState", {"target_base": target_base})
 			return
 		MovementHelper.InteractionMoveResult.FAILED_NO_PATH, MovementHelper.InteractionMoveResult.FAILED_STUCK:
 			# 寻路失败或卡住，返回空闲
-			if state_machine.debug_mode:
-				print("❌ [ReturnToBaseState] 无法到达基地，返回空闲")
 			state_finished.emit(GameGroups.STATE_IDLE, {})
 		# MOVING_TO_ADJACENT 和 MOVING_TO_INTERACTION 继续移动
 
 func exit() -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	worker.velocity = Vector3.ZERO
 
 
@@ -151,10 +145,10 @@ func _check_in_base_interaction_area(worker: Node, _base: Node) -> bool:
 		var is_target_building = false
 		
 		# 检查是否是地牢之心
-		if area.has_meta("building_type") and (area_building_type == BuildingTypes.DUNGEON_HEART or str(area_building_type) == str(BuildingTypes.DUNGEON_HEART)):
+		if area.has_meta("building_type") and (area_building_type == BuildingTypes.BuildingType.DUNGEON_HEART or str(area_building_type) == str(BuildingTypes.BuildingType.DUNGEON_HEART)):
 			is_target_building = true
 		# 🔧 [新增] 检查是否是金库
-		elif area.has_meta("building_type") and (area_building_type == BuildingTypes.TREASURY or str(area_building_type) == str(BuildingTypes.TREASURY)):
+		elif area.has_meta("building_type") and (area_building_type == BuildingTypes.BuildingType.TREASURY or str(area_building_type) == str(BuildingTypes.BuildingType.TREASURY)):
 			is_target_building = true
 		
 		if is_target_building:

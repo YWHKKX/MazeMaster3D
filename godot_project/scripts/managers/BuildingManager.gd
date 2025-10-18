@@ -4,38 +4,12 @@ class_name BuildingManager
 # 建筑系统管理器 - 负责所有建筑的创建、管理和维护
 # 参考 BUILDING_SYSTEM.md
 
-# 建筑类型枚举
-enum BuildingType {
-	DUNGEON_HEART, # 地牢之心
-	TREASURY, # 金库
-	LAIR, # 巢穴
-	DEMON_LAIR, # 恶魔巢穴
-	ORC_LAIR, # 兽人巢穴
-	TRAINING_ROOM, # 训练室
-	LIBRARY, # 图书馆
-	WORKSHOP, # 工坊
-	PRISON, # 监狱
-	TORTURE_CHAMBER, # 刑房
-	ARROW_TOWER, # 箭塔
-	ARCANE_TOWER, # 奥术塔
-	DEFENSE_WORKS, # 防御工事
-	MAGIC_ALTAR, # 魔法祭坛
-	SHADOW_TEMPLE, # 暗影神殿
-	MAGIC_RESEARCH_INSTITUTE # 魔法研究院
-}
-
-# 建筑状态枚举
-enum BuildingStatus {
-	PLANNING, # 规划中
-	UNDER_CONSTRUCTION, # 建造中
-	COMPLETED, # 已完成
-	DAMAGED, # 受损
-	DESTROYED # 被摧毁
-}
+# 🔧 使用autoload中的枚举类型
+# BuildingType 和 BuildingStatus 现在从 BuildingTypes autoload 获取
 
 # 建筑配置类
-class BuildingConfig:
-	var building_type: BuildingType
+class BuildingManagerConfig:
+	var building_type: BuildingTypes.BuildingType
 	var name: String
 	var cost_gold: int
 	var engineer_cost: int # 工程师建造成本（建筑成本的一半）
@@ -50,7 +24,7 @@ class BuildingConfig:
 	var placement_type: String # 放置类型
 	var can_place_on: Array[String] # 可放置的地形类型
 	
-	func _init(type: BuildingType, n: String, cost: int, time: float, eng_req: int,
+	func _init(type: BuildingTypes.BuildingType, n: String, cost: int, time: float, eng_req: int,
 		hp: int, arm: int, col: Color, sz: Vector2, level: int, p_type: String, terrain: Array[String]):
 		building_type = type
 		name = n
@@ -68,7 +42,8 @@ class BuildingConfig:
 		can_place_on = terrain
 
 # 注意：Building 类已移至 res://scripts/characters/Building.gd
-# 这里保留 BuildingConfig 类用于建筑配置
+# 所有建筑现在使用3D版本（如 DungeonHeart3D, Treasury3D 等）
+# 这里保留 BuildingManagerConfig 类用于建筑配置
 
 # 系统引用
 var main_game: Node = null
@@ -88,114 +63,114 @@ func _ready():
 func _initialize_building_configs():
 	"""初始化建筑配置"""
 	# 地牢之心
-	building_configs[BuildingType.DUNGEON_HEART] = BuildingConfig.new(
-		BuildingType.DUNGEON_HEART, "地牢之心", 0, 0, 0,
+	building_configs[BuildingTypes.BuildingType.DUNGEON_HEART] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.DUNGEON_HEART, "地牢之心", 0, 0, 0,
 		1000, 10, Color(0.545, 0.0, 0.0), Vector2(40, 40), 5,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 金库
-	building_configs[BuildingType.TREASURY] = BuildingConfig.new(
-		BuildingType.TREASURY, "金库", 100, 60, 1,
+	building_configs[BuildingTypes.BuildingType.TREASURY] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.TREASURY, "金库", 100, 60, 1,
 		200, 5, Color(1.0, 0.843, 0.0), Vector2(20, 20), 2,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
-	# 巢穴
-	building_configs[BuildingType.LAIR] = BuildingConfig.new(
-		BuildingType.LAIR, "巢穴", 150, 90, 1,
-		250, 4, Color(0.396, 0.263, 0.129), Vector2(25, 25), 2,
-		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
-	)
-	
 	# 恶魔巢穴
-	building_configs[BuildingType.DEMON_LAIR] = BuildingConfig.new(
-		BuildingType.DEMON_LAIR, "恶魔巢穴", 200, 180, 1,
+	building_configs[BuildingTypes.BuildingType.DEMON_LAIR] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.DEMON_LAIR, "恶魔巢穴", 200, 180, 1,
 		450, 6, Color(0.294, 0.0, 0.510), Vector2(20, 20), 4,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 兽人巢穴
-	building_configs[BuildingType.ORC_LAIR] = BuildingConfig.new(
-		BuildingType.ORC_LAIR, "兽人巢穴", 200, 150, 1,
+	building_configs[BuildingTypes.BuildingType.ORC_LAIR] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.ORC_LAIR, "兽人巢穴", 200, 150, 1,
 		500, 6, Color(0.545, 0.271, 0.075), Vector2(20, 20), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 训练室
-	building_configs[BuildingType.TRAINING_ROOM] = BuildingConfig.new(
-		BuildingType.TRAINING_ROOM, "训练室", 200, 120, 1,
+	building_configs[BuildingTypes.BuildingType.TRAINING_ROOM] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.TRAINING_ROOM, "训练室", 200, 120, 1,
 		300, 6, Color(0.439, 0.502, 0.565), Vector2(30, 30), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 图书馆
-	building_configs[BuildingType.LIBRARY] = BuildingConfig.new(
-		BuildingType.LIBRARY, "图书馆", 250, 150, 1,
+	building_configs[BuildingTypes.BuildingType.LIBRARY] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.LIBRARY, "图书馆", 250, 150, 1,
 		200, 5, Color(0.098, 0.098, 0.439), Vector2(28, 28), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 箭塔
-	building_configs[BuildingType.ARROW_TOWER] = BuildingConfig.new(
-		BuildingType.ARROW_TOWER, "箭塔", 200, 100, 1,
+	building_configs[BuildingTypes.BuildingType.ARROW_TOWER] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.ARROW_TOWER, "箭塔", 200, 100, 1,
 		800, 5, Color(0.827, 0.827, 0.827), Vector2(15, 35), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 奥术塔
-	building_configs[BuildingType.ARCANE_TOWER] = BuildingConfig.new(
-		BuildingType.ARCANE_TOWER, "奥术塔", 200, 100, 1,
+	building_configs[BuildingTypes.BuildingType.ARCANE_TOWER] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.ARCANE_TOWER, "奥术塔", 200, 100, 1,
 		800, 5, Color(0.541, 0.169, 0.886), Vector2(15, 35), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 魔法祭坛
-	building_configs[BuildingType.MAGIC_ALTAR] = BuildingConfig.new(
-		BuildingType.MAGIC_ALTAR, "魔法祭坛", 120, 160, 1,
+	building_configs[BuildingTypes.BuildingType.MAGIC_ALTAR] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.MAGIC_ALTAR, "魔法祭坛", 120, 160, 1,
 		300, 4, Color(0.0, 0.502, 0.502), Vector2(20, 20), 4,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 工坊
-	building_configs[BuildingType.WORKSHOP] = BuildingConfig.new(
-		BuildingType.WORKSHOP, "工坊", 300, 180, 2,
+	building_configs[BuildingTypes.BuildingType.WORKSHOP] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.WORKSHOP, "工坊", 300, 180, 2,
 		250, 6, Color(0.502, 0.251, 0.0), Vector2(25, 25), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
-	# 防御工事
-	building_configs[BuildingType.DEFENSE_WORKS] = BuildingConfig.new(
-		BuildingType.DEFENSE_WORKS, "防御工事", 180, 80, 1,
-		600, 8, Color(0.502, 0.502, 0.502), Vector2(22, 22), 2,
-		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
-	)
-	
-	# 监狱
-	building_configs[BuildingType.PRISON] = BuildingConfig.new(
-		BuildingType.PRISON, "监狱", 200, 100, 1,
-		400, 7, Color(0.251, 0.251, 0.251), Vector2(24, 24), 3,
-		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
-	)
-	
-	# 刑房
-	building_configs[BuildingType.TORTURE_CHAMBER] = BuildingConfig.new(
-		BuildingType.TORTURE_CHAMBER, "刑房", 400, 200, 2,
-		350, 6, Color(0.545, 0.0, 0.0), Vector2(26, 26), 4,
-		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
-	)
-	
 	# 暗影神殿
-	building_configs[BuildingType.SHADOW_TEMPLE] = BuildingConfig.new(
-		BuildingType.SHADOW_TEMPLE, "暗影神殿", 800, 300, 3,
+	building_configs[BuildingTypes.BuildingType.SHADOW_TEMPLE] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.SHADOW_TEMPLE, "暗影神殿", 800, 300, 3,
 		500, 8, Color(0.051, 0.051, 0.051), Vector2(32, 32), 5,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 	
 	# 魔法研究院
-	building_configs[BuildingType.MAGIC_RESEARCH_INSTITUTE] = BuildingConfig.new(
-		BuildingType.MAGIC_RESEARCH_INSTITUTE, "魔法研究院", 600, 240, 2,
+	building_configs[BuildingTypes.BuildingType.MAGIC_RESEARCH_INSTITUTE] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.MAGIC_RESEARCH_INSTITUTE, "魔法研究院", 600, 240, 2,
 		350, 6, Color(0.294, 0.0, 0.510), Vector2(28, 28), 4,
+		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
+	)
+	
+	# 学院
+	building_configs[BuildingTypes.BuildingType.ACADEMY] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.ACADEMY, "学院", 400, 200, 2,
+		300, 5, Color(0.098, 0.098, 0.439), Vector2(30, 30), 4,
+		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
+	)
+	
+	# 医院
+	building_configs[BuildingTypes.BuildingType.HOSPITAL] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.HOSPITAL, "医院", 350, 180, 2,
+		250, 4, Color.WHITE, Vector2(25, 25), 3,
+		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
+	)
+	
+	# 工厂
+	building_configs[BuildingTypes.BuildingType.FACTORY] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.FACTORY, "工厂", 500, 240, 3,
+		400, 8, Color(0.502, 0.251, 0.0), Vector2(35, 35), 4,
+		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
+	)
+	
+	# 市场
+	building_configs[BuildingTypes.BuildingType.MARKET] = BuildingManagerConfig.new(
+		BuildingTypes.BuildingType.MARKET, "市场", 300, 150, 2,
+		200, 4, Color(1.0, 0.843, 0.0), Vector2(30, 30), 3,
 		"building", ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
 	)
 
@@ -222,9 +197,9 @@ func register_building(building: Building):
 		# 如果是地牢之心或金库，注册到资源管理器
 		if resource_manager:
 			match building.building_type:
-				BuildingType.DUNGEON_HEART:
+				BuildingTypes.BuildingType.DUNGEON_HEART:
 					resource_manager.register_dungeon_heart(building)
-				BuildingType.TREASURY:
+				BuildingTypes.BuildingType.TREASURY:
 					resource_manager.register_treasury(building)
 		
 		# 建筑已注册
@@ -241,10 +216,10 @@ func unregister_building(building: Building):
 		# 从资源管理器移除
 		if resource_manager:
 			match building.building_type:
-				BuildingType.DUNGEON_HEART:
+				BuildingTypes.BuildingType.DUNGEON_HEART:
 					resource_manager.remove_gold_building(building)
 					resource_manager.remove_mana_building(building)
-				BuildingType.TREASURY:
+				BuildingTypes.BuildingType.TREASURY:
 					resource_manager.remove_gold_building(building)
 		
 		# 建筑已注销
@@ -256,7 +231,7 @@ func get_building_by_id(building_id: String):
 			return building
 	return null
 
-func get_buildings_by_type(building_type: BuildingType) -> Array:
+func get_buildings_by_type(building_type: BuildingTypes.BuildingType) -> Array:
 	"""根据类型获取建筑列表"""
 	var result: Array = []
 	for building in buildings:
@@ -266,7 +241,7 @@ func get_buildings_by_type(building_type: BuildingType) -> Array:
 
 func get_dungeon_heart():
 	"""获取地牢之心（主基地）"""
-	var hearts = get_buildings_by_type(BuildingType.DUNGEON_HEART)
+	var hearts = get_buildings_by_type(BuildingTypes.BuildingType.DUNGEON_HEART)
 	if hearts.size() > 0:
 		var heart = hearts[0]
 		return heart
@@ -287,7 +262,7 @@ func get_nearest_treasury(position: Vector3, for_deposit: bool = false):
 	Returns:
 		最近的金库，如果没有则返回 null
 	"""
-	var treasuries = get_buildings_by_type(BuildingType.TREASURY)
+	var treasuries = get_buildings_by_type(BuildingTypes.BuildingType.TREASURY)
 	if treasuries.is_empty():
 		return null
 	
@@ -378,7 +353,7 @@ func get_building_count() -> int:
 	"""获取建筑数量"""
 	return buildings.size()
 
-func get_building_config(building_type: BuildingType) -> BuildingConfig:
+func get_building_config(building_type: BuildingTypes.BuildingType) -> BuildingManagerConfig:
 	"""获取建筑配置"""
 	return building_configs.get(building_type)
 
@@ -412,7 +387,7 @@ func update_buildings(delta: float):
 
 # ===== 建筑放置系统 =====
 
-func place_building(building_type: BuildingType, world_position: Vector3, parent_node: Node = null) -> Node:
+func place_building(building_type: BuildingTypes.BuildingType, world_position: Vector3, parent_node: Node = null) -> Node:
 	"""放置新建筑（规划状态，需要工程师建造）
 	
 	🔧 [建造系统] 创建处于PLANNING状态的建筑，等待工程师建造
@@ -499,42 +474,60 @@ func _update_pathfinding_for_building(building: Node, walkable: bool):
 		GridPathFinder.set_cell_walkable(tile, walkable)
 		# 更新格子寻路状态
 
-func _create_building_instance(building_type: BuildingType) -> Node:
+func _create_building_instance(building_type: BuildingTypes.BuildingType) -> Node:
 	"""创建建筑实例（根据类型）
 	
-	🔧 [建造系统] 建筑类型到实例的映射
+	🔧 [建造系统] 建筑类型到实例的映射 - 使用3D版本
 	"""
 	match building_type:
-		BuildingType.TREASURY:
-			return Treasury.new()
-		BuildingType.LAIR:
-			return Lair.new()
-		BuildingType.DEMON_LAIR:
-			return DemonLair.new()
-		BuildingType.ORC_LAIR:
-			return OrcLair.new()
-		BuildingType.TRAINING_ROOM:
-			return Barracks.new()
-		BuildingType.LIBRARY:
-			return Library.new()
-		BuildingType.WORKSHOP:
-			return Workshop.new()
-		BuildingType.ARROW_TOWER:
-			return ArrowTower.new()
-		BuildingType.ARCANE_TOWER:
-			return ArcaneTower.new()
-		BuildingType.DEFENSE_WORKS:
-			return DefenseWorks.new()
-		BuildingType.PRISON:
-			return Prison.new()
-		BuildingType.TORTURE_CHAMBER:
-			return TortureChamber.new()
-		BuildingType.MAGIC_ALTAR:
-			return MagicAltar.new()
-		BuildingType.SHADOW_TEMPLE:
-			return ShadowTemple.new()
-		BuildingType.MAGIC_RESEARCH_INSTITUTE:
-			return MagicResearchInstitute.new()
+		BuildingTypes.BuildingType.DUNGEON_HEART:
+			return DungeonHeart3D.new()
+		BuildingTypes.BuildingType.TREASURY:
+			return Treasury3D.new()
+		BuildingTypes.BuildingType.DEMON_LAIR:
+			return DemonLair3D.new()
+		BuildingTypes.BuildingType.ORC_LAIR:
+			return OrcLair3D.new()
+		BuildingTypes.BuildingType.TRAINING_ROOM:
+			return Barracks3D.new()
+		BuildingTypes.BuildingType.LIBRARY:
+			return Library3D.new()
+		BuildingTypes.BuildingType.WORKSHOP:
+			return Workshop3D.new()
+		BuildingTypes.BuildingType.ACADEMY:
+			return Academy3D.new()
+		BuildingTypes.BuildingType.HOSPITAL:
+			return Hospital3D.new()
+		BuildingTypes.BuildingType.FACTORY:
+			return Factory3D.new()
+		BuildingTypes.BuildingType.MARKET:
+			return Market3D.new()
+		BuildingTypes.BuildingType.ARROW_TOWER:
+			return ArrowTower3D.new()
+		BuildingTypes.BuildingType.ARCANE_TOWER:
+			return ArcaneTower3D.new()
+		BuildingTypes.BuildingType.MAGIC_ALTAR:
+			return MagicAltar3D.new()
+		BuildingTypes.BuildingType.SHADOW_TEMPLE:
+			return ShadowTemple3D.new()
+		BuildingTypes.BuildingType.MAGIC_RESEARCH_INSTITUTE:
+			return MagicResearchInstitute3D.new()
 		_:
 			LogManager.warning("⚠️ 未实现的建筑类型: %d，使用默认Building" % building_type)
 			return null
+
+func clear_all_buildings():
+	"""清空所有建筑"""
+	LogManager.info("BuildingManager - 清空所有建筑...")
+	
+	# 销毁所有建筑
+	for building in buildings.duplicate():
+		destroy_building(building)
+	
+	# 清空建筑列表
+	buildings.clear()
+	
+	# 重置建筑ID计数器
+	next_building_id = 1
+	
+	LogManager.info("BuildingManager - 所有建筑已清空")

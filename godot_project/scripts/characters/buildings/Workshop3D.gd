@@ -5,15 +5,15 @@ class_name Workshop3D
 ## 基于Building3D，实现工坊的3x3x3渲染
 
 # 制造系统
-var crafting_slots: int = 3                    # 同时制造项目数
-var crafting_speed_multiplier: float = 1.5     # 制造速度倍率
-var trap_crafting_bonus: float = 0.3          # 陷阱制造加成（30%）
-var equipment_crafting_bonus: float = 0.2     # 装备制造加成（20%）
+var crafting_slots: int = 3 # 同时制造项目数
+var crafting_speed_multiplier: float = 1.5 # 制造速度倍率
+var trap_crafting_bonus: float = 0.3 # 陷阱制造加成（30%）
+var equipment_crafting_bonus: float = 0.2 # 装备制造加成（20%）
 
 # 制造状态
-var active_crafting_projects: Array = []       # 当前制造项目
-var available_recipes: Array = []              # 可用配方
-var material_storage: Dictionary = {}          # 材料存储
+var active_crafting_projects: Array = [] # 当前制造项目
+var available_recipes: Array = [] # 可用配方
+var material_storage: Dictionary = {} # 材料存储
 
 
 func _init():
@@ -22,11 +22,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "工坊"
-	building_type = BuildingTypes.WORKSHOP
+	building_type = BuildingTypes.BuildingType.WORKSHOP
 	max_health = 300
 	health = max_health
 	armor = 5
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 400
 	engineer_cost = 200
 	build_time = 180.0
@@ -43,37 +43,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有窗户（采光）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（工业风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.5, 0.4, 0.3),    # 棕色墙体
-		roof = Color(0.4, 0.3, 0.2),    # 深棕色屋顶
-		floor = Color(0.6, 0.5, 0.4)     # 浅棕色地板
-	)
+	building_3d_config.wall_color = Color(0.5, 0.4, 0.3) # 棕色墙体
+	building_3d_config.roof_color = Color(0.4, 0.3, 0.2) # 深棕色屋顶
+	building_3d_config.floor_color = Color(0.6, 0.5, 0.4) # 浅棕色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取工坊建筑模板"""
-	var template = BuildingTemplate.new("工坊")
-	template.building_type = BuildingTypes.WORKSHOP
+	var template = BuildingTemplateClass.new("工坊")
+	template.building_type = BuildingTypes.BuildingType.WORKSHOP
 	template.description = "实用的3x3x3制造工坊，散发着工业的气息"
 	
 	# 创建工业结构
-	template.create_workshop_structure(BuildingTypes.WORKSHOP)
+	template.create_workshop_structure(BuildingTypes.BuildingType.WORKSHOP)
 	
 	# 自定义工坊元素
 	# 顶层：工具架和工作台
@@ -129,11 +123,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.5, 0.4, 0.3)  # 棕色
-	config.roof_color = Color(0.4, 0.3, 0.2)    # 深棕色
-	config.floor_color = Color(0.6, 0.5, 0.4)   # 浅棕色
-	config.window_color = Color(0.8, 0.7, 0.6)  # 淡棕色窗户
-	config.door_color = Color(0.4, 0.3, 0.2)    # 深棕色门
+	config.wall_color = Color(0.5, 0.4, 0.3) # 棕色
+	config.roof_color = Color(0.4, 0.3, 0.2) # 深棕色
+	config.floor_color = Color(0.6, 0.5, 0.4) # 浅棕色
+	config.window_color = Color(0.8, 0.7, 0.6) # 淡棕色窗户
+	config.door_color = Color(0.4, 0.3, 0.2) # 深棕色门
 	
 	return config
 
@@ -173,7 +167,7 @@ func _start_crafting_system():
 	# 设置制造更新定时器
 	var crafting_timer = Timer.new()
 	crafting_timer.name = "CraftingTimer"
-	crafting_timer.wait_time = 0.5  # 每0.5秒更新一次
+	crafting_timer.wait_time = 0.5 # 每0.5秒更新一次
 	crafting_timer.timeout.connect(_update_crafting)
 	crafting_timer.autostart = true
 	add_child(crafting_timer)
@@ -181,7 +175,7 @@ func _start_crafting_system():
 	# 设置锻造更新定时器
 	var forge_timer = Timer.new()
 	forge_timer.name = "ForgeTimer"
-	forge_timer.wait_time = 2.0  # 每2秒更新一次
+	forge_timer.wait_time = 2.0 # 每2秒更新一次
 	forge_timer.timeout.connect(_update_forge)
 	forge_timer.autostart = true
 	add_child(forge_timer)
@@ -342,7 +336,7 @@ func _update_forge_animation(delta: float):
 		var light = effect_manager.light_systems["forge_light"]
 		if light and light.visible:
 			light.light_energy = 0.6 + crafting_intensity * 1.0
-			light.light_color = Color(1.0, 0.5, 0.2)  # 橙红色锻造光
+			light.light_color = Color(1.0, 0.5, 0.2) # 橙红色锻造光
 
 
 func _update_workbench_activity(delta: float):
@@ -381,7 +375,7 @@ func _update_workshop_specific_effects(delta: float):
 		if light and light.visible:
 			# 工坊脉冲
 			light.light_energy = 0.5 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.3
-			light.light_color = Color(1.0, 0.6, 0.3)  # 橙黄色工坊光
+			light.light_color = Color(1.0, 0.6, 0.3) # 橙黄色工坊光
 
 
 func get_building_info() -> Dictionary:

@@ -29,8 +29,6 @@ func enter(data: Dictionary = {}) -> void:
 	
 	# 🔧 修复：检查金库是否有效
 	if not target_treasury or not is_instance_valid(target_treasury):
-		if state_machine.debug_mode:
-			print("[FetchGoldState] 找不到金库，返回空闲")
 		state_finished.emit("IdleState", {})
 		return
 	
@@ -40,17 +38,12 @@ func enter(data: Dictionary = {}) -> void:
 	# 播放行走动画
 	if engineer.has_node("Model") and engineer.get_node("Model").has_method("play_animation"):
 		engineer.get_node("Model").play_animation("move")
-	
-	if state_machine.debug_mode:
-		print("[FetchGoldState] 前往金库取金")
 
 func physics_update(_delta: float) -> void:
 	var engineer = state_machine.owner
 	
 	# 检查金库是否有效
 	if not is_instance_valid(target_treasury):
-		if state_machine.debug_mode:
-			print("[FetchGoldState] 金库失效，返回空闲")
 		state_finished.emit("IdleState", {})
 		return
 	
@@ -80,10 +73,6 @@ func physics_update(_delta: float) -> void:
 		else:
 			# 已经满了，前往目标建筑
 			if target_building:
-				if state_machine.debug_mode:
-					print("[FetchGoldState] ✅ 金币已满 %d/%d，前往建筑" % [
-						engineer.carried_gold, engineer.engineer_config.gold_capacity
-					])
 				state_finished.emit("MoveToTargetState", {"target_building": target_building})
 			else:
 				state_finished.emit("IdleState", {})
@@ -111,8 +100,6 @@ func _withdraw_gold(engineer: Node) -> void:
 	"""
 	# 🔧 修复：检查 target_treasury 是否有效
 	if not target_treasury or not is_instance_valid(target_treasury):
-		if state_machine.debug_mode:
-			print("[FetchGoldState] 目标金库无效，无法取金")
 		return
 	
 	# 🔧 直接从目标建筑扣除金币

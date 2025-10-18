@@ -16,7 +16,7 @@ var max_retreat_time: float = 8.0
 var retreat_speed_multiplier: float = 1.1
 
 func enter(_data: Dictionary = {}) -> void:
-	var monster = state_machine.owner
+	var monster = state_machine.owner_node
 	
 	# 播放撤退动画
 	if monster.has_node("Model") and monster.get_node("Model").has_method("play_animation"):
@@ -36,12 +36,10 @@ func enter(_data: Dictionary = {}) -> void:
 	
 	# 寻找安全位置
 	_find_safe_position(monster)
-	
-	if state_machine.debug_mode:
-		print("[MonsterRetreatState] 怪物开始撤退 | 撤退时间: %.1f秒" % retreat_duration)
+
 
 func update(_delta: float) -> void:
-	var monster = state_machine.owner
+	var monster = state_machine.owner_node
 	
 	# 检查是否恢复健康
 	if _is_healthy_enough(monster):
@@ -58,7 +56,7 @@ func _find_safe_position(monster: Node) -> void:
 	
 	# 寻找远离敌人的方向
 	var enemy_direction = _get_enemy_direction(monster)
-	var safe_direction = -enemy_direction if enemy_direction != Vector3.ZERO else Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized()
+	var safe_direction = - enemy_direction if enemy_direction != Vector3.ZERO else Vector3(randf_range(-1, 1), 0, randf_range(-1, 1)).normalized()
 	
 	var safe_position = current_pos + safe_direction * safe_distance
 	
@@ -75,7 +73,7 @@ func _get_enemy_direction(monster: Node) -> Vector3:
 		if enemy != monster and is_instance_valid(enemy):
 			if monster.is_enemy_of(enemy):
 				var distance = monster.global_position.distance_to(enemy.global_position)
-				if distance < monster.detection_range * 1.5:  # 撤退时检测范围更大
+				if distance < monster.detection_range * 1.5: # 撤退时检测范围更大
 					var direction = (enemy.global_position - monster.global_position).normalized()
 					enemy_direction += direction
 	
@@ -107,7 +105,7 @@ func _retreat_to_safety(monster: Node, delta: float) -> void:
 func _is_healthy_enough(monster: Node) -> bool:
 	"""检查是否恢复足够的健康"""
 	if monster.has_method("get_health_percentage"):
-		return monster.get_health_percentage() >= 0.4  # 40%以上可以停止撤退
+		return monster.get_health_percentage() >= 0.4 # 40%以上可以停止撤退
 	return false
 
 func _on_retreat_timeout() -> void:

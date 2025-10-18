@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_archmage_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("archmages")
+	add_to_group(GameGroups.ARCHMAGES)
 
 func _init_archmage_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "大法师"
-	data.creature_type = Enums.CreatureType.ARCHMAGE
+	data.creature_type = HeroesTypes.HeroType.ARCHMAGE
 	data.max_health = 800
 	data.attack = 35
 	data.armor = 2
@@ -25,8 +25,8 @@ func _init_archmage_data() -> void:
 	data.attack_range = 12.0
 	data.attack_cooldown = 2.5
 	data.detection_range = 12.0
-	data.attack_type = Enums.AttackType.AREA
-	data.damage_type = Enums.DamageType.MAGICAL
+	data.attack_type = CombatTypes.AttackType.AREA
+	data.damage_type = CombatTypes.DamageType.MAGICAL
 	data.color = Color(0.6, 0.4, 1.0)
 	character_data = data
 	_init_from_character_data()

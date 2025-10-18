@@ -16,7 +16,7 @@ var idle_timer: float = 0.0
 const IDLE_TIMEOUT: float = 1.0 # 空闲超时时间
 
 func enter(_data: Dictionary = {}) -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 重置空闲计时器
 	idle_timer = 0.0
@@ -28,14 +28,13 @@ func enter(_data: Dictionary = {}) -> void:
 	if engineer.has_node("Model") and engineer.get_node("Model").has_method("play_animation"):
 		engineer.get_node("Model").play_animation("idle")
 	
-	if state_machine.debug_mode:
-		LogManager.info("[IdleState] 进入空闲状态 | 金币: %d | 建筑: %s" % [
-			engineer.carried_gold,
-			engineer.current_building.name if engineer.current_building else "无"
-		])
+	LogManager.info("[IdleState] 进入空闲状态 | 金币: %d | 建筑: %s" % [
+		engineer.carried_gold,
+		engineer.current_building.name if engineer.current_building else "无"
+	])
 
 func update(delta: float) -> void:
-	var engineer = state_machine.owner
+	var engineer = state_machine.owner_node
 	
 	# 🔍 调试：仅在进入IdleState和即将超时时输出（减少日志）
 	if idle_timer == 0.0:

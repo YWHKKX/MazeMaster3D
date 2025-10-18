@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name BoneDragon
+extends MonsterBase
 
 ## 骨龙 - 终极武器，具有范围攻击
 ## 战斗等级: ⭐⭐⭐⭐⭐
@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_bone_dragon_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("bone_dragons")
+	add_to_group(GameGroups.BONE_DRAGONS)
 
 func _init_bone_dragon_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "骨龙"
-	data.creature_type = Enums.CreatureType.BONE_DRAGON
+	data.creature_type = MonstersTypes.MonsterType.BONE_DRAGON
 	data.max_health = 4000
 	data.attack = 60
 	data.armor = 18
@@ -28,6 +28,6 @@ func _init_bone_dragon_data() -> void:
 	data.cost_gold = GameBalance.BONE_DRAGON_COST
 	data.upkeep = GameBalance.BONE_DRAGON_UPKEEP
 	data.can_fly = true
-	data.attack_type = Enums.AttackType.AREA
+	data.attack_type = CombatTypes.AttackType.AREA
 	character_data = data
 	_init_from_character_data()

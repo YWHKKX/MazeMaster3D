@@ -4,13 +4,16 @@ class_name GridMapRenderer
 ## 🏗️ GridMap渲染器
 ## 负责使用GridMap模块化拼接方式渲染3x3x3建筑
 
+# 预加载依赖类
+const BuildingTemplateClass = preload("res://scripts/characters/buildings/BuildingTemplate.gd")
+
 # 渲染配置
-var cell_size: Vector3 = Vector3(0.33, 0.33, 0.33)
-var mesh_library: MeshLibrary = null
-var current_template: BuildingTemplate = null
+var building_cell_size: Vector3 = Vector3(0.33, 0.33, 0.33)
+var building_mesh_library: MeshLibrary = null
+var current_template = null
 
 # LOD系统
-var lod_level: int = 2  # 0=最低, 1=中等, 2=最高
+var lod_level: int = 2 # 0=最低, 1=中等, 2=最高
 var lod_enabled: bool = true
 
 # 性能优化
@@ -23,9 +26,9 @@ func _init():
 	name = "GridMapRenderer"
 	
 	# 配置GridMap属性
-	self.cell_size = cell_size
+	# building_cell_size 已在类级别定义
 	self.cell_center_x = true
-	self.cell_center_y = false  # 底部对齐
+	self.cell_center_y = false # 底部对齐
 	self.cell_center_z = true
 
 
@@ -36,13 +39,13 @@ func _ready():
 	collision_mask = 0
 
 
-func set_mesh_library(library: MeshLibrary):
-	"""设置MeshLibrary"""
-	mesh_library = library
+func set_building_mesh_library(library: MeshLibrary):
+	"""设置建筑MeshLibrary"""
+	building_mesh_library = library
 	self.mesh_library = library
 
 
-func apply_template(template: BuildingTemplate):
+func apply_template(template):
 	"""应用建筑模板"""
 	if not template:
 		LogManager.warning("⚠️ [GridMapRenderer] 模板为空")
@@ -63,11 +66,9 @@ func apply_template(template: BuildingTemplate):
 	# 批量更新结束
 	if batch_update_enabled:
 		end_batch_update()
-	
-	LogManager.info("✅ [GridMapRenderer] 已应用模板: %s" % template.name)
 
 
-func _apply_template_data(template: BuildingTemplate):
+func _apply_template_data(template):
 	"""应用模板数据"""
 	for y in range(3):
 		for z in range(3):
@@ -80,7 +81,7 @@ func _apply_template_data(template: BuildingTemplate):
 func _set_cell_component(x: int, y: int, z: int, component_id: int):
 	"""设置单元格构件"""
 	# 检查构件是否存在于MeshLibrary中
-	if not mesh_library or not mesh_library.has_item(component_id):
+	if not building_mesh_library or component_id not in building_mesh_library.get_item_list():
 		LogManager.warning("⚠️ [GridMapRenderer] 构件不存在: ID %d" % component_id)
 		return
 	
@@ -95,11 +96,11 @@ func _set_cell_component(x: int, y: int, z: int, component_id: int):
 func _should_render_component(component_id: int) -> bool:
 	"""根据LOD级别判断是否应该渲染构件"""
 	match lod_level:
-		0:  # 最低细节：只渲染主要结构
+		0: # 最低细节：只渲染主要结构
 			return _is_essential_component(component_id)
-		1:  # 中等细节：渲染主要结构和重要装饰
+		1: # 中等细节：渲染主要结构和重要装饰
 			return _is_essential_component(component_id) or _is_important_component(component_id)
-		2:  # 最高细节：渲染所有构件
+		2: # 最高细节：渲染所有构件
 			return true
 		_:
 			return true
@@ -164,7 +165,7 @@ func enable_lod(enabled: bool):
 		apply_template(current_template)
 
 
-func clear():
+func clear_building():
 	"""清空GridMap内容"""
 	super.clear()
 
@@ -182,7 +183,7 @@ func get_building_bounds() -> AABB:
 	
 	# 计算建筑的实际边界
 	var min_pos = Vector3.ZERO
-	var max_pos = Vector3(3, 3, 3) * cell_size
+	var max_pos = Vector3(3, 3, 3) * building_cell_size
 	
 	return AABB(min_pos, max_pos - min_pos)
 
@@ -207,7 +208,7 @@ func get_building_statistics() -> Dictionary:
 	
 	var stats = {
 		"template_name": current_template.name,
-		"total_cells": 27,  # 3x3x3 = 27
+		"total_cells": 27, # 3x3x3 = 27
 		"empty_cells": 0,
 		"component_counts": {}
 	}
@@ -235,14 +236,14 @@ func print_building_structure():
 		return
 	
 	LogManager.info("=== GridMap建筑结构: %s ===" % current_template.name)
-	for y in range(2, -1, -1):  # 从顶层开始打印
+	for y in range(2, -1, -1): # 从顶层开始打印
 		LogManager.info("层 %d (Y=%d):" % [y, y])
 		for z in range(3):
 			var row = ""
 			for x in range(3):
 				var component_id = get_cell_component(x, y, z)
 				var component_name = BuildingComponents.get_component_name(component_id)
-				row += "[%s] " % component_name.substr(0, 3)  # 只显示前3个字符
+				row += "[%s] " % component_name.substr(0, 3) # 只显示前3个字符
 			LogManager.info("  %s" % row)
 	LogManager.info("===============================")
 
@@ -271,7 +272,7 @@ func update_component_at(x: int, y: int, z: int, new_component_id: int):
 		return
 	
 	# 检查构件是否存在
-	if not mesh_library or not mesh_library.has_item(new_component_id):
+	if not building_mesh_library or new_component_id not in building_mesh_library.get_item_list():
 		LogManager.warning("⚠️ [GridMapRenderer] 构件不存在: ID %d" % new_component_id)
 		return
 	
@@ -296,8 +297,8 @@ func get_render_info() -> Dictionary:
 	"""获取渲染信息"""
 	return {
 		"renderer_type": "GridMapRenderer",
-		"cell_size": cell_size,
-		"mesh_library_items": mesh_library.get_item_list().size() if mesh_library else 0,
+		"cell_size": building_cell_size,
+		"mesh_library_items": building_mesh_library.get_item_list().size() if building_mesh_library else 0,
 		"lod_level": lod_level,
 		"lod_enabled": lod_enabled,
 		"batch_update_enabled": batch_update_enabled,

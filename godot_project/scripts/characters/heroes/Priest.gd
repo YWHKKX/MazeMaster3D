@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_priest_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("priests")
+	add_to_group(GameGroups.PRIESTS)
 
 func _init_priest_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "牧师"
-	data.creature_type = Enums.CreatureType.PRIEST
+	data.creature_type = HeroesTypes.HeroType.PRIEST
 	data.max_health = 800
 	data.attack = 10
 	data.armor = 3
@@ -25,7 +25,7 @@ func _init_priest_data() -> void:
 	data.attack_range = 8.0
 	data.attack_cooldown = 1.5
 	data.detection_range = 8.0
-	data.attack_type = Enums.AttackType.MAGIC
+	data.attack_type = CombatTypes.AttackType.MAGIC
 	data.color = Color(1.0, 1.0, 0.9)
 	character_data = data
 	_init_from_character_data()

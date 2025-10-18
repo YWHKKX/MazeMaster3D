@@ -7,8 +7,8 @@ class_name Building3DConfig
 # 基础配置
 var name: String = ""
 var building_type: int = 0
-var size: Vector3 = Vector3(3, 3, 3)  # 3x3x3空间
-var cell_size: float = 0.33  # 每个子瓦片的尺寸
+var size: Vector3 = Vector3(3, 3, 3) # 3x3x3空间
+var cell_size: float = 0.33 # 每个子瓦片的尺寸
 
 # 结构配置
 var has_windows: bool = true

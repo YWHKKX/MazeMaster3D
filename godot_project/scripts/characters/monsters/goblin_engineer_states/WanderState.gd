@@ -34,9 +34,6 @@ func enter(_data: Dictionary = {}) -> void:
 	add_child(wander_timer)
 	wander_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[WanderState] 工程师开始游荡 | 目标: %s" % str(wander_target))
-
 func physics_update(_delta: float) -> void:
 	var engineer = state_machine.owner
 	
@@ -49,8 +46,6 @@ func physics_update(_delta: float) -> void:
 	
 	# 🔧 优先级2：检查是否有任务分配（立即响应）
 	if engineer.current_building and is_instance_valid(engineer.current_building):
-		if state_machine.debug_mode:
-			print("[WanderState] 检测到任务分配，立即转为空闲")
 		state_finished.emit("IdleState", {})
 		return
 	
@@ -75,9 +70,7 @@ func physics_update(_delta: float) -> void:
 			if (current_time - last_target_change_time) > target_change_cooldown:
 				_generate_wander_target(engineer)
 				last_target_change_time = current_time
-				
-				if state_machine.debug_mode:
-					print("[WanderState] 到达目标，生成新目标: %s" % str(wander_target))
+			
 		MovementHelper.MoveResult.FAILED_NO_PATH, MovementHelper.MoveResult.FAILED_STUCK:
 			# 游荡失败，生成新目标
 			var current_time = Time.get_ticks_msec() / 1000.0

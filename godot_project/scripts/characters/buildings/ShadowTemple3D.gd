@@ -5,15 +5,15 @@ class_name ShadowTemple3D
 ## 基于Building3D，实现暗影神殿的3x3x3渲染
 
 # 暗影魔法系统
-var shadow_mana_generation_rate: float = 1.0     # 暗影魔力生成速度（每秒）
-var shadow_power_multiplier: float = 2.0         # 暗影法术威力倍率（200%）
-var shadow_stealth_bonus: float = 0.5            # 暗影隐身加成（50%）
-var shadow_ritual_slots: int = 3                 # 同时进行的暗影仪式数量
+var shadow_mana_generation_rate: float = 1.0 # 暗影魔力生成速度（每秒）
+var shadow_power_multiplier: float = 2.0 # 暗影法术威力倍率（200%）
+var shadow_stealth_bonus: float = 0.5 # 暗影隐身加成（50%）
+var shadow_ritual_slots: int = 3 # 同时进行的暗影仪式数量
 
 # 暗影仪式状态
-var active_shadow_rituals: Array = []            # 当前活跃的暗影仪式
-var shadow_energy_level: float = 0.0             # 暗影能量等级
-var is_shadow_veil_active: bool = false          # 暗影面纱是否激活
+var active_shadow_rituals: Array = [] # 当前活跃的暗影仪式
+var shadow_energy_level: float = 0.0 # 暗影能量等级
+var is_shadow_veil_active: bool = false # 暗影面纱是否激活
 
 
 func _init():
@@ -22,11 +22,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "暗影神殿"
-	building_type = BuildingTypes.SHADOW_TEMPLE
+	building_type = BuildingTypes.BuildingType.SHADOW_TEMPLE
 	max_health = 400
 	health = max_health
 	armor = 8
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 800
 	engineer_cost = 400
 	build_time = 300.0
@@ -43,37 +43,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = false,   # 无窗户（暗影建筑）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = false
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（暗影风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.2, 0.1, 0.3),    # 深紫色墙体
-		roof = Color(0.1, 0.05, 0.2),   # 更深紫色屋顶
-		floor = Color(0.3, 0.15, 0.4)    # 暗紫色地板
-	)
+	building_3d_config.wall_color = Color(0.2, 0.1, 0.3) # 深紫色墙体
+	building_3d_config.roof_color = Color(0.1, 0.05, 0.2) # 更深紫色屋顶
+	building_3d_config.floor_color = Color(0.3, 0.15, 0.4) # 暗紫色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取暗影神殿建筑模板"""
-	var template = BuildingTemplate.new("暗影神殿")
-	template.building_type = BuildingTypes.SHADOW_TEMPLE
+	var template = BuildingTemplateClass.new("暗影神殿")
+	template.building_type = BuildingTypes.BuildingType.SHADOW_TEMPLE
 	template.description = "神秘的3x3x3暗影神殿，散发着黑暗的力量"
 	
 	# 创建暗影结构
-	template.create_shadow_structure(BuildingTypes.SHADOW_TEMPLE)
+	template.create_shadow_structure(BuildingTypes.BuildingType.SHADOW_TEMPLE)
 	
 	# 自定义暗影神殿元素
 	# 顶层：暗影符文和神殿祭坛
@@ -125,11 +119,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.2, 0.1, 0.3)  # 深紫色
-	config.roof_color = Color(0.1, 0.05, 0.2)    # 更深紫色
-	config.floor_color = Color(0.3, 0.15, 0.4)   # 暗紫色
-	config.window_color = Color.LIGHT_BLUE       # 不使用窗户
-	config.door_color = Color(0.05, 0.02, 0.1)    # 深黑色门
+	config.wall_color = Color(0.2, 0.1, 0.3) # 深紫色
+	config.roof_color = Color(0.1, 0.05, 0.2) # 更深紫色
+	config.floor_color = Color(0.3, 0.15, 0.4) # 暗紫色
+	config.window_color = Color.LIGHT_BLUE # 不使用窗户
+	config.door_color = Color(0.05, 0.02, 0.1) # 深黑色门
 	
 	return config
 
@@ -170,7 +164,7 @@ func _start_shadow_system():
 	# 设置暗影更新定时器
 	var shadow_timer = Timer.new()
 	shadow_timer.name = "ShadowTimer"
-	shadow_timer.wait_time = 1.0  # 每秒更新一次
+	shadow_timer.wait_time = 1.0 # 每秒更新一次
 	shadow_timer.timeout.connect(_process_shadow_energy)
 	shadow_timer.autostart = true
 	add_child(shadow_timer)
@@ -178,7 +172,7 @@ func _start_shadow_system():
 	# 设置暗影魔力生成定时器
 	var mana_timer = Timer.new()
 	mana_timer.name = "ShadowManaTimer"
-	mana_timer.wait_time = 1.0  # 每秒生成一次
+	mana_timer.wait_time = 1.0 # 每秒生成一次
 	mana_timer.timeout.connect(_generate_shadow_mana)
 	mana_timer.autostart = true
 	add_child(mana_timer)
@@ -186,7 +180,7 @@ func _start_shadow_system():
 	# 设置暗影仪式更新定时器
 	var ritual_timer = Timer.new()
 	ritual_timer.name = "RitualTimer"
-	ritual_timer.wait_time = 0.5  # 每0.5秒更新一次
+	ritual_timer.wait_time = 0.5 # 每0.5秒更新一次
 	ritual_timer.timeout.connect(_update_shadow_rituals)
 	ritual_timer.autostart = true
 	add_child(ritual_timer)
@@ -357,7 +351,7 @@ func _update_shadow_core_glow(delta: float):
 		var light = effect_manager.light_systems["shadow_core_light"]
 		if light and light.visible:
 			light.light_energy = glow_intensity
-			light.light_color = Color(0.4, 0.2, 0.8)  # 暗紫色光
+			light.light_color = Color(0.4, 0.2, 0.8) # 暗紫色光
 
 
 func _update_shadow_energy_effects():
@@ -369,7 +363,7 @@ func _update_shadow_energy_effects():
 			var light = effect_manager.light_systems["shadow_veil_light"]
 			if light and light.visible:
 				light.light_energy = 0.8 + sin(Time.get_time_dict_from_system()["second"] * 2) * 0.3
-				light.light_color = Color(0.3, 0.1, 0.6)  # 暗紫色面纱光
+				light.light_color = Color(0.3, 0.1, 0.6) # 暗紫色面纱光
 
 
 func _update_functional_effects(delta: float):
@@ -392,7 +386,7 @@ func _update_shadow_temple_effects(delta: float):
 		if light and light.visible:
 			# 暗影脉冲
 			light.light_energy = 0.7 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.3
-			light.light_color = Color(0.4, 0.2, 0.8)  # 暗紫色神殿光
+			light.light_color = Color(0.4, 0.2, 0.8) # 暗紫色神殿光
 
 
 func can_start_shadow_ritual() -> bool:

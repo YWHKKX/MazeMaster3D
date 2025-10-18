@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_thief_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("thieves")
+	add_to_group(GameGroups.THIEVES)
 
 func _init_thief_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "盗贼"
-	data.creature_type = Enums.CreatureType.THIEF
+	data.creature_type = HeroesTypes.HeroType.THIEF
 	data.max_health = 600
 	data.attack = 28
 	data.armor = 1

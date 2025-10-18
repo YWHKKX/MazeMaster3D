@@ -18,7 +18,7 @@ var max_support_time: float = 15.0
 var heal_interval: float = 2.0
 
 func enter(data: Dictionary = {}) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 获取目标友军
 	if data.has("target_ally"):
@@ -43,11 +43,8 @@ func enter(data: Dictionary = {}) -> void:
 	add_child(support_timer)
 	support_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[HeroSupportState] 英雄开始支援友军 | 目标: %s" % str(target_ally))
-
 func update(_delta: float) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 优先级1: 战斗准备 - 检测敌人
 	if _has_nearby_enemies(hero):
@@ -87,7 +84,7 @@ func _reached_ally(hero: Node) -> bool:
 
 func _on_heal_tick() -> void:
 	"""治疗定时器触发"""
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 检查目标友军是否仍然有效
 	if not target_ally or not is_instance_valid(target_ally):
@@ -110,12 +107,10 @@ func _perform_heal(hero: Node, ally: Node) -> void:
 	"""执行治疗"""
 	if hero.has_method("heal"):
 		hero.heal(ally)
-		if state_machine.debug_mode:
-			print("[HeroSupportState] 英雄治疗友军: %s" % str(ally))
 	else:
 		# 默认治疗逻辑
 		if ally.has_method("restore_health"):
-			var heal_amount = 20  # 默认治疗量
+			var heal_amount = 20 # 默认治疗量
 			ally.restore_health(heal_amount)
 
 func _is_ally_healthy(ally: Node) -> bool:
@@ -124,7 +119,7 @@ func _is_ally_healthy(ally: Node) -> bool:
 		return true
 	
 	if ally.has_method("get_health_percentage"):
-		return ally.get_health_percentage() >= 0.9  # 90%以上算健康
+		return ally.get_health_percentage() >= 0.9 # 90%以上算健康
 	return false
 
 func _has_nearby_enemies(hero: Node) -> bool:

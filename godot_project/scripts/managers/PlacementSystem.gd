@@ -207,26 +207,109 @@ func _initialize_entity_configs():
 	entity_configs["building_shadow_temple"] = EntityConfig.new("building_shadow_temple", 800, Vector2(1, 1), allowed_terrain, "building")
 	entity_configs["building_magic_research_institute"] = EntityConfig.new("building_magic_research_institute", 600, Vector2(1, 1), allowed_terrain, "building")
 	
-	# 怪物配置
+	# 怪物配置 - 使用CharacterTypes常量
 	var monster_terrain: Array[String] = ["EMPTY", "STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
-	entity_configs["imp"] = EntityConfig.new(
-		"imp",
-		50,
+	
+	# 基础怪物
+	entity_configs[MonstersTypes.IMP] = EntityConfig.new(
+		MonstersTypes.IMP,
+		100,
 		Vector2(1, 1),
 		monster_terrain,
 		"monster"
 	)
 	
-	entity_configs["goblin_worker"] = EntityConfig.new(
-		"goblin_worker",
+	entity_configs[MonstersTypes.ORC_WARRIOR] = EntityConfig.new(
+		MonstersTypes.ORC_WARRIOR,
+		120,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.GARGOYLE] = EntityConfig.new(
+		MonstersTypes.GARGOYLE,
+		150,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.HELLHOUND] = EntityConfig.new(
+		MonstersTypes.HELLHOUND,
+		150,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.FIRE_LIZARD] = EntityConfig.new(
+		MonstersTypes.FIRE_LIZARD,
+		200,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.TREANT] = EntityConfig.new(
+		MonstersTypes.TREANT,
+		200,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.SUCCUBUS] = EntityConfig.new(
+		MonstersTypes.SUCCUBUS,
+		200,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.SHADOW_MAGE] = EntityConfig.new(
+		MonstersTypes.SHADOW_MAGE,
+		150,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.SHADOW_LORD] = EntityConfig.new(
+		MonstersTypes.SHADOW_LORD,
+		400,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.STONE_GOLEM] = EntityConfig.new(
+		MonstersTypes.STONE_GOLEM,
+		400,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	entity_configs[MonstersTypes.BONE_DRAGON] = EntityConfig.new(
+		MonstersTypes.BONE_DRAGON,
+		600,
+		Vector2(1, 1),
+		monster_terrain,
+		"monster"
+	)
+	
+	# 后勤单位配置 - 使用CharacterTypes常量
+	entity_configs[MonstersTypes.GOBLIN_WORKER] = EntityConfig.new(
+		MonstersTypes.GOBLIN_WORKER,
 		80,
 		Vector2(1, 1),
 		monster_terrain,
 		"logistics"
 	)
 	
-	entity_configs["goblin_engineer"] = EntityConfig.new(
-		"goblin_engineer",
+	entity_configs[MonstersTypes.GOBLIN_ENGINEER] = EntityConfig.new(
+		MonstersTypes.GOBLIN_ENGINEER,
 		100,
 		Vector2(1, 1),
 		monster_terrain,
@@ -362,23 +445,23 @@ func list_available_entities() -> Array:
 func _get_tile_type_string(tile_type: int) -> String:
 	"""将瓦片类型转换为字符串（仅用于非挖掘操作）"""
 	match tile_type:
-		tile_manager.TileType.EMPTY:
+		TileTypes.TileType.EMPTY:
 			return "EMPTY"
-		tile_manager.TileType.STONE_FLOOR:
+		TileTypes.TileType.STONE_FLOOR:
 			return "STONE_FLOOR"
-		tile_manager.TileType.STONE_WALL:
+		TileTypes.TileType.STONE_WALL:
 			return "STONE_WALL"
-		tile_manager.TileType.DIRT_FLOOR:
+		TileTypes.TileType.DIRT_FLOOR:
 			return "DIRT_FLOOR"
-		tile_manager.TileType.MAGIC_FLOOR:
+		TileTypes.TileType.MAGIC_FLOOR:
 			return "MAGIC_FLOOR"
-		tile_manager.TileType.UNEXCAVATED:
+		TileTypes.TileType.UNEXCAVATED:
 			return "UNEXCAVATED"
-		tile_manager.TileType.GOLD_MINE:
+		TileTypes.TileType.GOLD_MINE:
 			return "GOLD_MINE"
-		tile_manager.TileType.MANA_CRYSTAL:
+		TileTypes.TileType.MANA_CRYSTAL:
 			return "MANA_CRYSTAL"
-		tile_manager.TileType.CORRIDOR:
+		TileTypes.TileType.CORRIDOR:
 			return "CORRIDOR"
 		_:
 			return "UNKNOWN"
@@ -467,8 +550,8 @@ func _execute_dig(position: Vector3) -> bool:
 	if tile_manager:
 		var tile_data = tile_manager.get_tile_data(position)
 		if tile_data and tile_data.is_diggable:
-			if tile_data.type == tile_manager.TileType.UNEXCAVATED:
-				tile_manager.set_tile_type(position, tile_manager.TileType.EMPTY)
+			if tile_data.type == TileTypes.TileType.UNEXCAVATED:
+				tile_manager.set_tile_type(position, TileTypes.TileType.EMPTY)
 				
 				# 🔧 关键优化：先更新可达性，再重新烘焙导航网格
 				# 1. 更新地块可达性（从地牢之心开始洪水填充）
@@ -514,41 +597,41 @@ func _get_building_type_from_id(entity_id: String) -> int:
 	match entity_id:
 		# 基础设施建筑
 		"building_treasury":
-			return BuildingTypes.TREASURY
+			return BuildingTypes.BuildingType.TREASURY
 		"building_lair":
-			return BuildingTypes.LAIR
+			return BuildingTypes.BuildingType.LAIR
 		"building_demon_lair":
-			return BuildingTypes.DEMON_LAIR
+			return BuildingTypes.BuildingType.DEMON_LAIR
 		"building_orc_lair":
-			return BuildingTypes.ORC_LAIR
+			return BuildingTypes.BuildingType.ORC_LAIR
 		
 		# 功能性建筑
 		"building_training_room":
-			return BuildingTypes.TRAINING_ROOM
+			return BuildingTypes.BuildingType.TRAINING_ROOM
 		"building_library":
-			return BuildingTypes.LIBRARY
+			return BuildingTypes.BuildingType.LIBRARY
 		"building_workshop":
-			return BuildingTypes.WORKSHOP
+			return BuildingTypes.BuildingType.WORKSHOP
 		
 		# 军事建筑
 		"building_arrow_tower":
-			return BuildingTypes.ARROW_TOWER
+			return BuildingTypes.BuildingType.ARROW_TOWER
 		"building_arcane_tower":
-			return BuildingTypes.ARCANE_TOWER
+			return BuildingTypes.BuildingType.ARCANE_TOWER
 		"building_defense_works":
-			return BuildingTypes.DEFENSE_WORKS
+			return BuildingTypes.BuildingType.DEFENSE_WORKS
 		"building_prison":
-			return BuildingTypes.PRISON
+			return BuildingTypes.BuildingType.PRISON
 		"building_torture_chamber":
-			return BuildingTypes.TORTURE_CHAMBER
+			return BuildingTypes.BuildingType.TORTURE_CHAMBER
 		
 		# 魔法建筑
 		"building_magic_altar":
-			return BuildingTypes.MAGIC_ALTAR
+			return BuildingTypes.BuildingType.MAGIC_ALTAR
 		"building_shadow_temple":
-			return BuildingTypes.SHADOW_TEMPLE
+			return BuildingTypes.BuildingType.SHADOW_TEMPLE
 		"building_magic_research_institute":
-			return BuildingTypes.MAGIC_RESEARCH_INSTITUTE
+			return BuildingTypes.BuildingType.MAGIC_RESEARCH_INSTITUTE
 		_:
 			return -1
 
@@ -564,16 +647,36 @@ func _execute_summon_monster(entity_id: String, position: Vector3) -> bool:
 	# 根据entity_id直接调用对应的创建函数
 	var character = null
 	match entity_id:
-		# 非战斗单位（已实现）
-		"goblin_worker":
+		# 后勤单位（已实现）
+		MonstersTypes.GOBLIN_WORKER:
 			character = character_manager.create_goblin_worker(spawn_position)
-		"goblin_engineer":
+		MonstersTypes.GOBLIN_ENGINEER:
 			character = character_manager.create_goblin_engineer(spawn_position)
-		# 战斗单位（暂时未实现，需要创建对应的场景文件）
-		"imp", "orc_warrior", "gargoyle", "shadow_mage", "hellhound", \
-		"fire_lizard", "treant", "succubus", "shadow_lord", "stone_golem", "bone_dragon":
-			LogManager.warning("PlacementSystem: 角色类型 '%s' 尚未实现（缺少场景文件）" % entity_id)
-			return false
+		
+		# 怪物单位 - 使用CharacterManager的通用创建方法
+		MonstersTypes.IMP:
+			character = character_manager.create_imp(spawn_position)
+		MonstersTypes.ORC_WARRIOR:
+			character = character_manager.create_orc_warrior(spawn_position)
+		MonstersTypes.GARGOYLE:
+			character = character_manager.create_gargoyle(spawn_position)
+		MonstersTypes.HELLHOUND:
+			character = character_manager.create_hellhound(spawn_position)
+		MonstersTypes.FIRE_LIZARD:
+			character = character_manager.create_fire_lizard(spawn_position)
+		MonstersTypes.TREANT:
+			character = character_manager.create_treant(spawn_position)
+		MonstersTypes.SUCCUBUS:
+			character = character_manager.create_succubus(spawn_position)
+		MonstersTypes.SHADOW_MAGE:
+			character = character_manager.create_shadow_mage(spawn_position)
+		MonstersTypes.SHADOW_LORD:
+			character = character_manager.create_shadow_lord(spawn_position)
+		MonstersTypes.STONE_GOLEM:
+			character = character_manager.create_stone_golem(spawn_position)
+		MonstersTypes.BONE_DRAGON:
+			character = character_manager.create_bone_dragon(spawn_position)
+		
 		_:
 			LogManager.error("PlacementSystem: 未知角色类型: " + entity_id)
 			return false

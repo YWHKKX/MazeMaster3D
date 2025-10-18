@@ -5,16 +5,16 @@ class_name Market3D
 ## 基于Building3D，实现市场的3x3x3渲染
 
 # 贸易系统
-var trade_slots: int = 5                       # 交易槽位数量
-var gold_generation_rate: float = 2.0          # 金币生成速度
-var trade_efficiency: float = 1.5              # 贸易效率倍率
-var merchant_attraction_bonus: float = 0.3     # 商人吸引力加成（30%）
+var trade_slots: int = 5 # 交易槽位数量
+var gold_generation_rate: float = 2.0 # 金币生成速度
+var trade_efficiency: float = 1.5 # 贸易效率倍率
+var merchant_attraction_bonus: float = 0.3 # 商人吸引力加成（30%）
 
 # 贸易状态
-var active_trades: Array = []                  # 当前活跃交易
-var merchant_queue: Array = []                 # 商人队列
-var market_reputation: float = 0.0             # 市场声誉
-var daily_revenue: int = 0                     # 每日收入
+var active_trades: Array = [] # 当前活跃交易
+var merchant_queue: Array = [] # 商人队列
+var market_reputation: float = 0.0 # 市场声誉
+var daily_revenue: int = 0 # 每日收入
 
 
 func _init():
@@ -23,11 +23,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "市场"
-	building_type = BuildingTypes.MARKET
+	building_type = BuildingTypes.BuildingType.MARKET
 	max_health = 280
 	health = max_health
 	armor = 3
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 500
 	engineer_cost = 250
 	build_time = 220.0
@@ -44,37 +44,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有窗户（展示商品）
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（商业风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.7, 0.6, 0.4),    # 金色墙体
-		roof = Color(0.6, 0.5, 0.3),    # 深金色屋顶
-		floor = Color(0.8, 0.7, 0.5)     # 浅金色地板
-	)
+	building_3d_config.wall_color = Color(0.7, 0.6, 0.4) # 金色墙体
+	building_3d_config.roof_color = Color(0.6, 0.5, 0.3) # 深金色屋顶
+	building_3d_config.floor_color = Color(0.8, 0.7, 0.5) # 浅金色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = true,   # 有粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = true
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取市场建筑模板"""
-	var template = BuildingTemplate.new("市场")
-	template.building_type = BuildingTypes.MARKET
+	var template = BuildingTemplateClass.new("市场")
+	template.building_type = BuildingTypes.BuildingType.MARKET
 	template.description = "繁华的3x3x3商业市场，散发着贸易的气息"
 	
 	# 创建商业结构
-	template.create_market_structure(BuildingTypes.MARKET)
+	template.create_market_structure(BuildingTypes.BuildingType.MARKET)
 	
 	# 自定义市场元素
 	# 顶层：招牌和旗帜
@@ -130,11 +124,11 @@ func _get_building_config() -> BuildingConfig:
 	config.has_balcony = false
 	
 	# 材质配置
-	config.wall_color = Color(0.7, 0.6, 0.4)  # 金色
-	config.roof_color = Color(0.6, 0.5, 0.3)    # 深金色
-	config.floor_color = Color(0.8, 0.7, 0.5)   # 浅金色
-	config.window_color = Color(0.9, 0.8, 0.6)  # 淡金色窗户
-	config.door_color = Color(0.5, 0.4, 0.2)    # 深金色门
+	config.wall_color = Color(0.7, 0.6, 0.4) # 金色
+	config.roof_color = Color(0.6, 0.5, 0.3) # 深金色
+	config.floor_color = Color(0.8, 0.7, 0.5) # 浅金色
+	config.window_color = Color(0.9, 0.8, 0.6) # 淡金色窗户
+	config.door_color = Color(0.5, 0.4, 0.2) # 深金色门
 	
 	return config
 
@@ -179,7 +173,7 @@ func _start_trading_system():
 	# 设置贸易更新定时器
 	var trading_timer = Timer.new()
 	trading_timer.name = "TradingTimer"
-	trading_timer.wait_time = 1.0  # 每秒更新一次
+	trading_timer.wait_time = 1.0 # 每秒更新一次
 	trading_timer.timeout.connect(_update_trading)
 	trading_timer.autostart = true
 	add_child(trading_timer)
@@ -187,7 +181,7 @@ func _start_trading_system():
 	# 设置金币生成定时器
 	var gold_timer = Timer.new()
 	gold_timer.name = "GoldTimer"
-	gold_timer.wait_time = 2.0  # 每2秒生成一次
+	gold_timer.wait_time = 2.0 # 每2秒生成一次
 	gold_timer.timeout.connect(_generate_gold)
 	gold_timer.autostart = true
 	add_child(gold_timer)
@@ -360,7 +354,7 @@ func _update_market_sign_animation(delta: float):
 		var light = effect_manager.light_systems["market_sign_light"]
 		if light and light.visible:
 			light.light_energy = 0.6 + trade_intensity * 0.8
-			light.light_color = Color(1.0, 0.8, 0.4)  # 金色招牌光
+			light.light_color = Color(1.0, 0.8, 0.4) # 金色招牌光
 
 
 func _update_vendor_stall_activity(delta: float):
@@ -399,7 +393,7 @@ func _update_market_specific_effects(delta: float):
 		if light and light.visible:
 			# 市场脉冲
 			light.light_energy = 0.7 + sin(Time.get_time_dict_from_system()["second"] * pulse_frequency) * 0.3
-			light.light_color = Color(1.0, 0.8, 0.4)  # 金色市场光
+			light.light_color = Color(1.0, 0.8, 0.4) # 金色市场光
 
 
 func get_building_info() -> Dictionary:

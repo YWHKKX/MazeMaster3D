@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_druid_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("druids")
+	add_to_group(GameGroups.DRUIDS)
 
 func _init_druid_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "德鲁伊"
-	data.creature_type = Enums.CreatureType.DRUID
+	data.creature_type = HeroesTypes.HeroType.DRUID
 	data.max_health = 1300
 	data.attack = 22
 	data.armor = 6
@@ -25,8 +25,8 @@ func _init_druid_data() -> void:
 	data.attack_range = 8.0
 	data.attack_cooldown = 1.8
 	data.detection_range = 8.0
-	data.attack_type = Enums.AttackType.MAGIC
-	data.damage_type = Enums.DamageType.MAGICAL
+	data.attack_type = CombatTypes.AttackType.MAGIC
+	data.damage_type = CombatTypes.DamageType.MAGICAL
 	data.color = Color(0.3, 0.8, 0.3)
 	character_data = data
 	_init_from_character_data()

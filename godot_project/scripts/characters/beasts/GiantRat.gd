@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = false
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("giant_rats")
+	add_to_group(GameGroups.GIANT_RATS)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_giant_rat_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "巨鼠"
-	data.creature_type = Enums.CreatureType.GIANT_RAT
+	data.creature_type = BeastsTypes.BeastType.GIANT_RAT
 	data.max_health = 200
 	data.attack = 8
 	data.armor = 0
-	data.speed = 70  # 跑得很快
+	data.speed = 70 # 跑得很快
 	data.size = 12
 	data.attack_range = 1.5
 	data.attack_cooldown = 1.5
 	data.detection_range = 6.0
-	data.color = Color(0.4, 0.3, 0.2)  # 棕色
+	data.color = Color(0.4, 0.3, 0.2) # 棕色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,4 +41,4 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 1.5  # 快速移动
+	return 1.5 # 快速移动

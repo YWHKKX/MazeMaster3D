@@ -18,7 +18,7 @@ var patrol_duration: float = 0.0
 var max_patrol_time: float = 20.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 播放巡逻动画
 	if hero.has_node("Model") and hero.get_node("Model").has_method("play_animation"):
@@ -38,12 +38,9 @@ func enter(_data: Dictionary = {}) -> void:
 	patrol_timer.timeout.connect(_on_patrol_timeout)
 	add_child(patrol_timer)
 	patrol_timer.start()
-	
-	if state_machine.debug_mode:
-		print("[HeroPatrolState] 英雄开始巡逻 | 巡逻点数量: %d" % patrol_points.size())
 
 func update(_delta: float) -> void:
-	var hero = state_machine.owner
+	var hero = state_machine.owner_node
 	
 	# 优先级1: 战斗准备 - 检测敌人
 	if _has_nearby_enemies(hero):
@@ -85,17 +82,24 @@ func _patrol_to_next_point(hero: Node, delta: float) -> void:
 	
 	var current_target = patrol_points[current_patrol_index]
 	
-	# 移动到目标点
-	if hero.has_method("move_towards"):
-		hero.move_towards(current_target, delta)
+	# 🔧 [统一移动API] 使用 MovementHelper.process_navigation 处理巡逻移动
+	var move_result = MovementHelper.process_navigation(
+		hero,
+		current_target,
+		delta,
+		"HeroPatrolState" if state_machine.debug_mode else ""
+	)
 	
-	# 检查是否到达目标点
-	if _reached_patrol_point(hero, current_target):
-		# 到达巡逻点，移动到下一个点
-		current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
-		
-		# 在巡逻点停留一会儿
-		_wait_at_patrol_point(hero)
+	# 处理移动结果
+	match move_result:
+		MovementHelper.MoveResult.REACHED:
+			# 到达巡逻点，移动到下一个点
+			current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
+			_wait_at_patrol_point(hero)
+		MovementHelper.MoveResult.FAILED_NO_PATH, MovementHelper.MoveResult.FAILED_STUCK:
+			# 移动失败，跳过这个巡逻点
+			current_patrol_index = (current_patrol_index + 1) % patrol_points.size()
+		# MovementHelper.MoveResult.MOVING: 继续移动
 
 func _reached_patrol_point(hero: Node, target: Vector3) -> bool:
 	"""检查是否到达巡逻点"""

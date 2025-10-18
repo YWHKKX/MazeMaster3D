@@ -16,7 +16,7 @@ func _ready() -> void:
 func _init_engineer_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "工程师"
-	data.creature_type = Enums.CreatureType.ENGINEER
+	data.creature_type = HeroesTypes.HeroType.ENGINEER
 	data.max_health = 1100
 	data.attack = 20
 	data.armor = 6
@@ -25,7 +25,7 @@ func _init_engineer_data() -> void:
 	data.attack_range = 6.0
 	data.attack_cooldown = 2.0
 	data.detection_range = 6.0
-	data.attack_type = Enums.AttackType.RANGED
+	data.attack_type = CombatTypes.AttackType.RANGED
 	data.color = Color(0.7, 0.6, 0.4)
 	character_data = data
 	_init_from_character_data()

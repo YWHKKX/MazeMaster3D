@@ -8,6 +8,8 @@ class_name CharacterManager
 # 场景引用（延迟加载，避免循环依赖）
 var GoblinWorkerScene = null
 var GoblinEngineerScene = null
+var ImpScene = null
+var OrcWarriorScene = null
 
 # 节点引用
 var world: Node3D = null
@@ -26,6 +28,8 @@ func _ready():
 	# 延迟加载场景
 	GoblinWorkerScene = load("res://img/scenes/characters/GoblinWorker.tscn")
 	GoblinEngineerScene = load("res://img/scenes/characters/GoblinEngineer.tscn")
+	ImpScene = load("res://img/scenes/characters/Imp.tscn")
+	OrcWarriorScene = load("res://img/scenes/characters/OrcWarrior.tscn")
 	
 	# 使用 GameServices 获取管理器
 	call_deferred("_setup_manager_references")
@@ -74,6 +78,90 @@ func create_goblin_engineer(pos: Vector3) -> GoblinEngineer:
 	engineer.global_position = pos
 	# [新架构] Engineer 通过 GameServices 自动获取管理器引用
 	return engineer
+
+# ============================================================================
+# 通用怪物创建方法 - 使用脚本实例化
+# ============================================================================
+
+func create_monster_by_type(monster_type: String, pos: Vector3) -> MonsterBase:
+	"""根据类型创建怪物 - 优先使用场景文件，回退到脚本实例化"""
+	var monster: MonsterBase = null
+	
+	match monster_type:
+		MonstersTypes.IMP:
+			if ImpScene:
+				monster = ImpScene.instantiate()
+			else:
+				monster = Imp.new()
+		MonstersTypes.ORC_WARRIOR:
+			if OrcWarriorScene:
+				monster = OrcWarriorScene.instantiate()
+			else:
+				monster = OrcWarrior.new()
+		MonstersTypes.GARGOYLE:
+			monster = Gargoyle.new()
+		MonstersTypes.HELLHOUND:
+			monster = Hellhound.new()
+		MonstersTypes.FIRE_LIZARD:
+			monster = FireLizard.new()
+		MonstersTypes.TREANT:
+			monster = Treant.new()
+		MonstersTypes.SUCCUBUS:
+			monster = Succubus.new()
+		MonstersTypes.SHADOW_MAGE:
+			monster = ShadowMage.new()
+		MonstersTypes.SHADOW_LORD:
+			monster = ShadowLord.new()
+		MonstersTypes.STONE_GOLEM:
+			monster = StoneGolem.new()
+		MonstersTypes.BONE_DRAGON:
+			monster = BoneDragon.new()
+		_:
+			LogManager.error("CharacterManager: 未知怪物类型: " + monster_type)
+			return null
+	
+	if monster:
+		character_container.add_child(monster)
+		monster.global_position = pos
+		LogManager.info("✅ 怪物创建成功: " + monster_type + " 位置: " + str(pos))
+		return monster
+	else:
+		LogManager.error("❌ 怪物创建失败: " + monster_type)
+		return null
+
+# 便捷方法
+func create_imp(pos: Vector3) -> Imp:
+	return create_monster_by_type(MonstersTypes.IMP, pos) as Imp
+
+func create_orc_warrior(pos: Vector3) -> OrcWarrior:
+	return create_monster_by_type(MonstersTypes.ORC_WARRIOR, pos) as OrcWarrior
+
+func create_gargoyle(pos: Vector3) -> Gargoyle:
+	return create_monster_by_type(MonstersTypes.GARGOYLE, pos) as Gargoyle
+
+func create_hellhound(pos: Vector3) -> Hellhound:
+	return create_monster_by_type(MonstersTypes.HELLHOUND, pos) as Hellhound
+
+func create_fire_lizard(pos: Vector3) -> FireLizard:
+	return create_monster_by_type(MonstersTypes.FIRE_LIZARD, pos) as FireLizard
+
+func create_treant(pos: Vector3) -> Treant:
+	return create_monster_by_type(MonstersTypes.TREANT, pos) as Treant
+
+func create_succubus(pos: Vector3) -> Succubus:
+	return create_monster_by_type(MonstersTypes.SUCCUBUS, pos) as Succubus
+
+func create_shadow_mage(pos: Vector3) -> ShadowMage:
+	return create_monster_by_type(MonstersTypes.SHADOW_MAGE, pos) as ShadowMage
+
+func create_shadow_lord(pos: Vector3) -> ShadowLord:
+	return create_monster_by_type(MonstersTypes.SHADOW_LORD, pos) as ShadowLord
+
+func create_stone_golem(pos: Vector3) -> StoneGolem:
+	return create_monster_by_type(MonstersTypes.STONE_GOLEM, pos) as StoneGolem
+
+func create_bone_dragon(pos: Vector3) -> BoneDragon:
+	return create_monster_by_type(MonstersTypes.BONE_DRAGON, pos) as BoneDragon
 
 # ============================================================================
 # 查询接口 - 使用组系统
@@ -180,3 +268,17 @@ func get_stats() -> Dictionary:
 		"alive_count": alive_count,
 		"dead_count": all_chars.size() - alive_count
 	}
+
+func clear_all_characters():
+	"""清空所有角色"""
+	LogManager.info("CharacterManager - 清空所有角色...")
+	
+	# 获取所有角色
+	var all_chars = get_all_characters()
+	
+	# 销毁所有角色
+	for char in all_chars:
+		if char and is_instance_valid(char):
+			char.queue_free()
+	
+	LogManager.info("CharacterManager - 所有角色已清空")

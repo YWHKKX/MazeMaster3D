@@ -51,7 +51,7 @@ func _initialize_pools():
 ## 公共接口
 ## ============================================================================
 
-func play_hit_effect(position: Vector3, attack_type: Enums.AttackType):
+func play_hit_effect(position: Vector3, attack_type: CombatTypes.AttackType):
 	"""播放命中特效"""
 	var effect_name = _get_hit_effect_name(attack_type)
 	spawn_effect(effect_name, position)
@@ -84,14 +84,14 @@ func spawn_effect(effect_name: String, position: Vector3, rotation: Vector3 = Ve
 	
 	return effect
 
-func _get_hit_effect_name(attack_type: Enums.AttackType) -> String:
+func _get_hit_effect_name(attack_type: CombatTypes.AttackType) -> String:
 	"""根据攻击类型获取命中特效名称"""
 	match attack_type:
-		Enums.AttackType.MELEE_SWORD, Enums.AttackType.MELEE_SPEAR, Enums.AttackType.MELEE_AXE:
+		CombatTypes.AttackType.MELEE_SWORD, CombatTypes.AttackType.MELEE_SPEAR, CombatTypes.AttackType.MELEE_AXE:
 			return "hit_melee"
-		Enums.AttackType.RANGED_BOW, Enums.AttackType.RANGED_GUN, Enums.AttackType.RANGED_CROSSBOW:
+		CombatTypes.AttackType.RANGED_BOW, CombatTypes.AttackType.RANGED_GUN, CombatTypes.AttackType.RANGED_CROSSBOW:
 			return "hit_ranged"
-		Enums.AttackType.MAGIC_SINGLE, Enums.AttackType.MAGIC_AOE:
+		CombatTypes.AttackType.MAGIC_SINGLE, CombatTypes.AttackType.MAGIC_AOE:
 			return "hit_magic"
 		_:
 			return "hit_melee"

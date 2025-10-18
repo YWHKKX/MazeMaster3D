@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = true
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("demons")
+	add_to_group(GameGroups.DEMONS)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_demon_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "恶魔"
-	data.creature_type = Enums.CreatureType.DEMON
-	data.max_health = 1000  # 血量很高
-	data.attack = 60        # 攻击力很强
+	data.creature_type = BeastsTypes.BeastType.DEMON
+	data.max_health = 1000 # 血量很高
+	data.attack = 60 # 攻击力很强
 	data.armor = 4
 	data.speed = 45
 	data.size = 25
 	data.attack_range = 5.0
 	data.attack_cooldown = 1.5
 	data.detection_range = 12.0
-	data.color = Color(0.6, 0.1, 0.1)  # 深红色
+	data.color = Color(0.6, 0.1, 0.1) # 深红色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,4 +41,4 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 1.0  # 正常移动
+	return 1.0 # 正常移动

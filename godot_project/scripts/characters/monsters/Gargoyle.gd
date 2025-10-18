@@ -1,5 +1,5 @@
-extends MonsterBase
 class_name Gargoyle
+extends MonsterBase
 
 ## 石像鬼 - 重装战士，适合正面作战
 ## 战斗等级: ⭐⭐⭐
@@ -14,15 +14,12 @@ func _ready() -> void:
 	
 	is_combat_unit = true
 	add_to_group(GameGroups.MONSTERS)
-	add_to_group("gargoyles")
-	
-	if debug_mode:
-		print("[Gargoyle] 石像鬼初始化完成 - 位置: %v" % global_position)
+	add_to_group(GameGroups.GARGOYLES)
 
 func _init_gargoyle_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "石像鬼"
-	data.creature_type = Enums.CreatureType.GARGOYLE
+	data.creature_type = MonstersTypes.MonsterType.GARGOYLE
 	data.max_health = 1200
 	data.attack = 25
 	data.armor = 6

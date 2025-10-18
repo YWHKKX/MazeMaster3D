@@ -16,8 +16,8 @@ extends Resource
 ## 角色名称（如"哥布林苦工"、"骑士"）
 @export var character_name: String = "未命名"
 
-## 角色类型（使用 Enums.CreatureType）
-@export var creature_type: Enums.CreatureType = Enums.CreatureType.IMP
+## 角色类型（使用整数类型，兼容所有角色类型系统）
+@export var creature_type: int = 0
 
 ## 角色图标
 @export var icon: Texture2D
@@ -58,10 +58,10 @@ extends Resource
 @export_range(1, 50, 1) var detection_range: float = 10.0
 
 ## 攻击类型
-@export var attack_type: Enums.AttackType = Enums.AttackType.NORMAL
+@export var attack_type: CombatTypes.AttackType = CombatTypes.AttackType.NORMAL
 
 ## 伤害类型
-@export var damage_type: Enums.DamageType = Enums.DamageType.PHYSICAL
+@export var damage_type: CombatTypes.DamageType = CombatTypes.DamageType.PHYSICAL
 
 ## ============================================================================
 ## 特效和动画资源
@@ -133,7 +133,7 @@ extends Resource
 ## ============================================================================
 
 ## 击退类型
-@export var knockback_type: Enums.KnockbackType = Enums.KnockbackType.NORMAL
+@export var knockback_type: CombatTypes.KnockbackType = CombatTypes.KnockbackType.NORMAL
 
 ## 免疫列表
 @export_flags("击退", "眩晕", "减速", "中毒", "燃烧", "冰冻") var immunities: int = 0
@@ -211,7 +211,7 @@ func clone() -> CharacterData:
 func to_dict() -> Dictionary:
 	return {
 		"character_name": character_name,
-		"creature_type": Enums.creature_type_to_string(creature_type),
+		"creature_type": creature_type,
 		"max_health": max_health,
 		"attack": attack,
 		"armor": armor,

@@ -17,7 +17,7 @@ var mine_building: Node3D = null # 🔧 金矿建筑包装器
 # 不再需要手动管理 current_path 和 current_waypoint
 
 func enter(data: Dictionary = {}) -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 获取目标金矿
 	if data.has("target_mine"):
@@ -43,16 +43,11 @@ func enter(data: Dictionary = {}) -> void:
 	
 	worker.current_mine = target_mine
 	
-	if state_machine.debug_mode:
-		print("[MoveToMineState] 开始移动到金矿 | 目标: %s" % str(mine_building.global_position))
-
 func physics_update(_delta: float) -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	
 	# 检查目标金矿是否有效
 	if not is_instance_valid(target_mine) or target_mine.is_exhausted():
-		if state_machine.debug_mode:
-			print("[MoveToMineState] 金矿失效，返回空闲")
 		state_finished.emit(GameGroups.STATE_IDLE, {})
 		return
 	
@@ -73,20 +68,16 @@ func physics_update(_delta: float) -> void:
 	match move_result:
 		MovementHelper.InteractionMoveResult.REACHED_INTERACTION:
 			# 已到达交互范围，开始挖矿
-			if state_machine.debug_mode:
-				print("✅ [MoveToMineState] Worker进入金矿交互范围，开始挖矿")
 			state_finished.emit(GameGroups.STATE_MINING, {"target_mine": target_mine})
 			return
 		MovementHelper.InteractionMoveResult.FAILED_NO_PATH, MovementHelper.InteractionMoveResult.FAILED_STUCK:
 			# 寻路失败或卡住，标记金矿失败
-			if state_machine.debug_mode:
-				print("❌ [MoveToMineState] 无法到达金矿，加入黑名单: %s" % str(target_mine.position))
 			worker.failed_mines[target_mine.position] = Time.get_ticks_msec()
 			state_finished.emit(GameGroups.STATE_IDLE, {})
 		# MOVING_TO_ADJACENT 和 MOVING_TO_INTERACTION 继续移动
 
 func exit() -> void:
-	var worker = state_machine.owner
+	var worker = state_machine.owner_node
 	worker.velocity = Vector3.ZERO
 	
 	# 🔧 [清理] 移除金矿建筑包装器

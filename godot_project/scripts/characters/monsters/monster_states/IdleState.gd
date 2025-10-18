@@ -16,7 +16,11 @@ var idle_duration: float = 0.0
 var max_idle_time: float = 4.0
 
 func enter(_data: Dictionary = {}) -> void:
-	var monster = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		LogManager.warning("MonsterIdleState - state_machine 或 owner_node 为空")
+		return
+	
+	var monster = state_machine.owner_node
 	
 	# 播放待机动画
 	if monster.has_node("Model") and monster.get_node("Model").has_method("play_animation"):
@@ -37,11 +41,11 @@ func enter(_data: Dictionary = {}) -> void:
 	add_child(idle_timer)
 	idle_timer.start()
 	
-	if state_machine.debug_mode:
-		print("[MonsterIdleState] 怪物进入待机状态 | 阵营: %s" % Enums.faction_to_string(monster.faction))
-
 func update(_delta: float) -> void:
-	var monster = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	
+	var monster = state_machine.owner_node
 	
 	# 优先级1: 战斗准备 - 检测敌人
 	if _has_nearby_enemies(monster):
@@ -84,7 +88,10 @@ func _should_guard(monster: Node) -> bool:
 
 func _on_idle_timeout() -> void:
 	"""空闲时间结束"""
-	var monster = state_machine.owner
+	if not state_machine or not state_machine.owner_node:
+		return
+	
+	var monster = state_machine.owner_node
 	
 	# 随机选择下一个行为
 	var behaviors = ["PatrolState", "GuardState", "IdleState"]

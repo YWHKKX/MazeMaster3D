@@ -15,23 +15,23 @@ func _ready() -> void:
 	is_combat_unit = false
 	
 	add_to_group(GameGroups.BEASTS)
-	add_to_group("fishes")
+	add_to_group(GameGroups.FISHES)
 	
 	# 状态机会在BeastBase._ready()中自动创建
 
 func _init_fish_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "鱼"
-	data.creature_type = Enums.CreatureType.FISH
-	data.max_health = 100  # 血量很低
-	data.attack = 2        # 攻击力很低
+	data.creature_type = BeastsTypes.BeastType.FISH
+	data.max_health = 100 # 血量很低
+	data.attack = 2 # 攻击力很低
 	data.armor = 0
-	data.speed = 45        # 水中游泳速度
-	data.size = 6          # 体型很小
+	data.speed = 45 # 水中游泳速度
+	data.size = 6 # 体型很小
 	data.attack_range = 1.0
 	data.attack_cooldown = 3.0
 	data.detection_range = 8.0
-	data.color = Color(0.2, 0.4, 0.8)  # 蓝色
+	data.color = Color(0.2, 0.4, 0.8) # 蓝色
 	character_data = data
 	_init_from_character_data()
 
@@ -41,4 +41,4 @@ func get_search_range() -> float:
 
 ## 获取游荡速度倍数
 func get_wander_speed_multiplier() -> float:
-	return 1.0  # 正常游泳
+	return 1.0 # 正常游泳

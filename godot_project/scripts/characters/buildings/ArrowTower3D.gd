@@ -8,7 +8,7 @@ class_name ArrowTower3D
 var attack_damage: float = 25.0
 var attack_range: float = 80.0
 var attack_interval: float = 2.0
-var crit_rate: float = 0.25  # 25%暴击率
+var crit_rate: float = 0.25 # 25%暴击率
 var crit_multiplier: float = 2.0
 var ammo_count: int = 50
 var max_ammo: int = 50
@@ -21,11 +21,11 @@ func _init():
 	
 	# 基础属性
 	building_name = "箭塔"
-	building_type = BuildingTypes.ARROW_TOWER
+	building_type = BuildingTypes.BuildingType.ARROW_TOWER
 	max_health = 600
 	health = max_health
 	armor = 8
-	building_size = Vector2(1, 1)  # 保持原有尺寸用于碰撞检测
+	building_size = Vector2(1, 1) # 保持原有尺寸用于碰撞检测
 	cost_gold = 150
 	engineer_cost = 75
 	build_time = 90.0
@@ -42,37 +42,31 @@ func _setup_3d_config():
 	building_3d_config.set_basic_config(building_name, building_type, Vector3(3, 3, 3))
 	
 	# 结构配置
-	building_3d_config.set_structure_config(
-		windows = true,    # 有射箭口
-		door = true,       # 有门
-		roof = true,       # 有屋顶
-		decorations = true # 有军事装饰
-	)
+	building_3d_config.has_windows = true
+	building_3d_config.has_door = true
+	building_3d_config.has_roof = true
+	building_3d_config.has_decorations = true
 	
 	# 材质配置（军事风格）
-	building_3d_config.set_material_config(
-		wall = Color(0.83, 0.83, 0.83),  # 石灰色墙体
-		roof = Color(0.6, 0.3, 0.2),     # 棕红色屋顶
-		floor = Color(0.5, 0.5, 0.5)     # 灰色地板
-	)
+	building_3d_config.wall_color = Color(0.83, 0.83, 0.83) # 石灰色墙体
+	building_3d_config.roof_color = Color(0.6, 0.3, 0.2) # 棕红色屋顶
+	building_3d_config.floor_color = Color(0.5, 0.5, 0.5) # 灰色地板
 	
 	# 特殊功能配置
-	building_3d_config.set_special_config(
-		lighting = true,    # 有光照
-		particles = false,  # 无粒子特效
-		animations = true,  # 有动画
-		sound = false       # 暂时无音效
-	)
+	building_3d_config.has_lighting = true
+	building_3d_config.has_particles = false
+	building_3d_config.has_animations = true
+	building_3d_config.has_sound_effects = false
 
 
-func _get_building_template() -> BuildingTemplate:
+func _get_building_template():
 	"""获取箭塔建筑模板"""
-	var template = BuildingTemplate.new("箭塔")
-	template.building_type = BuildingTypes.ARROW_TOWER
+	var template = BuildingTemplateClass.new("箭塔")
+	template.building_type = BuildingTypes.BuildingType.ARROW_TOWER
 	template.description = "坚固的3x3x3军事防御塔，具有强大的远程攻击能力"
 	
 	# 创建军事塔楼结构
-	template.create_military_structure(BuildingTypes.ARROW_TOWER)
+	template.create_military_structure(BuildingTypes.BuildingType.ARROW_TOWER)
 	
 	# 自定义军事元素
 	# 顶层：射箭口和弩机
@@ -116,11 +110,11 @@ func _get_building_config() -> BuildingConfig:
 	config.tower_height = 1.2
 	
 	# 材质配置
-	config.wall_color = Color(0.83, 0.83, 0.83)  # 石灰色
-	config.roof_color = Color(0.6, 0.3, 0.2)     # 棕红色
-	config.floor_color = Color(0.5, 0.5, 0.5)    # 灰色
-	config.window_color = Color.LIGHT_GRAY        # 浅灰色窗户
-	config.door_color = Color.DARK_GRAY           # 深灰色门
+	config.wall_color = Color(0.83, 0.83, 0.83) # 石灰色
+	config.roof_color = Color(0.6, 0.3, 0.2) # 棕红色
+	config.floor_color = Color(0.5, 0.5, 0.5) # 灰色
+	config.window_color = Color.LIGHT_GRAY # 浅灰色窗户
+	config.door_color = Color.DARK_GRAY # 深灰色门
 	
 	return config
 
@@ -270,7 +264,7 @@ func _update_functional_effects(delta: float):
 func _update_arrow_tower_effects(delta: float):
 	"""更新箭塔特效"""
 	# 弹药不足警告
-	if ammo_count < max_ammo * 0.2:  # 弹药低于20%
+	if ammo_count < max_ammo * 0.2: # 弹药低于20%
 		if effect_manager and effect_manager.light_systems.has("torch_light"):
 			var light = effect_manager.light_systems["torch_light"]
 			if light and light.visible:

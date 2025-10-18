@@ -63,26 +63,31 @@ func _ready() -> void:
 	super._ready()
 	
 	# 设置怪物阵营
-	faction = Enums.Faction.MONSTERS
+	faction = MonstersTypes.Faction.MONSTERS
 	
-	# 创建状态机
-	if enable_state_machine and not state_machine:
-		state_machine = StateManager.get_instance().create_state_machine_for_character(self)
-	
-	if debug_mode:
-		print("[MonsterBase] 怪物初始化: %s" % get_character_name())
+	# 🔧 [特殊处理] GoblinWorker 和 GoblinEngineer 使用场景预配置的状态机
+	if _is_special_goblin_unit():
+		_handle_special_goblin_state_machine()
+	else:
+		# 普通怪物使用 StateManager 创建状态机
+		if enable_state_machine and not state_machine:
+			var state_manager = StateManagerClass.get_instance()
+			if state_manager:
+				state_machine = state_manager.create_state_machine_for_character(self)
+			else:
+				LogManager.error("MonsterBase - StateManager 实例为空，无法创建状态机")
 
 func _process(delta: float) -> void:
 	if not is_alive:
 		return
 	
 	# 更新空闲计时器
-	if current_status == Enums.CreatureStatus.IDLE:
+	if current_status == MonstersTypes.MonsterStatus.IDLE:
 		idle_timer += delta
 		
 		# 空闲超时自动游荡
 		if idle_timer > idle_timeout:
-			change_status(Enums.CreatureStatus.WANDERING)
+			change_status(MonstersTypes.MonsterStatus.WANDERING)
 			idle_timer = 0.0
 
 func _physics_process(delta: float) -> void:
@@ -95,7 +100,7 @@ func _physics_process(delta: float) -> void:
 	update_regeneration(delta)
 	
 	# 检查是否需要逃跑
-	if is_low_health() and current_status != Enums.CreatureStatus.FLEEING:
+	if is_low_health() and current_status != MonstersTypes.MonsterStatus.FLEEING:
 		start_fleeing()
 
 ## ============================================================================
@@ -104,7 +109,7 @@ func _physics_process(delta: float) -> void:
 
 ## 开始游荡
 func start_wandering() -> void:
-	change_status(Enums.CreatureStatus.WANDERING)
+	change_status(MonstersTypes.MonsterStatus.WANDERING)
 	_generate_wander_target()
 
 ## 生成游荡目标
@@ -115,45 +120,26 @@ func _generate_wander_target() -> void:
 		randf_range(-wander_radius, wander_radius)
 	)
 	
-	if debug_mode:
-		print("[MonsterBase] %s 生成游荡目标: %v" % [get_character_name(), wander_target])
-
 ## 开始逃跑
 func start_fleeing() -> void:
-	change_status(Enums.CreatureStatus.FLEEING)
+	change_status(MonstersTypes.MonsterStatus.FLEEING)
 	flee_started.emit()
-	
-	if debug_mode:
-		print("[MonsterBase] %s 开始逃跑" % get_character_name())
 
-## 停止逃跑
 func stop_fleeing() -> void:
 	flee_ended.emit()
-	change_status(Enums.CreatureStatus.IDLE)
+	change_status(MonstersTypes.MonsterStatus.IDLE)
 	
-	if debug_mode:
-		print("[MonsterBase] %s 停止逃跑" % get_character_name())
-
 ## 开始工作
 func start_working(target: Node3D = null) -> void:
 	work_target = target
 	work_started.emit()
-	
-	if debug_mode:
-		var target_name := "none"
-		if target and is_instance_valid(target):
-			target_name = target.name
-		print("[MonsterBase] %s 开始工作，目标: %s" % [get_character_name(), target_name])
 
 ## 完成工作
 func complete_work() -> void:
 	work_completed.emit()
 	work_target = null
-	change_status(Enums.CreatureStatus.IDLE)
+	change_status(MonstersTypes.MonsterStatus.IDLE)
 	
-	if debug_mode:
-		print("[MonsterBase] %s 完成工作" % get_character_name())
-
 ## ============================================================================
 ## 查找方法
 ## ============================================================================
@@ -215,6 +201,35 @@ func get_search_range() -> float:
 	# 子类可以根据怪物类型返回特定的搜索范围
 	# 例如：Constants.SEARCH_RANGE_IMP
 	return detection_range
+
+## ============================================================================
+## 特殊哥布林单位处理
+## ============================================================================
+
+## 检查是否是特殊的哥布林单位（使用场景预配置状态机）
+func _is_special_goblin_unit() -> bool:
+	"""检查是否是 GoblinWorker 或 GoblinEngineer"""
+	if not character_data:
+		return false
+	
+	var creature_type = character_data.creature_type
+	return creature_type in [MonstersTypes.MonsterType.GOBLIN_WORKER, MonstersTypes.MonsterType.GOBLIN_ENGINEER]
+
+## 处理特殊哥布林单位的状态机
+func _handle_special_goblin_state_machine() -> void:
+	"""处理 GoblinWorker 和 GoblinEngineer 的场景预配置状态机"""
+	# 获取场景中预配置的状态机
+	var scene_state_machine = get_node_or_null("StateMachine")
+	if scene_state_machine:
+		# 将场景状态机赋值给基类的 state_machine 引用
+		state_machine = scene_state_machine
+		
+		# 设置状态机属性
+		state_machine.debug_mode = debug_mode
+		state_machine.auto_start = true
+	
+	else:
+		LogManager.error("MonsterBase - %s 场景中缺少 StateMachine 节点" % get_character_name())
 
 ## ============================================================================
 ## 重写基类方法

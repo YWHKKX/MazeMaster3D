@@ -11,12 +11,12 @@ func _ready() -> void:
 		_init_ranger_data()
 	is_combat_unit = true
 	add_to_group(GameGroups.HEROES)
-	add_to_group("rangers")
+	add_to_group(GameGroups.RANGERS)
 
 func _init_ranger_data() -> void:
 	var data = CharacterData.new()
 	data.character_name = "游侠"
-	data.creature_type = Enums.CreatureType.RANGER
+	data.creature_type = HeroesTypes.HeroType.RANGER
 	data.max_health = 1000
 	data.attack = 25
 	data.armor = 4
@@ -25,7 +25,7 @@ func _init_ranger_data() -> void:
 	data.attack_range = 15.0
 	data.attack_cooldown = 1.2
 	data.detection_range = 15.0
-	data.attack_type = Enums.AttackType.RANGED
+	data.attack_type = CombatTypes.AttackType.RANGED
 	data.color = Color(0.4, 0.6, 0.3)
 	character_data = data
 	_init_from_character_data()

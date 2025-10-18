@@ -33,35 +33,35 @@ func _ready():
 func _initialize_effect_configs():
 	"""初始化特效配置"""
 	# 魔法建筑特效
-	effect_configs[BuildingTypes.ARCANE_TOWER] = {
+	effect_configs[BuildingTypes.BuildingType.ARCANE_TOWER] = {
 		"particles": ["magic_energy", "sparkles"],
 		"lights": ["magic_glow"],
 		"sounds": ["magic_hum"]
 	}
 	
 	# 金库特效
-	effect_configs[BuildingTypes.TREASURY] = {
+	effect_configs[BuildingTypes.BuildingType.TREASURY] = {
 		"particles": ["gold_sparkles", "coin_flash"],
 		"lights": ["golden_glow"],
 		"sounds": ["coin_chime"]
 	}
 	
 	# 箭塔特效
-	effect_configs[BuildingTypes.ARROW_TOWER] = {
+	effect_configs[BuildingTypes.BuildingType.ARROW_TOWER] = {
 		"particles": ["arrow_trail"],
 		"lights": ["torch_light"],
 		"sounds": ["bow_string"]
 	}
 	
 	# 恶魔巢穴特效
-	effect_configs[BuildingTypes.DEMON_LAIR] = {
+	effect_configs[BuildingTypes.BuildingType.DEMON_LAIR] = {
 		"particles": ["flames", "dark_energy"],
 		"lights": ["fire_glow"],
 		"sounds": ["demon_growl"]
 	}
 	
 	# 暗影神殿特效
-	effect_configs[BuildingTypes.SHADOW_TEMPLE] = {
+	effect_configs[BuildingTypes.BuildingType.SHADOW_TEMPLE] = {
 		"particles": ["shadow_wisps", "dark_mist"],
 		"lights": ["shadow_glow"],
 		"sounds": ["dark_whisper"]
@@ -80,13 +80,13 @@ func play_completion_effect():
 	
 	# 根据建筑类型播放不同的完成特效
 	match target_building.building_type:
-		BuildingTypes.ARCANE_TOWER:
+		BuildingTypes.BuildingType.ARCANE_TOWER:
 			_play_magic_completion_effect()
-		BuildingTypes.TREASURY:
+		BuildingTypes.BuildingType.TREASURY:
 			_play_treasury_completion_effect()
-		BuildingTypes.ARROW_TOWER:
+		BuildingTypes.BuildingType.ARROW_TOWER:
 			_play_tower_completion_effect()
-		BuildingTypes.DEMON_LAIR:
+		BuildingTypes.BuildingType.DEMON_LAIR:
 			_play_demon_completion_effect()
 		_:
 			_play_generic_completion_effect()
@@ -478,11 +478,11 @@ func set_lod_level(level: int):
 func _update_effects_for_lod():
 	"""根据LOD级别更新特效"""
 	match lod_level:
-		0:  # 最低细节：禁用所有特效
+		0: # 最低细节：禁用所有特效
 			_disable_all_effects()
-		1:  # 中等细节：只保留重要特效
+		1: # 中等细节：只保留重要特效
 			_enable_important_effects()
-		2:  # 最高细节：启用所有特效
+		2: # 最高细节：启用所有特效
 			_enable_all_effects()
 
 
