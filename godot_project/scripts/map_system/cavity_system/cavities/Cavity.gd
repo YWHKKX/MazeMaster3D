@@ -18,7 +18,7 @@ var highlight_color: Color = Color.WHITE
 var priority: int = 0
 var shape_points: PackedVector2Array = [] # 噪声生成的形状点
 var area: float = 0.0 # 空洞面积
-var is_connected: bool = true # 连通性标记
+var is_connected_cavity: bool = true # 连通性标记
 var is_excavated: bool = false # 是否已挖掘
 
 # ============================================================================
@@ -148,25 +148,25 @@ func check_connectivity() -> bool:
 			if neighbor in positions and neighbor not in visited:
 				queue.append(neighbor)
 	
-	is_connected = connected_count >= positions.size() * 0.8 # 80%以上连通
-	return is_connected
+	is_connected_cavity = connected_count >= positions.size() * 0.8 # 80%以上连通
+	return is_connected_cavity
 
 # ============================================================================
 # 形状生成
 # ============================================================================
 
-func generate_circular_shape(center_pos: Vector2i, radius: int) -> void:
+func generate_circular_shape(center_pos: Vector2i, _radius: int) -> void:
 	"""生成圆形空洞形状"""
 	clear()
 	center = center_pos
-	self.radius = radius
+	self.radius = _radius
 	
-	for x in range(center.x - radius, center.x + radius + 1):
-		for z in range(center.y - radius, center.y + radius + 1):
+	for x in range(center.x - _radius, center.x + _radius + 1):
+		for z in range(center.y - _radius, center.y + _radius + 1):
 			var pos = Vector2i(x, z)
 			var distance = pos.distance_to(center)
 			
-			if distance <= radius:
+			if distance <= _radius:
 				add_position(Vector3(x, 0, z))
 
 func generate_rectangular_shape(center_pos: Vector2i, rect_size: Vector2i) -> void:
@@ -175,26 +175,26 @@ func generate_rectangular_shape(center_pos: Vector2i, rect_size: Vector2i) -> vo
 	center = center_pos
 	size = rect_size
 	
-	var half_width = rect_size.x / 2
-	var half_height = rect_size.y / 2
+	var half_width = rect_size.x / 2.0
+	var half_height = rect_size.y / 2.0
 	
 	for x in range(center.x - half_width, center.x + half_width + 1):
 		for z in range(center.y - half_height, center.y + half_height + 1):
 			add_position(Vector3(x, 0, z))
 
-func generate_noise_shape(center_pos: Vector2i, shape_points: PackedVector2Array) -> void:
+func generate_noise_shape(center_pos: Vector2i, _shape_points: PackedVector2Array) -> void:
 	"""基于噪声形状生成空洞"""
 	clear()
 	center = center_pos
-	self.shape_points = shape_points
+	self.shape_points = _shape_points
 	
 	# 使用射线法填充多边形
-	var bounding_rect = _calculate_bounding_rect_from_points(shape_points)
+	var bounding_rect = _calculate_bounding_rect_from_points(_shape_points)
 	
 	for x in range(int(bounding_rect.position.x), int(bounding_rect.end.x)):
 		for z in range(int(bounding_rect.position.y), int(bounding_rect.end.y)):
 			var point = Vector2(x, z)
-			if _is_point_in_polygon(point, shape_points):
+			if _is_point_in_polygon(point, _shape_points):
 				add_position(Vector3(x, 0, z))
 
 # ============================================================================
@@ -272,9 +272,9 @@ func _is_point_in_polygon(point: Vector2, polygon: PackedVector2Array) -> bool:
 	
 	return inside
 
-func _get_default_color_for_type(content_type: String) -> Color:
+func _get_default_color_for_type(_content_type: String) -> Color:
 	"""根据内容类型获取默认颜色"""
-	match content_type:
+	match _content_type:
 		"FOREST":
 			return Color(0.0, 0.8, 0.0, 0.6)
 		"LAKE":
@@ -309,7 +309,7 @@ func to_dictionary() -> Dictionary:
 		"highlight_color": [highlight_color.r, highlight_color.g, highlight_color.b, highlight_color.a],
 		"priority": priority,
 		"area": area,
-		"is_connected": is_connected,
+		"is_connected": is_connected_cavity,
 		"is_excavated": is_excavated
 	}
 
@@ -337,7 +337,7 @@ func from_dictionary(data: Dictionary) -> void:
 	
 	priority = data.get("priority", 0)
 	area = data.get("area", 0.0)
-	is_connected = data.get("is_connected", true)
+	is_connected_cavity = data.get("is_connected", true)
 	is_excavated = data.get("is_excavated", false)
 
 func get_debug_info() -> String:

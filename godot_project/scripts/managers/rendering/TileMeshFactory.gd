@@ -25,8 +25,8 @@ func _ready():
 func create_tile_object(tile_data) -> Node3D:
 	"""创建瓦片3D对象"""
 	var tile_type = tile_data.type
-	var position = tile_data.position
-	var level = tile_data.level
+	var _position = tile_data.position
+	var _level = tile_data.level
 	
 	# 特殊处理地牢之心
 	if tile_type == TileTypes.TileType.DUNGEON_HEART:
@@ -135,7 +135,7 @@ func _add_collision_body(tile_object: Node3D, tile_type: int, position: Vector3)
 	static_body.add_child(collision_shape)
 	tile_object.add_child(static_body)
 
-func _add_interaction_area(tile_object: Node3D, tile_type: int, position: Vector3):
+func _add_interaction_area(tile_object: Node3D, tile_type: int, _position: Vector3):
 	"""添加交互区域"""
 	var interaction_area = Area3D.new()
 	

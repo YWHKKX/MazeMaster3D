@@ -4,6 +4,8 @@ class_name PoissonDiskSampler
 ## 🎯 泊松圆盘采样器
 ## 使用泊松圆盘分布算法生成空洞中心点，确保空洞间最小距离
 
+const CavityConfigManager = preload("res://scripts/map_system/cavity_system/config/CavityConfigManager.gd")
+
 # ============================================================================
 # 属性
 # ============================================================================
@@ -15,21 +17,13 @@ var height: int = 200
 var grid: Array = []
 var cellsize: float = 0.0
 
-# 配置参数（从MapConfig加载）
-var cavity_config: Dictionary = {}
+var config_manager: CavityConfigManager
 
 # ============================================================================
 # 配置加载
 # ============================================================================
 
-func _load_config_from_mapconfig() -> void:
-	"""从MapConfig加载配置参数"""
-	if MapConfig:
-		cavity_config = MapConfig.get_cavity_excavation_config()
-		k = cavity_config.get("poisson_k_attempts", 30)
-		LogManager.info("PoissonDiskSampler - 已从MapConfig加载配置参数")
-	else:
-		LogManager.warning("PoissonDiskSampler - MapConfig未找到，使用默认配置")
+# 配置加载已移至 CavityConfigManager
 
 # ============================================================================
 # 核心方法
@@ -46,8 +40,9 @@ func sample(radius: float, w: int, h: int) -> PackedVector2Array:
 	Returns:
 		空洞中心点数组
 	"""
-	# 从MapConfig加载配置
-	_load_config_from_mapconfig()
+	# 获取配置管理器
+	config_manager = CavityConfigManager.get_instance()
+	k = config_manager.get_config_value("poisson_k_attempts", 30)
 	
 	r = radius
 	width = w

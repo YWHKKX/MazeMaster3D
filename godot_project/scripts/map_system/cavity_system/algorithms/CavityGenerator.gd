@@ -9,6 +9,7 @@ extends Node
 
 const Cavity = preload("res://scripts/map_system/cavity_system/cavities/Cavity.gd")
 const HoleShapeGenerator = preload("res://scripts/map_system/cavity_system/algorithms/HoleShapeGenerator.gd")
+const CavityConfigManager = preload("res://scripts/map_system/cavity_system/config/CavityConfigManager.gd")
 
 # ============================================================================
 # 属性
@@ -23,11 +24,7 @@ var noise: FastNoiseLite
 var poisson_sampler: PoissonDiskSampler
 var shape_generator: HoleShapeGenerator
 var tile_manager: Node
-
-# 配置参数（从MapConfig加载）
-var cavity_config: Dictionary = {}
-var type_configs: Dictionary = {}
-var ecosystem_configs: Dictionary = {}
+var config_manager: CavityConfigManager
 
 # ============================================================================
 # 初始化
@@ -40,37 +37,20 @@ func _ready():
 
 func _initialize_components() -> void:
 	"""初始化组件"""
+	config_manager = CavityConfigManager.get_instance()
 	poisson_sampler = PoissonDiskSampler.new()
 	shape_generator = HoleShapeGenerator.new()
-	
-	# 从MapConfig加载配置
-	_load_config_from_mapconfig()
 	
 	# 初始化噪声
 	noise = FastNoiseLite.new()
 	noise.seed = randi()
-	noise.frequency = cavity_config.get("noise_frequency", 0.1)
+	noise.frequency = config_manager.get_config_value("noise_frequency", 0.1)
 	noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	
 	shape_generator.noise = noise
-	shape_generator.hole_radius = cavity_config.get("average_cavity_radius", 12.0)
+	shape_generator.hole_radius = config_manager.get_config_value("average_cavity_size", 12.0)
 
-func _load_config_from_mapconfig() -> void:
-	"""从MapConfig加载配置参数"""
-	if MapConfig:
-		cavity_config = MapConfig.get_cavity_excavation_config()
-		type_configs = MapConfig.get_cavity_type_configs()
-		ecosystem_configs = MapConfig.get_ecosystem_cavity_configs()
-		
-		# 更新本地参数
-		map_width = int(MapConfig.get_map_size().x)
-		map_height = int(MapConfig.get_map_size().z)
-		min_hole_distance = cavity_config.get("min_cavity_distance", 25.0)
-		average_hole_radius = cavity_config.get("average_cavity_radius", 12.0)
-		
-		LogManager.info("CavityGenerator - 已从MapConfig加载配置参数")
-	else:
-		LogManager.warning("CavityGenerator - MapConfig未找到，使用默认配置")
+# 配置加载已移至 CavityConfigManager
 
 # ============================================================================
 # 核心生成方法
@@ -133,25 +113,40 @@ func _generate_fixed_cavities() -> Array[Cavity]:
 	var cavities: Array[Cavity] = []
 	
 	LogManager.info("CavityGenerator - 获取关键空洞配置...")
-	var fixed_configs = CavityConfig.get_instance().get_critical_cavities()
-	LogManager.info("CavityGenerator - 获得 %d 个关键空洞配置" % fixed_configs.size())
+	var fixed_configs = config_manager.get_type_config("critical")
+	LogManager.info("CavityGenerator - 获得关键空洞配置")
 	
-	if fixed_configs.size() == 0:
+	if fixed_configs.is_empty():
 		LogManager.warning("⚠️ 没有找到任何关键空洞配置！")
 		return cavities
 	
-	for i in range(fixed_configs.size()):
-		var config = fixed_configs[i]
-		LogManager.info("处理配置 %d/%d: ID=%s, 类型=%s, 中心=%s" % [i + 1, fixed_configs.size(), config.id, config.content_type, config.center])
-		
-		var cavity = _create_cavity_from_config(config)
-		if cavity:
-			cavities.append(cavity)
-			LogManager.info("CavityGenerator - 成功生成固定空洞: %s, 中心=%s, 位置数=%d" % [cavity.id, cavity.center, cavity.positions.size()])
-		else:
-			LogManager.warning("CavityGenerator - 生成固定空洞失败: %s" % config.id)
+	# 创建默认关键空洞
+	var critical_cavities = _create_default_critical_cavities()
+	cavities.append_array(critical_cavities)
 	
 	LogManager.info("CavityGenerator - 固定空洞生成完成: %d 个" % cavities.size())
+	return cavities
+
+func _create_default_critical_cavities() -> Array[Cavity]:
+	"""创建默认关键空洞"""
+	var cavities: Array[Cavity] = []
+	
+	# 创建地牢之心
+	var dungeon_heart = Cavity.new("dungeon_heart", "critical", "DUNGEON_HEART")
+	dungeon_heart.priority = 10
+	dungeon_heart.highlight_color = Color(1.0, 0.0, 0.0, 0.8)
+	var center = Vector2i(int(map_width / 2.0), int(map_height / 2.0))
+	dungeon_heart.generate_circular_shape(center, 15)
+	cavities.append(dungeon_heart)
+	
+	# 创建传送门
+	var portal = Cavity.new("portal", "critical", "PORTAL")
+	portal.priority = 9
+	portal.highlight_color = Color(0.5, 0.0, 0.8, 0.9)
+	var portal_center = Vector2i(int(map_width / 4.0), int(map_height / 4.0))
+	portal.generate_circular_shape(portal_center, 8)
+	cavities.append(portal)
+	
 	return cavities
 
 func _create_cavity_from_config(config: Dictionary) -> Cavity:
@@ -164,13 +159,13 @@ func _create_cavity_from_config(config: Dictionary) -> Cavity:
 	
 	match config.get("shape", "circle"):
 		"circle":
-			var radius = config.get("radius", 10)
-			cavity.generate_circular_shape(center, radius)
+			var _radius = config.get("radius", 10)
+			cavity.generate_circular_shape(center, _radius)
 		"rectangle":
 			var size = Vector2i(config.size[0], config.size[1])
 			cavity.generate_rectangular_shape(center, size)
 		"noise":
-			var radius = config.get("radius", 10)
+			var _radius = config.get("radius", 10)
 			var shape_points = shape_generator.generate_hole_shape(Vector2(center), map_width, map_height)
 			cavity.generate_noise_shape(center, shape_points)
 		"maze":

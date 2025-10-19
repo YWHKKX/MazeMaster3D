@@ -16,7 +16,6 @@ const HoleShapeGenerator = preload("res://scripts/map_system/cavity_system/algor
 # ============================================================================
 
 var cavity_generator: CavityGenerator
-var post_processor: Node
 var tile_manager: Node
 var map_width: int = 200
 var map_height: int = 200
@@ -33,11 +32,7 @@ func _ready():
 func _initialize_components() -> void:
 	"""初始化组件"""
 	cavity_generator = CavityGenerator.new()
-	# post_processor 暂时注释掉，等待实现
-	# post_processor = CavityPostProcessor.new()
-	
 	add_child(cavity_generator)
-	# add_child(post_processor)
 
 # ============================================================================
 # 核心挖掘方法
@@ -366,5 +361,5 @@ func get_excavation_info() -> Dictionary:
 		"map_size": Vector2i(map_width, map_height),
 		"tile_manager_ready": tile_manager != null,
 		"generator_info": cavity_generator.get_generation_info(),
-		"processor_info": post_processor.get_processing_info() if post_processor != null else {}
+		"processor_info": {}
 	}

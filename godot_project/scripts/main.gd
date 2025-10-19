@@ -11,7 +11,7 @@ const GridManager = preload("res://scripts/managers/GridManager.gd")
 @onready var map_generator = $MapGenerator
 @onready var character_manager = $CharacterManager
 @onready var grid_manager = $GridManager
-var terrain_manager: Node = null
+# terrain_manager 已删除，使用 CavityManager 统一管理
 @onready var camera = $World/Camera3D
 @onready var world = $World
 @onready var ui = $UI
@@ -56,8 +56,7 @@ var mining_manager: MiningManager = null
 # 资源管理器（动态创建）
 var resource_manager: ResourceManager = null
 
-# 地形高亮系统（通过MapGenerator获取）
-var terrain_highlight_system: Node = null
+# 地形高亮系统已移至 CavityHighlightSystem
 var terrain_display_enabled: bool = false
 
 # 游戏状态
@@ -114,7 +113,7 @@ func initialize_game():
 	_setup_character_atlas_ui()
 	
 	# 初始化地形管理器
-	_setup_terrain_manager()
+	# 地形管理器已删除，使用 CavityManager 统一管理
 	
 	# 初始化游戏管理器
 	game_manager.initialize()
@@ -165,12 +164,8 @@ func _register_scene_managers():
 	if auto_assigner:
 		GameServices.register("auto_assigner", auto_assigner)
 	
-	# 🔧 [新增] 获取地形高亮系统引用
-	if map_generator and map_generator.terrain_highlight_system:
-		terrain_highlight_system = map_generator.terrain_highlight_system
-		LogManager.info("地形高亮系统引用已获取")
-	else:
-		LogManager.warning("无法获取地形高亮系统引用")
+	# 地形高亮系统已移至 CavityHighlightSystem
+	LogManager.info("地形高亮功能已整合到 CavityHighlightSystem")
 	
 	LogManager.info("GameServices - 所有场景管理器已注册")
 
@@ -251,19 +246,9 @@ func _setup_building_selection_ui():
 	
 	LogManager.info("建筑选择UI已初始化")
 
-func _setup_terrain_manager():
-	"""设置地形管理器"""
-	# 如果场景中没有 TerrainManager 节点，创建一个
-	if not terrain_manager:
-		var TerrainManagerClass = preload("res://scripts/map_system/TerrainManager.gd")
-		terrain_manager = TerrainManagerClass.new()
-		terrain_manager.name = "TerrainManager"
-		add_child(terrain_manager)
+# 地形管理器已删除，使用 CavityManager 统一管理
 	
-	# 初始化系统引用
-	if terrain_manager:
-		GameServices.register("terrain_manager", terrain_manager) # ✅ 注册服务
-		LogManager.info("地形管理器已初始化")
+	# 地形管理器已删除，使用 CavityManager 统一管理
 
 func _setup_character_atlas_ui():
 	"""设置角色图鉴UI"""
@@ -355,9 +340,7 @@ func register_terrain_from_cavities():
 	"""从空洞系统注册地形到地形管理器"""
 	LogManager.info("=== 开始地形注册过程 ===")
 	
-	if not terrain_manager:
-		LogManager.warning("TerrainManager 未初始化，无法注册地形")
-		return
+	# 地形管理器已删除，使用 CavityManager 统一管理
 	
 	# 获取空洞管理器
 	var cavity_manager = get_node("MapGenerator/CavityManager")
@@ -384,23 +367,22 @@ func register_terrain_from_cavities():
 		LogManager.warning("  3. 地图生成过程中断")
 		return
 	
-	LogManager.info("开始注册 %d 个空洞到地形管理器..." % all_cavities.size())
+	LogManager.info("空洞数据已通过 CavityManager 统一管理，无需额外注册")
 	
-	var registered_count = 0
-	for i in range(all_cavities.size()):
-		var cavity = all_cavities[i]
-		
-		if terrain_manager.register_terrain_from_cavity(cavity.id):
-			registered_count += 1
-			LogManager.info("✅ 空洞 %s 注册成功" % cavity.id)
-		else:
-			LogManager.warning("❌ 空洞 %s 注册失败" % cavity.id)
+	# 调试空洞信息
+	LogManager.info("=== 空洞统计信息 ===")
+	LogManager.info("总空洞数: %d" % all_cavities.size())
 	
-	LogManager.info("地形注册完成: %d/%d 个空洞成功注册" % [registered_count, all_cavities.size()])
+	var type_counts = {}
+	for cavity in all_cavities:
+		if not type_counts.has(cavity.type):
+			type_counts[cavity.type] = 0
+		type_counts[cavity.type] += 1
 	
-	# 调试地形信息
-	if terrain_manager.has_method("debug_terrain_info"):
-		terrain_manager.debug_terrain_info()
+	for type_name in type_counts.keys():
+		LogManager.info("%s 类型: %d 个" % [type_name, type_counts[type_name]])
+	
+	LogManager.info("==================")
 	
 	LogManager.info("=== 地形注册过程完成 ===")
 
@@ -640,7 +622,7 @@ func handle_input(event: InputEvent):
 		mouse_position = event.position
 		update_world_position()
 		
-		# 地形显示鼠标交互功能已移除，现在使用TerrainHighlightSystem
+		# 地形显示功能已移至 CavityHighlightSystem
 
 	elif event is InputEventMouseButton:
 		handle_mouse_click(event)
@@ -1022,33 +1004,46 @@ func handle_key_input(event: InputEventKey):
 
 func toggle_terrain_display():
 	"""切换地形显示状态"""
-	if not terrain_highlight_system:
-		LogManager.warning("地形高亮系统未初始化")
-		return
+	# 使用 TerrainHighlightSystem 进行地形高亮
+	LogManager.info("使用 TerrainHighlightSystem 进行地形高亮")
 	
-	terrain_display_enabled = !terrain_display_enabled
-	
-	if terrain_display_enabled:
-		# 开启地形高亮显示 - 使用异步版本避免卡顿
-		if terrain_highlight_system.has_method("highlight_all_terrain_types_async"):
-			terrain_highlight_system.highlight_all_terrain_types_async()
-			LogManager.info("🎯 地形高亮已开启 (快捷键: V) - 异步处理中...")
-			_show_terrain_highlight_status("开启")
-		elif terrain_highlight_system.has_method("highlight_all_terrain_types"):
+	# 尝试获取 TerrainHighlightSystem
+	var terrain_highlight_system = get_node_or_null("MapGenerator/TerrainHighlightSystem")
+	if terrain_highlight_system:
+		terrain_display_enabled = !terrain_display_enabled
+		
+		if terrain_display_enabled:
+			# 高亮所有地形类型
 			terrain_highlight_system.highlight_all_terrain_types()
 			LogManager.info("🎯 地形高亮已开启 (快捷键: V)")
 			_show_terrain_highlight_status("开启")
 		else:
-			LogManager.warning("地形高亮系统不支持全部地形高亮功能")
-			terrain_display_enabled = false
-	else:
-		# 清除所有地形高亮
-		if terrain_highlight_system.has_method("clear_all_highlights"):
+			# 清除所有高亮
 			terrain_highlight_system.clear_all_highlights()
 			LogManager.info("🧹 地形高亮已清除 (快捷键: V)")
 			_show_terrain_highlight_status("清除")
-		else:
-			LogManager.warning("地形高亮系统不支持清除高亮功能")
+	else:
+		LogManager.warning("无法获取 TerrainHighlightSystem")
+
+func toggle_cavity_highlight():
+	"""切换空洞高亮状态"""
+	var terrain_highlight_system = get_node_or_null("MapGenerator/TerrainHighlightSystem")
+	if terrain_highlight_system:
+		# 高亮所有空洞边界
+		terrain_highlight_system.highlight_all_cavity_boundaries()
+		LogManager.info("🎯 空洞边界高亮已开启 (快捷键: B)")
+	else:
+		LogManager.warning("无法获取 TerrainHighlightSystem")
+
+func toggle_terrain_highlight():
+	"""切换地形区域高亮状态"""
+	var terrain_highlight_system = get_node_or_null("MapGenerator/TerrainHighlightSystem")
+	if terrain_highlight_system:
+		# 高亮所有地形区域
+		terrain_highlight_system.highlight_terrain_regions()
+		LogManager.info("🎯 地形区域高亮已开启 (快捷键: T)")
+	else:
+		LogManager.warning("无法获取 TerrainHighlightSystem")
 
 func _show_terrain_highlight_status(terrain_type: String):
 	"""显示地形高亮状态提示"""

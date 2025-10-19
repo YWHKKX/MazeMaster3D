@@ -70,7 +70,6 @@ var terrain_manager: TerrainManager = null # 地形管理器
 
 # 空洞系统引用
 var cavity_manager: Node = null # 空洞管理器
-var cavity_highlight_system: Node = null # 空洞高亮系统
 
 # ============================================================================
 # 🚀 系统初始化
@@ -102,8 +101,7 @@ func _ready():
 	
 func _initialize_cavity_system():
 	"""初始化空洞系统引用"""
-	cavity_manager = get_node("/root/CavityManager")
-	cavity_highlight_system = get_node("/root/CavityHighlightSystem")
+	cavity_manager = get_node("/root/Main/MapGenerator/CavityManager")
 
 func _check_system_status():
 	"""检查 TileManager 状态"""
@@ -158,11 +156,26 @@ func _get_system_references():
 
 func _get_terrain_manager_reference():
 	"""延迟获取 TerrainManager 引用"""
+	# 首先尝试从父节点获取
+	var parent = get_parent()
+	if parent and parent.has_node("TerrainManager"):
+		terrain_manager = parent.get_node("TerrainManager")
+		LogManager.info("TerrainHighlightSystem - 从父节点获取 TerrainManager 引用")
+		return
+	
+	# 然后尝试从主场景获取
 	var main_scene = get_tree().current_scene
-	if main_scene and main_scene.has_node("TerrainManager"):
-		terrain_manager = main_scene.get_node("TerrainManager")
-	else:
-		LogManager.warning("TerrainHighlightSystem - 未找到 TerrainManager 节点")
+	if main_scene and main_scene.has_node("MapGenerator/TerrainManager"):
+		terrain_manager = main_scene.get_node("MapGenerator/TerrainManager")
+		LogManager.info("TerrainHighlightSystem - 从主场景获取 TerrainManager 引用")
+		return
+	
+	LogManager.warning("TerrainHighlightSystem - 未找到 TerrainManager 节点")
+
+func set_tile_manager(manager: Node) -> void:
+	"""设置瓦片管理器"""
+	tile_manager = manager
+	LogManager.info("TerrainHighlightSystem - 瓦片管理器已设置")
 
 func _load_terrain_colors_from_manager():
 	"""从TerrainManager加载地形颜色"""
@@ -945,51 +958,179 @@ func set_flood_fill_parameters(max_distance: int, batch_size: int) -> void:
 
 func highlight_cavity_by_type(cavity_type: String) -> void:
 	"""高亮指定类型的所有空洞"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化，无法高亮空洞")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化，无法高亮空洞")
 		return
 	
-	cavity_highlight_system.highlight_cavity_by_type(cavity_type)
+	var cavities = cavity_manager.get_cavities_by_type(cavity_type)
+	if cavities.is_empty():
+		LogManager.warning("未找到类型为 %s 的空洞" % cavity_type)
+		return
+	
+	# 清除之前的高亮
+	clear_all_highlights()
+	
+	# 高亮所有匹配的空洞
+	for cavity in cavities:
+		_highlight_cavity_boundary(cavity)
+	
+	LogManager.info("高亮 %d 个 %s 类型空洞" % [cavities.size(), cavity_type])
 
 func highlight_cavity_by_content(content_type: String) -> void:
 	"""高亮指定内容类型的所有空洞"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化，无法高亮空洞")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化，无法高亮空洞")
 		return
 	
-	cavity_highlight_system.highlight_cavity_by_content(content_type)
+	var cavities = cavity_manager.get_cavities_by_content(content_type)
+	if cavities.is_empty():
+		LogManager.warning("未找到内容类型为 %s 的空洞" % content_type)
+		return
+	
+	# 清除之前的高亮
+	clear_all_highlights()
+	
+	# 高亮所有匹配的空洞
+	for cavity in cavities:
+		_highlight_cavity_boundary(cavity)
+	
+	LogManager.info("高亮 %d 个 %s 内容类型空洞" % [cavities.size(), content_type])
 
 func highlight_cavity_by_id(cavity_id: String) -> void:
 	"""高亮指定ID的空洞"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化，无法高亮空洞")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化，无法高亮空洞")
 		return
 	
-	cavity_highlight_system.highlight_cavity(cavity_id)
+	var cavity = cavity_manager.get_cavity_by_id(cavity_id)
+	if not cavity:
+		LogManager.warning("未找到空洞: %s" % cavity_id)
+		return
+	
+	# 清除之前的高亮
+	clear_all_highlights()
+	
+	# 高亮指定空洞
+	_highlight_cavity_boundary(cavity)
+	LogManager.info("高亮空洞: %s" % cavity_id)
 
 func highlight_all_cavity_boundaries() -> void:
 	"""高亮所有空洞边界"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化，无法高亮空洞")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化，无法高亮空洞")
 		return
 	
-	cavity_highlight_system.highlight_cavity_boundaries()
+	var all_cavities = cavity_manager.get_all_cavities()
+	if all_cavities.is_empty():
+		LogManager.warning("没有找到任何空洞")
+		return
+	
+	# 清除之前的高亮
+	clear_all_highlights()
+	
+	# 高亮所有空洞边界
+	for cavity in all_cavities:
+		_highlight_cavity_boundary(cavity)
+	
+	LogManager.info("高亮所有空洞边界: %d 个空洞" % all_cavities.size())
 
 func highlight_all_cavity_centers() -> void:
 	"""高亮所有空洞中心"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化，无法高亮空洞")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化，无法高亮空洞")
 		return
 	
-	cavity_highlight_system.highlight_cavity_centers()
+	var all_cavities = cavity_manager.get_all_cavities()
+	if all_cavities.is_empty():
+		LogManager.warning("没有找到任何空洞")
+		return
+	
+	# 清除之前的高亮
+	clear_all_highlights()
+	
+	# 高亮所有空洞中心
+	for cavity in all_cavities:
+		_highlight_cavity_center(cavity)
+	
+	LogManager.info("高亮所有空洞中心: %d 个空洞" % all_cavities.size())
 
 func clear_cavity_highlights() -> void:
 	"""清除空洞高亮"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化，无法清除空洞高亮")
+	clear_all_highlights()
+	LogManager.info("已清除所有空洞高亮")
+
+func _highlight_cavity_boundary(cavity) -> void:
+	"""高亮空洞边界"""
+	if not cavity or cavity.positions.is_empty():
 		return
 	
-	cavity_highlight_system.clear_highlight()
+	# 获取高亮材质
+	var highlight_material = _get_highlight_material_for_cavity(cavity)
+	
+	# 高亮空洞边界
+	var boundary_positions = cavity.get_boundary_positions()
+	for pos in boundary_positions:
+		_highlight_tile_at_position(pos, highlight_material)
+
+func _highlight_cavity_center(cavity) -> void:
+	"""高亮空洞中心"""
+	if not cavity:
+		return
+	
+	# 获取高亮材质
+	var highlight_material = _get_highlight_material_for_cavity(cavity)
+	
+	# 高亮空洞中心
+	var center_pos = cavity.get_center_position()
+	_highlight_tile_at_position(center_pos, highlight_material)
+
+func _get_highlight_material_for_cavity(cavity) -> StandardMaterial3D:
+	"""为空洞获取高亮材质"""
+	var content_type = cavity.content_type
+	if highlight_materials.has(content_type):
+		return highlight_materials[content_type]
+	
+	var material = StandardMaterial3D.new()
+	var base_color = _get_base_color_for_content_type(content_type)
+	material.albedo_color = base_color
+	material.emission_enabled = true
+	material.emission = base_color * 0.5
+	material.flags_transparent = true
+	material.flags_unshaded = true
+	
+	highlight_materials[content_type] = material
+	return material
+
+func _get_base_color_for_content_type(content_type: String) -> Color:
+	"""根据内容类型获取基础颜色"""
+	match content_type:
+		"FOREST":
+			return Color(0.0, 0.8, 0.0, 0.8)
+		"LAKE":
+			return Color(0.0, 0.6, 1.0, 0.8)
+		"CAVE":
+			return Color(0.5, 0.3, 0.1, 0.8)
+		"WASTELAND":
+			return Color(0.8, 0.8, 0.0, 0.8)
+		"ROOM_SYSTEM":
+			return Color(0.0, 0.0, 1.0, 0.8)
+		"MAZE_SYSTEM":
+			return Color(0.5, 0.0, 0.5, 0.8)
+		"DUNGEON_HEART":
+			return Color(1.0, 0.0, 0.0, 0.9)
+		"PORTAL":
+			return Color(0.5, 0.0, 0.8, 0.9)
+		_:
+			return Color(0.5, 0.5, 0.5, 0.8)
+
+func _highlight_tile_at_position(pos: Vector3, material: StandardMaterial3D) -> void:
+	"""高亮指定位置的瓦片"""
+	if not tile_manager:
+		return
+	
+	var tile_data = tile_manager.get_tile_data(pos)
+	if tile_data and tile_data.tile_object:
+		tile_data.tile_object.set_surface_override_material(0, material)
 
 # 瓦片模式相关函数已移除 - 系统现在完全基于空洞模式
 
@@ -1020,8 +1161,8 @@ func highlight_critical_areas() -> void:
 func test_cavity_highlight_system() -> void:
 	"""测试空洞高亮系统"""
 	
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化")
 		return
 	
 	# 测试高亮所有空洞边界
@@ -1048,18 +1189,28 @@ func test_cavity_highlight_system() -> void:
 
 func get_cavity_highlight_info() -> Dictionary:
 	"""获取空洞高亮信息"""
-	if not cavity_highlight_system:
-		return {"error": "空洞高亮系统未初始化"}
+	if not cavity_manager:
+		return {"error": "空洞管理器未初始化"}
 	
-	return cavity_highlight_system.get_highlight_info()
+	return {
+		"registered_cavities": cavity_manager.get_cavity_count(),
+		"highlight_enabled": true,
+		"material_cache_size": highlight_materials.size(),
+		"tile_manager_ready": tile_manager != null
+	}
 
 func print_cavity_highlight_status() -> void:
 	"""打印空洞高亮状态"""
-	if not cavity_highlight_system:
-		LogManager.error("空洞高亮系统未初始化")
+	if not cavity_manager:
+		LogManager.error("空洞管理器未初始化")
 		return
 	
-	cavity_highlight_system.print_highlight_status()
+	LogManager.info("=== 空洞高亮状态 ===")
+	LogManager.info("注册空洞数: %d" % cavity_manager.get_cavity_count())
+	LogManager.info("高亮启用: 是")
+	LogManager.info("材质缓存大小: %d" % highlight_materials.size())
+	LogManager.info("瓦片管理器就绪: %s" % ("是" if tile_manager else "否"))
+	LogManager.info("==================")
 
 # ============================================================================
 # 🎨 区域高亮系统 - 将洪水填充的地块整理为一个高亮实例
@@ -1429,8 +1580,15 @@ func _show_tooltip(terrain_type: int, position: Vector3) -> void:
 	# 构建显示文本
 	var text = "[b]%s[/b]\n" % terrain_info.name
 	text += "位置: (%d, %d)\n" % [int(position.x), int(position.z)]
-	text += "资源: %d/%d\n" % [terrain_info.current_resources, terrain_info.max_resources]
-	text += "野兽: %d/%d" % [terrain_info.current_beasts, terrain_info.max_beasts]
+	
+	# 特殊处理房间系统的显示
+	if terrain_type == 0: # 房间系统
+		text += "房间: %d\n" % terrain_info.current_resources
+		text += "走廊: %d" % terrain_info.current_beasts
+	else:
+		# 其他地形类型显示资源/野兽（使用 0/n 格式）
+		text += "资源: %d/%d\n" % [terrain_info.current_resources, terrain_info.max_resources]
+		text += "野兽: %d/%d" % [terrain_info.current_beasts, terrain_info.max_beasts]
 	
 	tooltip_label.text = text
 	tooltip_label.visible = true
@@ -1447,9 +1605,19 @@ func _get_terrain_info(terrain_type: int, _position: Vector3) -> Dictionary:
 	# 使用TerrainManager获取地形名称
 	var terrain_name = _get_terrain_type_name(terrain_type)
 	
-	# 模拟资源数据 - 实际应该从游戏系统获取
+	# 特殊处理房间系统 - 显示房间和走廊统计
+	if terrain_type == 0: # 房间系统
+		var room_stats = _get_room_system_stats()
+		return {
+			"name": terrain_name,
+			"current_resources": room_stats.room_count,
+			"max_resources": room_stats.max_rooms,
+			"current_beasts": room_stats.corridor_count,
+			"max_beasts": room_stats.max_corridors
+		}
+	
+	# 其他地形类型 - 显示资源/野兽数据
 	var base_resources = {
-		0: {"max": 100, "current": 85}, # 房间系统
 		1: {"max": 50, "current": 30}, # 迷宫系统
 		2: {"max": 200, "current": 150}, # 森林
 		3: {"max": 80, "current": 60}, # 草地
@@ -1460,9 +1628,7 @@ func _get_terrain_info(terrain_type: int, _position: Vector3) -> Dictionary:
 		8: {"max": 30, "current": 10} # 死地
 	}
 	
-	# 模拟野兽数据
 	var base_beasts = {
-		0: {"max": 5, "current": 3}, # 房间系统
 		1: {"max": 8, "current": 6}, # 迷宫系统
 		2: {"max": 15, "current": 12}, # 森林
 		3: {"max": 6, "current": 4}, # 草地
@@ -1483,6 +1649,38 @@ func _get_terrain_info(terrain_type: int, _position: Vector3) -> Dictionary:
 		"current_beasts": beasts.current,
 		"max_beasts": beasts.max
 	}
+
+func _get_room_system_stats() -> Dictionary:
+	"""获取房间系统统计信息"""
+	var stats = {
+		"room_count": 0,
+		"max_rooms": 0,
+		"corridor_count": 0,
+		"max_corridors": 0
+	}
+	
+	# 尝试从MapGenerator获取SimpleRoomGenerator
+	if not map_generator:
+		return stats
+	
+	var simple_room_generator = map_generator.get_node("SimpleRoomGenerator")
+	if not simple_room_generator:
+		return stats
+	
+	# 直接获取房间统计信息
+	stats.room_count = simple_room_generator.get_room_count()
+	stats.corridor_count = simple_room_generator.get_corridor_count()
+	
+	# 调试输出
+	LogManager.info("房间系统统计: 房间=%d, 走廊=%d" % [stats.room_count, stats.corridor_count])
+	
+	# 设置合理的最大值（基于地图配置）
+	if MapConfig:
+		var room_config = MapConfig.get_room_generation_config()
+		stats.max_rooms = room_config.max_room_count
+		stats.max_corridors = stats.max_rooms * 2 # 走廊数量通常是房间数量的2倍
+	
+	return stats
 
 func _update_terrain_position_map() -> void:
 	"""🖱️ [悬停系统] 更新地形位置映射"""

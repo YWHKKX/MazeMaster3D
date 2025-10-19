@@ -3,6 +3,8 @@ extends Node
 ## 🎨 噪声形状空洞生成器
 ## 基于噪声为每个中心点生成不规则空洞形状
 
+const CavityConfigManager = preload("res://scripts/map_system/cavity_system/config/CavityConfigManager.gd")
+
 # ============================================================================
 # 属性
 # ============================================================================
@@ -14,8 +16,7 @@ var noise_scale: float = 0.1
 var shape_detail: int = 24 # 增加形状细节，让边界更平滑
 var irregularity_factor: float = 0.8 # 增加不规则程度
 
-# 配置参数（从MapConfig加载）
-var cavity_config: Dictionary = {}
+var config_manager: CavityConfigManager
 
 # ============================================================================
 # 初始化
@@ -31,21 +32,12 @@ func _init():
 func _ready():
 	"""节点准备就绪"""
 	name = "HoleShapeGenerator"
-	_load_config_from_mapconfig()
-
-func _load_config_from_mapconfig() -> void:
-	"""从MapConfig加载配置参数"""
-	if MapConfig:
-		cavity_config = MapConfig.get_cavity_excavation_config()
-		
-		# 更新噪声参数
-		noise.frequency = cavity_config.get("noise_frequency", 0.1)
-		noise_scale = cavity_config.get("noise_amplitude", 0.5)
-		irregularity_factor = cavity_config.get("shape_irregularity", 0.4)
-		
-		LogManager.info("HoleShapeGenerator - 已从MapConfig加载配置参数")
-	else:
-		LogManager.warning("HoleShapeGenerator - MapConfig未找到，使用默认配置")
+	config_manager = CavityConfigManager.get_instance()
+	
+	# 更新噪声参数
+	noise.frequency = config_manager.get_config_value("noise_frequency", 0.1)
+	noise_scale = config_manager.get_config_value("noise_amplitude", 0.5)
+	irregularity_factor = config_manager.get_config_value("shape_irregularity", 0.4)
 
 # ============================================================================
 # 核心方法
@@ -235,11 +227,11 @@ func _is_point_in_polygon(point: Vector2, polygon: PackedVector2Array) -> bool:
 # 配置方法
 # ============================================================================
 
-func set_noise_parameters(frequency: float, noise_type: FastNoiseLite.NoiseType, seed: int) -> void:
+func set_noise_parameters(frequency: float, noise_type: FastNoiseLite.NoiseType, _seed: int) -> void:
 	"""设置噪声参数"""
 	noise.frequency = frequency
 	noise.noise_type = noise_type
-	noise.seed = seed
+	noise.seed = _seed
 
 func set_shape_parameters(radius: float, threshold: float, scale: float, detail: int, irregularity: float) -> void:
 	"""设置形状参数"""

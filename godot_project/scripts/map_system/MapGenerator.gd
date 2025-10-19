@@ -205,7 +205,9 @@ class HeroCamp:
 
 var cavity_excavator: CavityExcavator
 var cavity_manager: CavityManager
-var cavity_highlight_system: CavityHighlightSystem
+var terrain_manager: TerrainManager
+var terrain_highlight_system: Node
+var flood_fill_system: FloodFillSystem
 
 # ============================================================================
 # 地图生成器核心变量
@@ -217,14 +219,15 @@ var ecosystem_manager: Node
 var rooms: Array[Room] = []
 var room_counter: int = 0
 
-# 🔧 [新增] 高级房间生成器
-var advanced_room_generator: Node
-var advanced_rooms: Array = []
+# 🔧 [新增] 简化房间生成器
+var simple_room_generator: SimpleRoomGenerator
+var simple_rooms: Array[SimpleRoom] = []
+
+# 废弃的高级房间生成器已删除
 
 # 🔧 [统一数据管理] 移除地形管理器，使用 TileManager 统一管理
 
-# 🔧 [新增] 地形高亮系统
-var terrain_highlight_system: Node3D
+# 地形高亮系统已移至 CavityHighlightSystem
 
 # 分块系统
 var chunks: Dictionary = {} # Vector2i -> Chunk
@@ -272,25 +275,33 @@ func _ready():
 	# 🔧 [统一数据管理] 移除 TerrainManager，使用 TileManager 作为唯一数据源
 	LogManager.info("使用 TileManager 作为唯一的地形数据源")
 	
-	# 🔧 [新增] 创建高级房间生成器
-	var advanced_room_script = preload("res://scripts/map_system/AdvancedRoomGenerator.gd")
-	if not advanced_room_script:
-		LogManager.error("ERROR: 无法加载AdvancedRoomGenerator脚本！")
+	# 🔧 [新增] 创建洪水填充系统
+	var flood_fill_script = preload("res://scripts/managers/FloodFillSystem.gd")
+	if not flood_fill_script:
+		LogManager.error("ERROR: 无法加载FloodFillSystem脚本！")
 	else:
-		advanced_room_generator = advanced_room_script.new()
-		add_child(advanced_room_generator)
-		LogManager.info("AdvancedRoomGenerator 创建成功")
+		flood_fill_system = flood_fill_script.new()
+		flood_fill_system.set_tile_manager(tile_manager)
+		add_child(flood_fill_system)
+		LogManager.info("FloodFillSystem 创建成功")
 	
-	# 🔧 [新增] 创建地形高亮系统
-	var terrain_highlight_script = preload("res://scripts/map_system/TerrainHighlightSystem.gd")
-	if not terrain_highlight_script:
-		LogManager.error("ERROR: 无法加载TerrainHighlightSystem脚本！")
+	# 🔧 [新增] 创建简化房间生成器
+	var simple_room_script = preload("res://scripts/map_system/room_system/SimpleRoomGenerator.gd")
+	if not simple_room_script:
+		LogManager.error("ERROR: 无法加载SimpleRoomGenerator脚本！")
 	else:
-		terrain_highlight_system = terrain_highlight_script.new()
-		add_child(terrain_highlight_system)
-		# 手动调用初始化，因为new()创建的节点不会自动调用_ready
-		terrain_highlight_system._ready()
-		LogManager.info("TerrainHighlightSystem 创建成功")
+		simple_room_generator = simple_room_script.new()
+		# 设置 TileManager 引用
+		simple_room_generator.set_tile_manager(tile_manager)
+		# 设置洪水填充系统引用
+		if flood_fill_system:
+			simple_room_generator.set_flood_fill_system(flood_fill_system)
+		add_child(simple_room_generator)
+		LogManager.info("SimpleRoomGenerator 创建成功")
+	
+	# 废弃的高级房间生成器已删除
+	
+	# 地形高亮功能已移至 CavityHighlightSystem
 	
 	# 初始化噪声生成器
 	_initialize_noise_generators()
@@ -298,7 +309,33 @@ func _ready():
 	# 初始化配置
 	config = MapGeneratorConfig.new(MapConfig.get_map_size())
 	
+	# 初始化迷宫生成器
+	_initialize_maze_generator()
+	
 	LogManager.info("=== 高级地图生成器初始化完成 ===")
+
+func _initialize_maze_generator():
+	"""初始化迷宫生成器"""
+	LogManager.info("初始化迷宫生成器...")
+	
+	# 创建SimpleMazeGenerator节点
+	var maze_generator = SimpleMazeGenerator.new()
+	add_child(maze_generator)
+	maze_generator.name = "SimpleMazeGenerator"
+	
+	# 初始化依赖项
+	maze_generator.initialize(tile_manager, flood_fill_system)
+	
+	# 设置迷宫生成配置
+	var maze_config = {
+		"min_maze_size": 20,
+		"max_maze_size": 100,
+		"complexity_factor": 0.3,
+		"ensure_solvable": true
+	}
+	maze_generator.set_config(maze_config)
+	
+	LogManager.info("迷宫生成器初始化完成")
 
 func _initialize_noise_generators():
 	"""初始化噪声生成器"""
@@ -969,65 +1006,27 @@ func _refine_room_system_region(_config: MapGeneratorConfig) -> void:
 	var center_x = int(_config.size.x / 2)
 	var center_z = int(_config.size.z / 2)
 	
-		# 🔧 [新增] 使用高级房间生成器
-	if advanced_room_generator and advanced_room_generator.has_method("generate_rooms"):
-		LogManager.info("使用高级房间生成器生成房间...")
-		advanced_rooms = advanced_room_generator.generate_rooms(_config)
-		
-		# 检查是否成功生成房间
-		if advanced_rooms.size() > 0:
-			# 将高级房间应用到地图
-			_apply_advanced_rooms_to_map(advanced_rooms, _config)
-			
-			# 地形显示功能已移除，现在使用TerrainHighlightSystem
-			
-			LogManager.info("高级房间系统区域细化完成: 生成 %d 个房间" % advanced_rooms.size())
-			return
-		else:
-			LogManager.warning("高级房间生成器未生成任何房间，使用备用方案...")
+	# 🔧 [新增] 使用简化房间生成器
+	if simple_room_generator:
+		LogManager.info("使用简化房间生成器生成房间...")
+		# 注意：简化房间生成器需要空洞作为输入，这里暂时跳过
+		# 实际的房间生成将在空洞填充阶段进行
+		LogManager.info("简化房间生成器已准备就绪，将在空洞填充阶段生成房间")
+		return
+	# 废弃的高级房间生成器已删除
 	
 	# 备用方案：原有的简单房间生成逻辑
 	LogManager.warning("使用简单房间生成逻辑...")
 	_generate_simple_rooms(_config)
 
-func _apply_advanced_rooms_to_map(rooms: Array, _config: MapGeneratorConfig) -> void:
-	"""将高级房间应用到地图"""
-	var map_size_x = int(_config.size.x)
-	var map_size_z = int(_config.size.z)
-	var center_x = int(_config.size.x / 2)
-	var center_z = int(_config.size.z / 2)
-	
-	for room in rooms:
-		# 将房间位置调整到地图中心区域
-		var adjusted_pos = Vector2i(
-			center_x + room.position.x,
-			center_z + room.position.y
-		)
-		
-		# 应用房间地板
-		for floor in room.floors:
-			var floor_start = Vector2i(
-				adjusted_pos.x + floor.position.x,
-				adjusted_pos.y + floor.position.y
-			)
-			
-			for dx in range(floor.size.x):
-				for dz in range(floor.size.y):
-					var x = floor_start.x + dx
-					var z = floor_start.y + dz
-					
-					# 检查边界
-					if x >= 0 and x < map_size_x and z >= 0 and z < map_size_z:
-						var pos = Vector3(x, 0, z)
-						# 🔧 [统一数据管理] 区域类型检查已简化，直接设置瓦片类型
-						tile_manager.set_tile_type(pos, TileTypes.TileType.STONE_FLOOR)
-		# 应用房间墙壁
-		_apply_room_walls_to_map(room, adjusted_pos, _config)
+# 废弃的高级房间应用函数已删除
 
 func _apply_room_walls_to_map(room, adjusted_pos: Vector2i, _config: MapGeneratorConfig) -> void:
 	"""将房间墙壁应用到地图"""
-	var map_size_x = int(_config.size.x)
-	var map_size_z = int(_config.size.z)
+	# 获取地图尺寸
+	var map_size = tile_manager.get_map_size()
+	var map_size_x = int(map_size.x)
+	var map_size_z = int(map_size.z)
 	
 	# 简化版墙壁生成：在房间周围放置墙壁
 	var rect = room.get_rect()
@@ -1056,11 +1055,7 @@ func _is_valid_position(pos: Vector3, map_size_x: int, map_size_z: int) -> bool:
 	"""检查位置是否有效"""
 	return pos.x >= 0 and pos.x < map_size_x and pos.z >= 0 and pos.z < map_size_z
 
-# 地形显示功能已移除，现在使用独立的TerrainHighlightSystem
-# func _create_room_terrain_displays(rooms: Array) -> void:
-# 	"""为房间创建地形显示和遮罩"""
-# 	# 功能已移除，现在使用TerrainHighlightSystem进行高亮显示
-# 	pass
+# 地形显示功能已移至 CavityHighlightSystem
 
 # 地形显示功能已移除
 # func _apply_room_terrain_theme(room, room_rect: Rect2i) -> void:
@@ -1222,10 +1217,7 @@ func _determine_ecosystem_type_improved(height: float, humidity: float, temperat
 			return EcosystemType.WASTELAND # 低地 + 干燥 = 荒地
 
 # 生态系统装饰物功能已移除
-# func _add_ecosystem_decorations(pos: Vector3, ecosystem_type: int) -> void:
-# 	"""为生态系统区域添加装饰物"""
-# 	# 功能已移除，现在使用TerrainHighlightSystem进行高亮显示
-# 	pass
+# 生态系统装饰功能已移至 CavityHighlightSystem
 
 func _refine_hero_camp_region(_config: MapGeneratorConfig) -> void:
 	"""细化英雄营地区域"""
@@ -1269,7 +1261,17 @@ func _generate_room_system(_config: MapGeneratorConfig) -> void:
 	rooms.clear()
 	room_counter = 0
 	
-	# 在地图中心区域生成随机房间
+	# 🔧 [新增] 使用简化房间生成器
+	if simple_room_generator:
+		LogManager.info("使用简化房间生成器生成房间...")
+		# 注意：简化房间生成器需要空洞作为输入，这里暂时跳过
+		# 实际的房间生成将在空洞填充阶段进行
+		LogManager.info("简化房间生成器已准备就绪，将在空洞填充阶段生成房间")
+		return
+	# 废弃的高级房间生成器已删除
+	
+	# 备用方案：原有的简单房间生成逻辑
+	LogManager.warning("使用简单房间生成逻辑...")
 	_generate_random_rooms(_config)
 	
 	# 连接所有房间
@@ -2031,8 +2033,7 @@ func _should_place_wall(position: Vector3) -> bool:
 # 公共接口
 # ============================================================================
 
-# 🔧 [统一数据管理] 地形管理器已移除，使用 TileManager 作为唯一数据源
-# func get_terrain_manager() -> TerrainManager:
+# 地形管理器已删除，使用 CavityManager 统一管理
 
 # ============================================================================
 # 空洞系统集成方法
@@ -2053,10 +2054,19 @@ func _initialize_cavity_system(_config: MapGeneratorConfig) -> void:
 	cavity_manager.name = "CavityManager"
 	add_child(cavity_manager)
 	
-	cavity_highlight_system = preload("res://scripts/map_system/cavity_system/highlight/CavityHighlightSystem.gd").new()
-	cavity_highlight_system.name = "CavityHighlightSystem"
-	cavity_highlight_system.set_tile_manager(tile_manager)
-	add_child(cavity_highlight_system)
+	# 初始化地形管理器
+	terrain_manager = preload("res://scripts/map_system/cavity_system/highlight/TerrainManager.gd").new()
+	terrain_manager.name = "TerrainManager"
+	add_child(terrain_manager)
+	
+	# 初始化地形高亮系统
+	terrain_highlight_system = preload("res://scripts/map_system/cavity_system/highlight/TerrainHighlightSystem.gd").new()
+	terrain_highlight_system.name = "TerrainHighlightSystem"
+	terrain_highlight_system.set_tile_manager(tile_manager)
+	add_child(terrain_highlight_system)
+	
+	# 设置 TerrainHighlightSystem 的 TerrainManager 引用
+	terrain_highlight_system.terrain_manager = terrain_manager
 	
 	# 配置空洞生成参数
 	var min_distance = 25.0
@@ -2089,7 +2099,8 @@ func _initialize_critical_buildings(_config: MapGeneratorConfig) -> void:
 	# 注册到空洞管理器
 	for cavity in critical_cavities:
 		cavity_manager.register_cavity(cavity)
-		cavity_highlight_system.register_cavity(cavity)
+		# 同时注册到地形管理器
+		terrain_manager.register_terrain_from_cavity(cavity.id)
 	
 	LogManager.info("CavitySystem - 关键建筑初始化完成: %d 个" % critical_cavities.size())
 
@@ -2114,7 +2125,8 @@ func _generate_poisson_cavities(_config: MapGeneratorConfig) -> void:
 		# LogManager.info("注册空洞 %d/%d: ID=%s, 类型=%s, 中心=%s, 位置数=%d" % [i + 1, all_cavities.size(), cavity.id, cavity.content_type, cavity.center, cavity.positions.size()])
 		
 		cavity_manager.register_cavity(cavity)
-		cavity_highlight_system.register_cavity(cavity)
+		# 同时注册到地形管理器
+		terrain_manager.register_terrain_from_cavity(cavity.id)
 		registered_count += 1
 	
 	LogManager.info("CavitySystem - 成功注册 %d 个空洞到管理器" % registered_count)
@@ -2222,22 +2234,37 @@ func _populate_dead_land_cavity(cavity: Cavity) -> void:
 
 func _populate_room_system_cavity(cavity: Cavity) -> void:
 	"""填充房间系统空洞"""
-	# 在空洞内生成房间
-	var room_count = randi_range(8, 15)
-	var rooms: Array[Room] = []
+	LogManager.info("在空洞 %s 内生成简化房间系统..." % cavity.id)
 	
-	for i in range(room_count):
-		var room = _generate_room_in_cavity(cavity)
-		if room:
-			rooms.append(room)
-	
-	# 连接房间
-	_connect_rooms_in_cavity(rooms)
+	# 🔧 [新增] 使用简化房间生成器在空洞内生成房间
+	if simple_room_generator:
+		LogManager.info("使用简化房间生成器在空洞内生成房间...")
+		var generated_rooms = simple_room_generator.generate_rooms_in_cavity(cavity)
+		
+		if generated_rooms.size() > 0:
+			LogManager.info("在空洞 %s 内成功生成 %d 个简化房间" % [cavity.id, generated_rooms.size()])
+			# 应用房间到地图
+			simple_room_generator.apply_rooms_to_map(generated_rooms)
+			# 保存到全局房间列表
+			simple_rooms.append_array(generated_rooms)
+		else:
+			LogManager.warning("在空洞 %s 内未生成任何房间" % cavity.id)
+
 
 func _populate_maze_system_cavity(cavity: Cavity) -> void:
 	"""填充迷宫系统空洞"""
-	# 使用递归回溯算法在空洞内生成迷宫
-	_generate_maze_in_cavity(cavity)
+	# 使用SimpleMazeGenerator在空洞内生成迷宫
+	if not has_node("SimpleMazeGenerator"):
+		LogManager.error("MapGenerator - SimpleMazeGenerator 未找到")
+		return
+	
+	var maze_generator = get_node("SimpleMazeGenerator")
+	var maze_data = maze_generator.generate_maze_in_cavity(cavity)
+	
+	if maze_data:
+		LogManager.info("MapGenerator - 迷宫生成成功: %dx%d" % [maze_data.size.x, maze_data.size.y])
+	else:
+		LogManager.warning("MapGenerator - 迷宫生成失败")
 
 func _generate_room_in_cavity(cavity: Cavity) -> Room:
 	"""在空洞内生成房间"""
