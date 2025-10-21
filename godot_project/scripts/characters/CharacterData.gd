@@ -161,6 +161,43 @@ extends Resource
 @export_range(0, 10, 0.1) var building_speed: float = 1.0
 
 ## ============================================================================
+## 生态适应属性
+## ============================================================================
+
+## 原始环境适应
+@export var primitive_adaptation: bool = false
+
+## 多样化觅食
+@export var versatile_feeding: bool = false
+
+## 掠食者特化
+@export var predator_specialization: bool = false
+
+## 杂食适应
+@export var omnivore_adaptation: bool = false
+
+## 食物适应性（0.0-1.0）
+@export_range(0.0, 1.0, 0.1) var food_versatility: float = 0.5
+
+## 主动狩猎
+@export var active_hunting: bool = false
+
+## 狩猎半径
+@export_range(1.0, 100.0, 1.0) var hunting_radius: float = 20.0
+
+## 狩猎持续时间（秒）
+@export_range(1.0, 60.0, 1.0) var hunting_duration: float = 10.0
+
+## 咆哮半径
+@export_range(1.0, 100.0, 1.0) var roar_radius: float = 15.0
+
+## 咆哮伤害
+@export_range(0, 50, 1) var roar_damage: int = 5
+
+## 咆哮持续时间（秒）
+@export_range(1.0, 30.0, 1.0) var roar_duration: float = 3.0
+
+## ============================================================================
 ## 辅助方法
 ## ============================================================================
 
@@ -205,6 +242,17 @@ func clone() -> CharacterData:
 	new_data.mining_speed = mining_speed
 	new_data.carry_capacity = carry_capacity
 	new_data.building_speed = building_speed
+	new_data.primitive_adaptation = primitive_adaptation
+	new_data.versatile_feeding = versatile_feeding
+	new_data.predator_specialization = predator_specialization
+	new_data.omnivore_adaptation = omnivore_adaptation
+	new_data.food_versatility = food_versatility
+	new_data.active_hunting = active_hunting
+	new_data.hunting_radius = hunting_radius
+	new_data.hunting_duration = hunting_duration
+	new_data.roar_radius = roar_radius
+	new_data.roar_damage = roar_damage
+	new_data.roar_duration = roar_duration
 	return new_data
 
 ## 转换为字典（用于调试和序列化）
@@ -224,7 +272,18 @@ func to_dict() -> Dictionary:
 		"cost_mana": cost_mana,
 		"upkeep": upkeep,
 		"special_ability": special_ability,
-		"is_worker": is_worker
+		"is_worker": is_worker,
+		"primitive_adaptation": primitive_adaptation,
+		"versatile_feeding": versatile_feeding,
+		"predator_specialization": predator_specialization,
+		"omnivore_adaptation": omnivore_adaptation,
+		"food_versatility": food_versatility,
+		"active_hunting": active_hunting,
+		"hunting_radius": hunting_radius,
+		"hunting_duration": hunting_duration,
+		"roar_radius": roar_radius,
+		"roar_damage": roar_damage,
+		"roar_duration": roar_duration
 	}
 
 ## 从字典加载（用于反序列化）
@@ -242,3 +301,14 @@ func from_dict(data: Dictionary) -> void:
 	if data.has("upkeep"): upkeep = data["upkeep"]
 	if data.has("special_ability"): special_ability = data["special_ability"]
 	if data.has("is_worker"): is_worker = data["is_worker"]
+	if data.has("primitive_adaptation"): primitive_adaptation = data["primitive_adaptation"]
+	if data.has("versatile_feeding"): versatile_feeding = data["versatile_feeding"]
+	if data.has("predator_specialization"): predator_specialization = data["predator_specialization"]
+	if data.has("omnivore_adaptation"): omnivore_adaptation = data["omnivore_adaptation"]
+	if data.has("food_versatility"): food_versatility = data["food_versatility"]
+	if data.has("active_hunting"): active_hunting = data["active_hunting"]
+	if data.has("hunting_radius"): hunting_radius = data["hunting_radius"]
+	if data.has("hunting_duration"): hunting_duration = data["hunting_duration"]
+	if data.has("roar_radius"): roar_radius = data["roar_radius"]
+	if data.has("roar_damage"): roar_damage = data["roar_damage"]
+	if data.has("roar_duration"): roar_duration = data["roar_duration"]

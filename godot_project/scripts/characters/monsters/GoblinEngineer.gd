@@ -29,6 +29,7 @@ var carried_gold: int = 0
 var base_position: Vector3 = Vector3.ZERO
 
 # 管理器引用
+var gold_mine_manager = null
 var building_manager = null
 var auto_assigner = null
 var resource_manager = null
@@ -75,6 +76,7 @@ func _init_goblin_engineer_data() -> void:
 func _setup_managers() -> void:
 	if is_inside_tree():
 		# 使用 GameServices 访问管理器（Autoload API）
+		gold_mine_manager = GameServices.get_gold_mines()
 		building_manager = GameServices.building_manager
 		auto_assigner = GameServices.auto_assigner
 		resource_manager = GameServices.resource_manager

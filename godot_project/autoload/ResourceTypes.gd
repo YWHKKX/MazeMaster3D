@@ -19,6 +19,8 @@ enum ResourceType {
 	HERB, # 草药
 	MUSHROOM, # 蘑菇
 	AQUATIC_PLANT, # 水产植物
+	CROP, # 耕地作物
+	CORRUPTED_PLANT, # 腐化植物
 	
 	# 矿物资源
 	IRON_ORE, # 铁矿
@@ -75,8 +77,9 @@ const FOREST_RESOURCES = {
 
 ## 草地资源配置
 const GRASSLAND_RESOURCES = {
-	ResourceType.FOOD: {"probability": 0.7, "amount_range": [8, 25], "respawn_time": 200.0},
-	ResourceType.HERB: {"probability": 0.5, "amount_range": [2, 10], "respawn_time": 300.0}
+	ResourceType.FOOD: {"probability": 0.5, "amount_range": [8, 25], "respawn_time": 200.0},
+	ResourceType.HERB: {"probability": 0.4, "amount_range": [2, 10], "respawn_time": 300.0},
+	ResourceType.CROP: {"probability": 0.6, "amount_range": [5, 20], "respawn_time": 400.0}
 }
 
 ## 湖泊资源配置
@@ -96,18 +99,19 @@ const CAVE_RESOURCES = {
 
 ## 荒地资源配置
 const WASTELAND_RESOURCES = {
-	ResourceType.RARE_MINERAL: {"probability": 0.4, "amount_range": [2, 8], "respawn_time": 1800.0},
-	ResourceType.STONE: {"probability": 0.6, "amount_range": [10, 30], "respawn_time": 600.0}
+	ResourceType.RARE_MINERAL: {"probability": 0.3, "amount_range": [2, 8], "respawn_time": 1800.0},
+	ResourceType.STONE: {"probability": 0.4, "amount_range": [10, 30], "respawn_time": 600.0},
+	ResourceType.CORRUPTED_PLANT: {"probability": 0.5, "amount_range": [3, 12], "respawn_time": 800.0}
 }
 
 ## 死地资源配置
 const DEAD_LAND_RESOURCES = {
-	ResourceType.MAGIC_CRYSTAL: {"probability": 0.25, "amount_range": [3, 12], "respawn_time": 2400.0},
-	ResourceType.ESSENCE: {"probability": 0.2, "amount_range": [1, 6], "respawn_time": 3600.0},
-	ResourceType.SOUL_STONE: {"probability": 0.2, "amount_range": [1, 3], "respawn_time": 7200.0},
-	ResourceType.DEMON_CORE: {"probability": 0.15, "amount_range": [1, 2], "respawn_time": 14400.0},
-	ResourceType.CURSED_GEM: {"probability": 0.15, "amount_range": [1, 2], "respawn_time": 10800.0},
-	ResourceType.DEATH_FLOWER: {"probability": 0.05, "amount_range": [1, 1], "respawn_time": 18000.0}
+	ResourceType.MAGIC_CRYSTAL: {"probability": 0.2, "amount_range": [3, 12], "respawn_time": 2400.0},
+	ResourceType.ESSENCE: {"probability": 0.15, "amount_range": [1, 6], "respawn_time": 3600.0},
+	ResourceType.SOUL_STONE: {"probability": 0.15, "amount_range": [1, 3], "respawn_time": 7200.0},
+	ResourceType.DEMON_CORE: {"probability": 0.1, "amount_range": [1, 2], "respawn_time": 14400.0},
+	ResourceType.CURSED_GEM: {"probability": 0.2, "amount_range": [1, 2], "respawn_time": 10800.0},
+	ResourceType.DEATH_FLOWER: {"probability": 0.2, "amount_range": [1, 1], "respawn_time": 18000.0}
 }
 
 ## 原始资源配置
@@ -136,6 +140,8 @@ static func get_resource_name(resource_type: ResourceType) -> String:
 		ResourceType.HERB: return "草药"
 		ResourceType.MUSHROOM: return "蘑菇"
 		ResourceType.AQUATIC_PLANT: return "水产植物"
+		ResourceType.CROP: return "耕地作物"
+		ResourceType.CORRUPTED_PLANT: return "腐化植物"
 		ResourceType.IRON_ORE: return "铁矿"
 		ResourceType.GOLD_ORE: return "金矿"
 		ResourceType.GEM: return "宝石"
@@ -144,19 +150,23 @@ static func get_resource_name(resource_type: ResourceType) -> String:
 		ResourceType.ESSENCE: return "精华"
 		ResourceType.SOUL_STONE: return "灵魂石"
 		ResourceType.DEMON_CORE: return "恶魔核心"
+		ResourceType.CURSED_GEM: return "诅咒宝石"
+		ResourceType.DEATH_FLOWER: return "死灵花"
 		_: return "未知资源"
 
 static func get_resource_icon(resource_type: ResourceType) -> String:
 	"""获取资源图标"""
 	match resource_type:
-		ResourceType.WOOD: return "🪵"
+		ResourceType.WOOD: return "📦" # 使用箱子替代木材
 		ResourceType.FOOD: return "🍖"
 		ResourceType.WATER: return "💧"
-		ResourceType.STONE: return "🪨"
+		ResourceType.STONE: return "🔳" # 使用方块替代石头
 		ResourceType.BERRY: return "🫐"
 		ResourceType.HERB: return "🌿"
 		ResourceType.MUSHROOM: return "🍄"
 		ResourceType.AQUATIC_PLANT: return "🌊"
+		ResourceType.CROP: return "🌾"
+		ResourceType.CORRUPTED_PLANT: return "🌱"
 		ResourceType.IRON_ORE: return "⛏️"
 		ResourceType.GOLD_ORE: return "💰"
 		ResourceType.GEM: return "💎"
@@ -165,6 +175,8 @@ static func get_resource_icon(resource_type: ResourceType) -> String:
 		ResourceType.ESSENCE: return "🌟"
 		ResourceType.SOUL_STONE: return "💀"
 		ResourceType.DEMON_CORE: return "👹"
+		ResourceType.CURSED_GEM: return "💀"
+		ResourceType.DEATH_FLOWER: return "🌹"
 		_: return "❓"
 
 static func get_ecosystem_resources(ecosystem_type: int) -> Dictionary:

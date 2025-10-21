@@ -221,7 +221,7 @@ func _get_enemy_units(character: CharacterBase) -> Array:
 		return []
 
 	# 根据阵营获取敌对单位
-	if character.faction == HeroesTypes.Faction.HEROES:
+	if character.faction == FactionManager.Faction.HEROES:
 		return GameGroups.get_nodes(GameGroups.MONSTERS)
 	
 	return GameGroups.get_nodes(GameGroups.HEROES)
@@ -233,7 +233,7 @@ func _detect_building_targets(unit: CombatUnit):
 		return
 
 	# 英雄可以攻击建筑
-	if unit.character.faction == HeroesTypes.Faction.HEROES:
+	if unit.character.faction == FactionManager.Faction.HEROES:
 		for building in building_manager.buildings:
 			if building and building.status != BuildingTypes.BuildingStatus.DESTROYED:
 				var distance = unit.character.position.distance_to(building.position)

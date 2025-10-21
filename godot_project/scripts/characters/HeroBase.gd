@@ -60,7 +60,7 @@ func _ready() -> void:
 	super._ready()
 	
 	# 设置英雄阵营
-	faction = HeroesTypes.Faction.HEROES
+	faction = FactionManager.Faction.HEROES
 	
 	# 设置巡逻中心为初始位置
 	patrol_center = global_position

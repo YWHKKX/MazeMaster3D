@@ -79,7 +79,7 @@ func flood_fill_area(start_pos: Vector3, target_tile_type: int) -> Array[Vector3
 				if neighbor not in visited and _is_valid_position(neighbor):
 					queue.append(neighbor)
 	
-	LogManager.info("FloodFillSystem - 洪水填充完成: %d 个位置" % filled_positions.size())
+	# 日志移除
 	return filled_positions
 
 func flood_fill_cavity_valid_area(cavity, tile_manager_ref: Node) -> Array[Vector3]:
@@ -103,7 +103,7 @@ func flood_fill_cavity_valid_area(cavity, tile_manager_ref: Node) -> Array[Vecto
 	var center_pos = cavity.get_center_position()
 	var queue: Array[Vector3] = [center_pos]
 	
-	LogManager.info("FloodFillSystem - 开始洪水填充空洞有效区域，中心: %s" % center_pos)
+	# 日志移除
 	
 	while not queue.is_empty():
 		var current = queue.pop_front()
@@ -122,7 +122,7 @@ func flood_fill_cavity_valid_area(cavity, tile_manager_ref: Node) -> Array[Vecto
 				if neighbor not in visited and cavity.contains_position(neighbor):
 					queue.append(neighbor)
 	
-	LogManager.info("FloodFillSystem - 空洞有效区域填充完成: %d 个位置" % valid_positions.size())
+	# 日志移除
 	return valid_positions
 
 func flood_fill_room_generation_areas(cavity, tile_manager_ref: Node) -> Array:
@@ -142,7 +142,7 @@ func flood_fill_room_generation_areas(cavity, tile_manager_ref: Node) -> Array:
 	var generation_areas = []
 	var visited: Dictionary = {}
 	
-	LogManager.info("FloodFillSystem - 开始洪水填充房间生成区域...")
+	# 日志移除
 	
 	# 遍历空洞内的所有位置
 	for pos in cavity.positions:
@@ -155,9 +155,9 @@ func flood_fill_room_generation_areas(cavity, tile_manager_ref: Node) -> Array:
 			var area = _flood_fill_single_area(pos, cavity, tile_manager_ref, visited)
 			if area.size() >= 10: # 最小房间大小
 				generation_areas.append(area)
-				LogManager.info("FloodFillSystem - 找到房间生成区域: %d 个位置" % area.size())
+				# 日志移除
 	
-	LogManager.info("FloodFillSystem - 房间生成区域填充完成: %d 个区域" % generation_areas.size())
+	# 日志移除
 	return generation_areas
 
 func flood_fill_maze_generation_areas(cavity, tile_manager_ref: Node) -> Array:
@@ -177,7 +177,7 @@ func flood_fill_maze_generation_areas(cavity, tile_manager_ref: Node) -> Array:
 	var generation_areas = []
 	var visited: Dictionary = {}
 	
-	LogManager.info("FloodFillSystem - 开始洪水填充迷宫生成区域...")
+	# 日志移除
 	
 	# 遍历空洞内的所有位置
 	for pos in cavity.positions:
@@ -190,9 +190,9 @@ func flood_fill_maze_generation_areas(cavity, tile_manager_ref: Node) -> Array:
 			var area = _flood_fill_single_maze_area(pos, cavity, tile_manager_ref, visited)
 			if area.size() >= 20: # 最小迷宫大小
 				generation_areas.append(area)
-				LogManager.info("FloodFillSystem - 找到迷宫生成区域: %d 个位置" % area.size())
+				# 日志移除
 	
-	LogManager.info("FloodFillSystem - 迷宫生成区域填充完成: %d 个区域" % generation_areas.size())
+	# 日志移除
 	return generation_areas
 
 func flood_fill_connectivity_check(positions: Array) -> bool:
@@ -228,10 +228,7 @@ func flood_fill_connectivity_check(positions: Array) -> bool:
 	var connectivity_ratio = float(connected_count) / positions.size()
 	var is_connected_result = connectivity_ratio >= 0.8 # 80%以上连通
 	
-	LogManager.info("FloodFillSystem - 连通性检查: %d/%d (%.1f%%) - %s" % [
-		connected_count, positions.size(), connectivity_ratio * 100,
-		"连通" if is_connected_result else "不连通"
-	])
+	# 日志移除
 	
 	return is_connected_result
 
@@ -249,7 +246,7 @@ func flood_fill_polygon_area(polygon_points: PackedVector2Array, _map_width: int
 	var filled_positions: Array[Vector3] = []
 	var bounding_rect = _calculate_bounding_rect(polygon_points)
 	
-	LogManager.info("FloodFillSystem - 开始洪水填充多边形区域...")
+	# 日志移除
 	
 	# 在包围盒内检查每个点是否在多边形内
 	for x in range(int(bounding_rect.position.x), int(bounding_rect.end.x)):
@@ -258,7 +255,7 @@ func flood_fill_polygon_area(polygon_points: PackedVector2Array, _map_width: int
 			if _is_point_in_polygon(point, polygon_points):
 				filled_positions.append(Vector3(x, 0, z))
 	
-	LogManager.info("FloodFillSystem - 多边形区域填充完成: %d 个位置" % filled_positions.size())
+	# 日志移除
 	return filled_positions
 
 # ============================================================================

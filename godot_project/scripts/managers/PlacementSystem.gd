@@ -7,7 +7,7 @@ class_name PlacementSystem
 # 导入必要的类
 const CharacterManager = preload("res://scripts/managers/CharacterManager.gd")
 const TileManager = preload("res://scripts/managers/TileManager.gd")
-const ResourceManager = preload("res://scripts/managers/ResourceManager.gd")
+const ResourceManager = preload("res://scripts/managers/resource/ResourceManager.gd")
 const BuildingManager = preload("res://scripts/managers/BuildingManager.gd")
 const WorldConstants = preload("res://scripts/managers/WorldConstants.gd")
 
@@ -181,8 +181,8 @@ func _initialize_entity_configs():
 	)
 	
 	# 🏗️ 建筑配置 - 基于BuildingManager配置
-	# 🔧 [修复] 添加 EMPTY（空地）到允许地形，因为地图默认为 EMPTY
-	var allowed_terrain: Array[String] = ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR", "EMPTY"]
+	# 🔧 [修复] 添加 EMPTY（空地）和CORRIDOR到允许地形，因为地图默认为 EMPTY，通道也可以建造
+	var allowed_terrain: Array[String] = ["STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR", "EMPTY", "CORRIDOR"]
 	
 	# 基础设施建筑
 	entity_configs["building_treasury"] = EntityConfig.new("building_treasury", 100, Vector2(1, 1), allowed_terrain, "building")
@@ -208,7 +208,8 @@ func _initialize_entity_configs():
 	entity_configs["building_magic_research_institute"] = EntityConfig.new("building_magic_research_institute", 600, Vector2(1, 1), allowed_terrain, "building")
 	
 	# 怪物配置 - 使用CharacterTypes常量
-	var monster_terrain: Array[String] = ["EMPTY", "STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR"]
+	# 🔧 修复：添加CORRIDOR到允许地形，与建筑放置条件一致
+	var monster_terrain: Array[String] = ["EMPTY", "STONE_FLOOR", "DIRT_FLOOR", "MAGIC_FLOOR", "CORRIDOR"]
 	
 	# 基础怪物
 	entity_configs[MonstersTypes.IMP] = EntityConfig.new(
@@ -357,10 +358,16 @@ func can_place(entity_id: String, position: Vector3) -> Array:
 			LogManager.error("SelectionHighlightSystem未找到，无法进行挖掘判断")
 			return [false, "系统错误"]
 	else:
-		# 其他操作：使用配置的地形类型列表
-		var tile_type_str = _get_tile_type_string(tile_data.type)
-		if not tile_type_str in config.can_place_on:
-			return [false, "地形不适合: " + tile_type_str]
+		# 其他操作：与 SelectionHighlightSystem 一致，优先按可行走判定
+		if config.placement_type == "monster" or config.placement_type == "logistics" or config.placement_type == "building":
+			if not tile_data.is_walkable:
+				var tile_type_str_walk = _get_tile_type_string(tile_data.type)
+				return [false, "地形不适合: " + tile_type_str_walk]
+		else:
+			# 其他类型仍使用配置的地形类型列表
+			var tile_type_str = _get_tile_type_string(tile_data.type)
+			if not tile_type_str in config.can_place_on:
+				return [false, "地形不适合: " + tile_type_str]
 	
 	# 检查位置是否被占用
 	if _is_position_occupied(position):
@@ -463,6 +470,46 @@ func _get_tile_type_string(tile_type: int) -> String:
 			return "MANA_CRYSTAL"
 		TileTypes.TileType.CORRIDOR:
 			return "CORRIDOR"
+		TileTypes.TileType.LAVA:
+			return "LAVA"
+		TileTypes.TileType.WATER:
+			return "WATER"
+		TileTypes.TileType.BRIDGE:
+			return "BRIDGE"
+		TileTypes.TileType.PORTAL:
+			return "PORTAL"
+		TileTypes.TileType.TRAP:
+			return "TRAP"
+		TileTypes.TileType.SECRET_PASSAGE:
+			return "SECRET_PASSAGE"
+		TileTypes.TileType.DUNGEON_HEART:
+			return "DUNGEON_HEART"
+		TileTypes.TileType.BARRACKS:
+			return "BARRACKS"
+		TileTypes.TileType.WORKSHOP:
+			return "WORKSHOP"
+		TileTypes.TileType.MAGIC_LAB:
+			return "MAGIC_LAB"
+		TileTypes.TileType.DEFENSE_TOWER:
+			return "DEFENSE_TOWER"
+		TileTypes.TileType.FOOD_FARM:
+			return "FOOD_FARM"
+		TileTypes.TileType.FOREST:
+			return "FOREST"
+		TileTypes.TileType.WASTELAND:
+			return "WASTELAND"
+		TileTypes.TileType.SWAMP:
+			return "SWAMP"
+		TileTypes.TileType.CAVE:
+			return "CAVE"
+		TileTypes.TileType.CAVITY_EMPTY:
+			return "CAVITY_EMPTY"
+		TileTypes.TileType.CAVITY_BOUNDARY:
+			return "CAVITY_BOUNDARY"
+		TileTypes.TileType.CAVITY_CENTER:
+			return "CAVITY_CENTER"
+		TileTypes.TileType.CAVITY_ENTRANCE:
+			return "CAVITY_ENTRANCE"
 		_:
 			return "UNKNOWN"
 

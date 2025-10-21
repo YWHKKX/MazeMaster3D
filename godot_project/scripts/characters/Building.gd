@@ -572,23 +572,9 @@ func _setup_storage_status_bar() -> void:
 	if not _is_storage_building():
 		return
 	
-	# 加载UnitStatusBar类
-	var UnitStatusBarClass = preload("res://scripts/ui/UnitStatusBar.gd")
-	var bar = UnitStatusBarClass.new()
-	bar.name = "StorageStatusBar"
-	add_child(bar)
-	status_bar = bar # 保存引用
-	
-	# 调整状态栏位置（建筑头顶）
-	var bar_height = 2.0 # 建筑比单位高，状态栏位置也更高
-	bar.set_offset_y(bar_height)
-	
-	# 调整状态栏尺寸（建筑比单位大）
-	bar.set_unit_size(30.0) # 建筑使用更大的状态栏
-	
-	# 启用金币显示
-	if bar.has_method("set_show_gold"):
-		bar.set_show_gold(true)
+	# UnitStatusBar.gd已被删除，状态栏功能已整合到建筑系统中
+	# 如果需要状态栏功能，请使用内置的UI系统
+	# 初始化日志已移除，避免重复输出
 	
 	# 初始化显示
 	_update_storage_display()

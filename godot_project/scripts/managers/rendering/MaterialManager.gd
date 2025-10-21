@@ -165,6 +165,257 @@ func _initialize_material_configs():
 			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
 			"emission": Color.BLACK,
 			"emission_energy": 0.0
+		},
+		
+		# 森林生态系统地块材质
+		"forest_clearing": {
+			"albedo_color": Color(0.4, 0.7, 0.4),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"dense_forest": {
+			"albedo_color": Color(0.1, 0.4, 0.1),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"forest_edge": {
+			"albedo_color": Color(0.5, 0.6, 0.3),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"ancient_forest": {
+			"albedo_color": Color(0.0, 0.3, 0.0),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.0, 0.1, 0.0),
+			"emission_energy": 0.1
+		},
+		
+		# 草地生态系统地块材质
+		"grassland_plains": {
+			"albedo_color": Color(0.6, 0.8, 0.4),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"grassland_hills": {
+			"albedo_color": Color(0.5, 0.6, 0.3),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"grassland_wetlands": {
+			"albedo_color": Color(0.3, 0.6, 0.5),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"grassland_fields": {
+			"albedo_color": Color(0.7, 0.8, 0.3),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		
+		# 湖泊生态系统地块材质
+		"lake_shallow": {
+			"albedo_color": Color(0.2, 0.6, 0.8),
+			"roughness": 0.1,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_ALPHA,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0,
+			"alpha": 0.7
+		},
+		"lake_deep": {
+			"albedo_color": Color(0.0, 0.3, 0.6),
+			"roughness": 0.1,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_ALPHA,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0,
+			"alpha": 0.8
+		},
+		"lake_shore": {
+			"albedo_color": Color(0.6, 0.5, 0.3),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"lake_island": {
+			"albedo_color": Color(0.4, 0.6, 0.3),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		
+		# 洞穴生态系统地块材质
+		"cave_entrance": {
+			"albedo_color": Color(0.4, 0.4, 0.4),
+			"roughness": 0.9,
+			"metallic": 0.1,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"cave_chamber": {
+			"albedo_color": Color(0.3, 0.3, 0.3),
+			"roughness": 0.9,
+			"metallic": 0.1,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"cave_deep": {
+			"albedo_color": Color(0.2, 0.2, 0.2),
+			"roughness": 0.9,
+			"metallic": 0.1,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"cave_crystal": {
+			"albedo_color": Color(0.6, 0.4, 0.8),
+			"roughness": 0.1,
+			"metallic": 0.3,
+			"transparency": BaseMaterial3D.TRANSPARENCY_ALPHA,
+			"emission": Color(0.2, 0.1, 0.3),
+			"emission_energy": 0.5,
+			"alpha": 0.8
+		},
+		"cave_underground_lake": {
+			"albedo_color": Color(0.1, 0.3, 0.6),
+			"roughness": 0.1,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_ALPHA,
+			"emission": Color(0.0, 0.1, 0.2),
+			"emission_energy": 0.3,
+			"alpha": 0.8
+		},
+		
+		# 荒地生态系统地块材质
+		"wasteland_desert": {
+			"albedo_color": Color(0.8, 0.7, 0.4),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"wasteland_rocks": {
+			"albedo_color": Color(0.5, 0.5, 0.4),
+			"roughness": 0.9,
+			"metallic": 0.1,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"wasteland_ruins": {
+			"albedo_color": Color(0.4, 0.3, 0.2),
+			"roughness": 0.9,
+			"metallic": 0.1,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"wasteland_toxic": {
+			"albedo_color": Color(0.6, 0.8, 0.2),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.2, 0.3, 0.0),
+			"emission_energy": 0.2
+		},
+		
+		# 死地生态系统地块材质
+		"deadland_corrupted": {
+			"albedo_color": Color(0.4, 0.1, 0.1),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.2, 0.0, 0.0),
+			"emission_energy": 0.3
+		},
+		"deadland_graveyard": {
+			"albedo_color": Color(0.3, 0.3, 0.2),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.1, 0.1, 0.0),
+			"emission_energy": 0.1
+		},
+		"deadland_necropolis": {
+			"albedo_color": Color(0.2, 0.2, 0.1),
+			"roughness": 0.9,
+			"metallic": 0.1,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.05, 0.05, 0.0),
+			"emission_energy": 0.2
+		},
+		"deadland_void": {
+			"albedo_color": Color(0.1, 0.1, 0.1),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.0, 0.0, 0.0),
+			"emission_energy": 0.0
+		},
+		
+		# 原始生态系统地块材质
+		"primitive_jungle": {
+			"albedo_color": Color(0.2, 0.5, 0.2),
+			"roughness": 0.8,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"primitive_volcano": {
+			"albedo_color": Color(0.6, 0.2, 0.1),
+			"roughness": 0.7,
+			"metallic": 0.2,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.3, 0.1, 0.0),
+			"emission_energy": 0.4
+		},
+		"primitive_swamp": {
+			"albedo_color": Color(0.3, 0.4, 0.2),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color.BLACK,
+			"emission_energy": 0.0
+		},
+		"primitive_crystal": {
+			"albedo_color": Color(0.8, 0.6, 0.4),
+			"roughness": 0.1,
+			"metallic": 0.3,
+			"transparency": BaseMaterial3D.TRANSPARENCY_ALPHA,
+			"emission": Color(0.3, 0.2, 0.1),
+			"emission_energy": 0.6,
+			"alpha": 0.9
 		}
 	}
 

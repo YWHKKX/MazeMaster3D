@@ -55,41 +55,8 @@ func update(_delta: float) -> void:
 			state_finished.emit("MoveToMineState", {"target_mine": mine})
 			return
 		else:
-			# 🔧 调试：为什么找不到金矿
-			LogManager.info("❌ [IdleState] 苦工找不到金矿 | gold_mine_manager: %s | 位置: %s" % [
-				"存在" if worker.gold_mine_manager else "null",
-				str(worker.global_position)
-			])
-			if worker.gold_mine_manager:
-				var reachable = worker.gold_mine_manager.get_reachable_mines_in_radius(worker.global_position, 100.0)
-				LogManager.info("  可达金矿数量: %d" % reachable.size())
-				if not reachable.is_empty():
-					var available_count = 0
-					for m in reachable:
-						if not m.is_exhausted() and m.can_accept_miner():
-							available_count += 1
-					LogManager.info("  可接受挖掘的金矿: %d / %d" % [available_count, reachable.size()])
-					
-					# 详细检查前3个金矿
-					for i in range(mini(3, reachable.size())):
-						var checked_mine = reachable[i]
-						var in_blacklist = worker.failed_mines.has(checked_mine.position)
-						var blacklist_info = ""
-						if in_blacklist:
-							var failed_time = worker.failed_mines[checked_mine.position]
-							var elapsed = (Time.get_ticks_msec() - failed_time) / 1000.0
-							var remaining = worker.failed_mine_timeout - elapsed
-							blacklist_info = "(超时剩余: %.1fs)" % remaining
-						LogManager.info("  金矿#%d: 位置=%s, 枯竭=%s, 可接受=%s, 黑名单=%s%s, 矿工数=%d/%d" % [
-							i + 1,
-							str(checked_mine.position),
-							str(checked_mine.is_exhausted()),
-							str(checked_mine.can_accept_miner()),
-							str(in_blacklist),
-							blacklist_info,
-							checked_mine.miners.size(),
-							checked_mine.get_mining_capacity()
-						])
+			# 精简日志，避免刷屏
+			pass
 	
 	# 优先级4: 无事可做 - 游荡
 	state_finished.emit("WanderState", {})

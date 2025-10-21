@@ -44,7 +44,7 @@ signal status_changed(old_status: int, new_status: int)
 @export var character_data: CharacterData
 
 ## 阵营
-@export var faction: int = 2 # MonstersTypes.Faction.MONSTERS
+@export var faction: int = FactionManager.Faction.MONSTERS
 
 ## 是否启用调试模式
 @export var debug_mode: bool = false
@@ -167,8 +167,8 @@ var is_alive: bool = true
 ## 碰撞形状（可选）
 @onready var collision_shape: CollisionShape3D = get_node_or_null("CollisionShape")
 
-## 🔧 [状态栏系统] 头顶状态栏（动态创建）
-var status_bar: Node3D = null
+## 🔧 [状态栏系统] 头顶状态栏（已迁移到UnitDisplay）
+# var status_bar: Node3D = null # 已移除，使用UnitDisplay系统
 
 ## ============================================================================
 ## 生命周期
@@ -193,6 +193,9 @@ func _ready() -> void:
 	
 	# 设置碰撞层级
 	_setup_collision_layers()
+	
+	# 🔧 创建默认模型（如果没有模型节点）
+	call_deferred("_setup_default_model")
 	
 	# 🔧 应用模型缩放（延迟到下一帧，确保模型已加载）
 	call_deferred("_apply_model_scale")
@@ -268,52 +271,168 @@ func _init_from_character_data() -> void:
 	collision_radius = character_data.get_collision_radius()
 	immunities = character_data.immunities
 	
+	# 🔧 生命值显示已迁移到UnitDisplay系统
+	# 不再需要手动更新状态栏
+	
 	# 从CharacterData加载角色信息
+
+## 🔧 [默认模型系统] 创建默认3D模型
+func _setup_default_model() -> void:
+	"""如果没有模型节点，创建默认的圆柱形3D模型"""
+	if model:
+		# 如果已经有模型节点，不需要创建
+		return
+	
+	# 创建圆柱形模型
+	var cylinder_model = _create_cylinder_model()
+	if not cylinder_model:
+		push_warning("无法创建默认圆柱形模型")
+		return
+	
+	# 设置模型名称和父节点
+	cylinder_model.name = "Model"
+	add_child(cylinder_model)
+	model = cylinder_model
+	
+	# 设置模型位置（让脚底对齐地面）
+	model.position = Vector3.ZERO
+	
+	# 应用初始缩放
+	_apply_cylinder_scale()
+	
+	# 默认模型创建完成
+
+## 🔧 [默认模型系统] 创建圆柱形模型
+func _create_cylinder_model() -> Node3D:
+	"""创建圆柱形3D模型，大小与goblin_worker相似"""
+	# 创建MeshInstance3D节点
+	var mesh_instance = MeshInstance3D.new()
+	
+	# 创建圆柱体网格
+	var cylinder_mesh = CylinderMesh.new()
+	
+	# 设置圆柱体参数（参考goblin_worker的大小）
+	# goblin_worker大约18厘米高，所以圆柱体高度设为0.18米
+	cylinder_mesh.height = 0.18 # 18厘米高度
+	cylinder_mesh.top_radius = 0.08 # 顶部半径8厘米
+	cylinder_mesh.bottom_radius = 0.08 # 底部半径8厘米
+	cylinder_mesh.radial_segments = 8 # 8个径向分段
+	cylinder_mesh.rings = 1 # 1个环
+	
+	# 设置网格
+	mesh_instance.mesh = cylinder_mesh
+	
+	# 根据阵营设置颜色
+	var material = StandardMaterial3D.new()
+	match faction:
+		FactionManager.Faction.MONSTERS:
+			material.albedo_color = Color(0.8, 0.2, 0.2) # 红色（怪物）
+		FactionManager.Faction.HEROES:
+			material.albedo_color = Color(0.2, 0.2, 0.8) # 蓝色（英雄）
+		FactionManager.Faction.BEASTS:
+			material.albedo_color = Color(0.2, 0.8, 0.2) # 绿色（野兽）
+		FactionManager.Faction.NEUTRAL:
+			material.albedo_color = Color(0.6, 0.6, 0.6) # 灰色（中立）
+		_:
+			material.albedo_color = Color(0.5, 0.5, 0.5) # 默认灰色
+	
+	# 应用材质
+	mesh_instance.material_override = material
+	
+	# 调整位置，让圆柱体底部对齐地面
+	mesh_instance.position.y = cylinder_mesh.height / 2.0
+	
+	return mesh_instance
+
+## 🔧 [默认模型系统] 应用圆柱形模型缩放
+func _apply_cylinder_scale() -> void:
+	"""根据size属性缩放圆柱形模型"""
+	if not model or not is_instance_valid(model):
+		return
+	
+	# 根据size计算缩放比例
+	# size=18对应0.18米高度，所以缩放比例 = size / 18
+	var scale_factor = size / 18.0
+	model.scale = Vector3(scale_factor, scale_factor, scale_factor)
+	
+	# 重新调整位置，确保底部对齐地面
+	if model.has_method("get_mesh") and model.get_mesh() is CylinderMesh:
+		var cylinder_mesh = model.get_mesh() as CylinderMesh
+		model.position.y = (cylinder_mesh.height * scale_factor) / 2.0
+
+## 🔧 [默认模型系统] 根据阵营获取默认模型路径（已废弃）
+func _get_default_model_path() -> String:
+	"""根据角色阵营返回对应的默认模型路径（已废弃，现在使用程序生成的圆柱形模型）"""
+	# 子类可以重写此方法来自定义模型路径
+	if has_method("get_custom_model_path"):
+		var custom_path = call("get_custom_model_path")
+		if custom_path and custom_path != "":
+			return custom_path
+	
+	# 现在使用程序生成的圆柱形模型，不再需要外部模型路径
+	return ""
+
+## 🔧 [默认模型系统] 检查模型是否已正确设置
+func has_model() -> bool:
+	"""检查角色是否有有效的3D模型"""
+	return model != null and is_instance_valid(model)
+
+## 🔧 [默认模型系统] 获取模型信息（调试用）
+func get_model_info() -> Dictionary:
+	"""获取模型信息，用于调试"""
+	if not has_model():
+		return {"has_model": false, "model_name": "none"}
+	
+	return {
+		"has_model": true,
+		"model_name": model.name,
+		"model_position": model.position,
+		"model_scale": model.scale,
+		"model_type": model.get_class()
+	}
 
 ## 应用模型缩放和位置
 func _apply_model_scale() -> void:
 	"""根据 size 属性缩放 3D 模型并调整位置让脚底对齐地面"""
-	if model:
-		# 应用缩放
-		if model.has_method("apply_size_scale"):
-			model.apply_size_scale(size)
-		
-		# 🔧 关键修复：将模型向下偏移，让脚底对齐地面
-		# CharacterBody3D.position.y = 0.05（单位脚底悬浮位置）
-		# 模型原点可能在中心，需要向下偏移让脚底对齐地面（y=0）
-		# 对于 Goblin 模型，使用固定偏移
-		model.position.y = 0.0 # 不偏移，让模型原点对齐单位位置
-		
-		# 应用模型缩放和位置
+	if not model or not is_instance_valid(model):
+		return
+	
+	# 检查是否为圆柱形模型
+	if model.get_class() == "MeshInstance3D" and model.mesh is CylinderMesh:
+		# 使用圆柱形模型的专用缩放方法
+		_apply_cylinder_scale()
+		return
+	
+	# 对于其他类型的模型（如外部加载的.glb模型）
+	if model.has_method("apply_size_scale"):
+		model.apply_size_scale(size)
+	
+	# 🔧 关键修复：将模型向下偏移，让脚底对齐地面
+	# CharacterBody3D.position.y = 0.05（单位脚底悬浮位置）
+	# 模型原点可能在中心，需要向下偏移让脚底对齐地面（y=0）
+	# 对于 Goblin 模型，使用固定偏移
+	model.position.y = 0.0 # 不偏移，让模型原点对齐单位位置
+	
+	# 应用模型缩放和位置
 
 
-## 🔧 [状态栏系统] 创建头顶状态栏
+## 🔧 [状态栏系统] 创建头顶状态栏（已迁移到UnitDisplay）
 func _setup_status_bar() -> void:
 	"""创建并设置头顶状态栏"""
-	# 加载UnitStatusBar类
-	var UnitStatusBarClass = preload("res://scripts/ui/UnitStatusBar.gd")
-	var bar = UnitStatusBarClass.new()
-	bar.name = "UnitStatusBar"
-	add_child(bar)
-	status_bar = bar # 保存引用
-	
-	# 🔧 根据单位size调整状态栏尺寸和位置
-	bar.set_unit_size(size) # 调整整体尺寸
-	
-	var bar_height = size * 0.01 + 0.5 # 基础高度 + 根据体型调整
-	bar.set_offset_y(bar_height)
-	
-	# 初始化血条
-	_update_status_bar_health()
-	
-	# 状态栏已创建
+	# 使用UnitNameDisplayManager创建名称和生命值显示
+	if GameServices.has_unit_name_display_manager():
+		var display_manager = GameServices.get_unit_name_display_manager()
+		if display_manager:
+			# 为当前角色创建名称和生命值显示
+			display_manager.create_display_for_unit(self)
 
 
-## 🔧 [状态栏系统] 更新状态栏血量显示
+## 🔧 [状态栏系统] 更新状态栏血量显示（已移除）
 func _update_status_bar_health() -> void:
-	"""更新状态栏的血量显示"""
-	if status_bar and is_instance_valid(status_bar) and status_bar.has_method("update_health"):
-		status_bar.update_health(current_health, max_health)
+	"""更新状态栏的血量显示（已迁移到UnitDisplay系统）"""
+	# 生命值显示已迁移到UnitDisplay系统
+	# 不再需要手动更新状态栏
+	pass
 
 ## 获取交互范围（基于单位碰撞半径）
 func get_interaction_range(target_radius: float = 0.5, buffer: float = 0.3) -> float:
@@ -407,13 +526,13 @@ func _setup_collision_layers() -> void:
 	
 	# 根据阵营设置碰撞层
 	match faction:
-		2: # MonstersTypes.Faction.MONSTERS
+		FactionManager.Faction.MONSTERS:
 			set_collision_layer_value(2, true) # 怪物阵营层
-		1: # HeroesTypes.Faction.HEROES
+		FactionManager.Faction.HEROES:
 			set_collision_layer_value(3, true) # 英雄阵营层
-		3: # BeastsTypes.Faction.BEASTS
+		FactionManager.Faction.BEASTS:
 			set_collision_layer_value(4, true) # 野兽阵营层
-		4: # Faction.NEUTRAL
+		FactionManager.Faction.NEUTRAL:
 			set_collision_layer_value(5, true) # 中立阵营层
 	
 	# 设置碰撞掩码：检测哪些层
@@ -467,8 +586,8 @@ func take_damage(damage: float, attacker: CharacterBase = null) -> void:
 	var old_health = current_health
 	current_health = max(0.0, current_health - actual_damage)
 	
-	# 🔧 [状态栏系统] 更新血条显示
-	_update_status_bar_health()
+	# 🔧 [状态栏系统] 生命值显示已迁移到UnitDisplay系统
+	# 不再需要手动更新状态栏
 	
 	# 发出信号
 	health_changed.emit(old_health, current_health)
@@ -572,7 +691,7 @@ func is_enemy_of(other: CharacterBase) -> bool:
 	
 	# 统一阵营系统：不同阵营即为敌人
 	# 特殊情况：野兽阵营对所有阵营都是中立的
-	if faction == 3 or other.faction == 3: # BeastsTypes.Faction.BEASTS
+	if faction == FactionManager.Faction.BEASTS or other.faction == FactionManager.Faction.BEASTS:
 		return false
 	
 	return faction != other.faction
@@ -591,11 +710,11 @@ func is_neutral_to(other: CharacterBase) -> bool:
 		return false
 	
 	# 野兽阵营对所有阵营都是中立的
-	if faction == 3: # BeastsTypes.Faction.BEASTS or other.faction == 3 # BeastsTypes.Faction.BEASTS:
+	if faction == FactionManager.Faction.BEASTS:
 		return true
 	
 	# 中立阵营对所有阵营都是中立的
-	if faction == 4: # Faction.NEUTRAL or other.faction == 4 # Faction.NEUTRAL:
+	if faction == FactionManager.Faction.NEUTRAL:
 		return true
 	
 	return false
@@ -889,17 +1008,17 @@ func heal_target(target: Node) -> void:
 ## 检查是否为野兽类型
 func is_beast() -> bool:
 	# 简化实现，基于阵营判断
-	return faction == 3 # BeastsTypes.Faction.BEASTS
+	return faction == FactionManager.Faction.BEASTS
 
 ## 检查是否为怪物类型
 func is_monster() -> bool:
 	# 简化实现，基于阵营判断
-	return faction == 2 # MonstersTypes.Faction.MONSTERS
+	return faction == FactionManager.Faction.MONSTERS
 
 ## 检查是否为英雄类型
 func is_hero() -> bool:
 	# 简化实现，基于阵营判断
-	return faction == 1 # HeroesTypes.Faction.HEROES
+	return faction == FactionManager.Faction.HEROES
 
 ## 检查是否为水生生物
 func is_aquatic() -> bool:

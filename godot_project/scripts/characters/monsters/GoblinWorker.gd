@@ -90,7 +90,7 @@ func _init_goblin_worker_data() -> void:
 func _setup_managers() -> void:
 	if is_inside_tree():
 		# 使用 GameServices 访问管理器（Autoload API）
-		gold_mine_manager = GameServices.gold_mine_manager
+		gold_mine_manager = GameServices.get_gold_mines()
 		auto_assigner = GameServices.auto_assigner
 		building_manager = GameServices.building_manager
 		resource_manager = GameServices.resource_manager
@@ -129,7 +129,12 @@ func find_nearby_gold_mine():
 	
 	_cleanup_failed_mines()
 	
-	var all_mines = gold_mine_manager.get_available_mines_in_range(global_position, 50.0)
+	# 使用 ResourceManager 的活跃金矿 + 本地距离筛选
+	var all_mines = []
+	if gold_mine_manager.has_method("get_active_gold_mines"):
+		for mine in gold_mine_manager.get_active_gold_mines():
+			if global_position.distance_to(mine.position) <= 50.0:
+				all_mines.append(mine)
 	if all_mines.is_empty():
 		return null
 	

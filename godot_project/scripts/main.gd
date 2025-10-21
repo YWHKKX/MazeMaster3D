@@ -26,17 +26,39 @@ const GridManager = preload("res://scripts/managers/GridManager.gd")
 @onready var logistics_ui = $UI/LogisticsSelectionUI
 @onready var mining_ui = $UI/MiningSystemUI
 @onready var resource_display_ui = $UI/ResourceDisplayUI
-@onready var gold_mine_manager = $GoldMineManager
+@onready var resource_visualization_ui = $UI/ResourceVisualizationUI
+@onready var resource_collection_ui = $UI/ResourceCollectionUI
+@onready var resource_density_ui = $UI/ResourceDensityUI
+# gold_mine_manager 已整合到 resource_manager 中，但苦工和工程师仍需要独立的GoldMineManager
+@onready var gold_mine_manager = null
 @onready var building_manager = $BuildingManager
 @onready var auto_assigner = $AutoAssigner
 @onready var combat_manager = $CombatManager
+@onready var resource_collection_manager = $ResourceCollectionManager
+@onready var resource_trade_manager = $ResourceTradeManager
+@onready var resource_prediction_manager = $ResourcePredictionManager
+@onready var resource_allocation_manager = $ResourceAllocationManager
+@onready var plant_renderer = $PlantRenderer
+@onready var mineral_renderer = $MineralRenderer
+@onready var enhanced_resource_renderer = $EnhancedResourceRenderer
+@onready var resource_renderer = $ResourceRenderer
 @onready var selection_highlight = $SelectionHighlightSystem
 # LogManager is now an autoload
 
 # 预加载管理器类型
-const MiningManager = preload("res://scripts/managers/MiningManager.gd")
+const MiningManager = preload("res://scripts/managers/resource/MiningManager.gd")
 # StatusIndicatorManager 已删除，状态指示器功能已整合到角色系统中
-const ResourceManager = preload("res://scripts/managers/ResourceManager.gd")
+const ResourceManager = preload("res://scripts/managers/resource/ResourceManager.gd")
+const ResourceCollectionManager = preload("res://scripts/managers/resource/ResourceCollectionManager.gd")
+const ResourceTradeManager = preload("res://scripts/managers/resource/ResourceTradeManager.gd")
+const ResourcePredictionManager = preload("res://scripts/managers/resource/ResourcePredictionManager.gd")
+const ResourceAllocationManager = preload("res://scripts/managers/resource/ResourceAllocationManager.gd")
+const PlantRenderer = preload("res://scripts/managers/rendering/PlantRenderer.gd")
+const MineralRenderer = preload("res://scripts/managers/rendering/MineralRenderer.gd")
+const EnhancedResourceRenderer = preload("res://scripts/managers/rendering/EnhancedResourceRenderer.gd")
+const ResourceRenderer = preload("res://scripts/managers/ResourceRenderer.gd")
+const UnitNameDisplayManager = preload("res://scripts/managers/UnitNameDisplayManager.gd")
+const GoldMineManager = preload("res://scripts/managers/resource/GoldMineManager.gd")
 # PhysicsSystem 已删除，使用 Godot 内置物理系统
 const PlacementSystem = preload("res://scripts/managers/PlacementSystem.gd")
 const BuildingManager = preload("res://scripts/managers/BuildingManager.gd")
@@ -56,7 +78,9 @@ var mining_manager: MiningManager = null
 # 资源管理器（动态创建）
 var resource_manager: ResourceManager = null
 
-# 地形高亮系统已移至 CavityHighlightSystem
+# 单位名称显示管理器（动态创建）
+var unit_name_display_manager: UnitNameDisplayManager = null
+
 var terrain_display_enabled: bool = false
 
 # 游戏状态
@@ -104,6 +128,9 @@ func initialize_game():
 	# 初始化挖矿管理器
 	_setup_mining_manager()
 	
+	# 初始化单位名称显示管理器
+	_setup_unit_name_display_manager()
+	
 	# 状态指示器管理器已删除，状态指示器功能已整合到角色系统中
 	
 	# 物理系统已删除，使用 Godot 内置物理系统
@@ -113,7 +140,6 @@ func initialize_game():
 	_setup_character_atlas_ui()
 	
 	# 初始化地形管理器
-	# 地形管理器已删除，使用 CavityManager 统一管理
 	
 	# 初始化游戏管理器
 	game_manager.initialize()
@@ -125,7 +151,9 @@ func initialize_game():
 	# 设置初始摄像机位置
 	setup_camera()
 
-	# 初始化UI系统
+	# 🔧 初始化渲染器（必须在注册服务之前）
+	_initialize_renderers()
+
 	setup_ui()
 
 	# 不在这里创建地牢环境，等待用户点击开始游戏或重新生成地图
@@ -139,6 +167,27 @@ func initialize_game():
 
 	LogManager.info("游戏系统初始化完成（地牢之心已创建并注册）")
 
+func _initialize_renderers():
+	"""初始化渲染器系统"""
+	LogManager.info("🔧 初始化渲染器系统...")
+	
+	# 初始化增强资源渲染器
+	if enhanced_resource_renderer:
+		enhanced_resource_renderer.set_world_node(world)
+		if resource_manager:
+			enhanced_resource_renderer.set_resource_manager(resource_manager)
+		LogManager.info("✅ EnhancedResourceRenderer 初始化完成")
+	else:
+		LogManager.error("❌ EnhancedResourceRenderer 节点未找到！")
+	
+	# 初始化资源渲染器
+	if resource_renderer:
+		resource_renderer.set_world_node(world)
+		if resource_manager:
+			resource_renderer.set_resource_manager(resource_manager)
+		LogManager.info("✅ ResourceRenderer 初始化完成")
+	else:
+		LogManager.warning("⚠️ ResourceRenderer 节点未找到")
 
 func _register_scene_managers():
 	"""注册场景中的@onready管理器到GameServices"""
@@ -152,7 +201,11 @@ func _register_scene_managers():
 	if grid_manager:
 		GameServices.register("grid_manager", grid_manager)
 	
-	if gold_mine_manager:
+	# 创建独立的GoldMineManager供苦工和工程师使用
+	if not gold_mine_manager:
+		gold_mine_manager = GoldMineManager.new()
+		gold_mine_manager.name = "GoldMineManager"
+		add_child(gold_mine_manager)
 		GameServices.register("gold_mine_manager", gold_mine_manager)
 	
 	if building_manager:
@@ -164,7 +217,30 @@ func _register_scene_managers():
 	if auto_assigner:
 		GameServices.register("auto_assigner", auto_assigner)
 	
-	# 地形高亮系统已移至 CavityHighlightSystem
+	if resource_collection_manager:
+		GameServices.register("resource_collection_manager", resource_collection_manager)
+	
+	if resource_trade_manager:
+		GameServices.register("resource_trade_manager", resource_trade_manager)
+	
+	if resource_prediction_manager:
+		GameServices.register("resource_prediction_manager", resource_prediction_manager)
+	
+	if resource_allocation_manager:
+		GameServices.register("resource_allocation_manager", resource_allocation_manager)
+	
+	if plant_renderer:
+		GameServices.register("plant_renderer", plant_renderer)
+	
+	if mineral_renderer:
+		GameServices.register("mineral_renderer", mineral_renderer)
+	
+	if enhanced_resource_renderer:
+		GameServices.register("enhanced_resource_renderer", enhanced_resource_renderer)
+		LogManager.info("✅ EnhancedResourceRenderer 已注册到 GameServices")
+	else:
+		LogManager.error("❌ EnhancedResourceRenderer 节点未找到！")
+	
 	LogManager.info("地形高亮功能已整合到 CavityHighlightSystem")
 	
 	LogManager.info("GameServices - 所有场景管理器已注册")
@@ -175,6 +251,47 @@ func _print_service_status():
 	LogManager.info("=== GameServices 服务状态 ===")
 	GameServices.print_service_status()
 	LogManager.info("================================")
+
+func _ensure_renderers_ready():
+	"""确保所有渲染器在地图生成前准备就绪"""
+	LogManager.info("🔧 确保渲染器准备就绪...")
+	
+	# 检查增强资源渲染器是否已注册
+	var enhanced_renderer = GameServices.get_enhanced_resource_renderer()
+	if not enhanced_renderer:
+		LogManager.error("❌ EnhancedResourceRenderer 未注册到 GameServices！")
+		return false
+	
+	# 检查渲染器是否已设置世界节点
+	if not enhanced_renderer.world_node:
+		LogManager.warning("⚠️ EnhancedResourceRenderer 世界节点未设置，重新设置...")
+		enhanced_renderer.set_world_node(world)
+	
+	# 检查渲染器是否已设置资源管理器
+	if not enhanced_renderer.resource_manager:
+		LogManager.warning("⚠️ EnhancedResourceRenderer 资源管理器未设置，重新设置...")
+		enhanced_renderer.set_resource_manager(resource_manager)
+	
+	# 验证渲染器组件
+	var components_ready = true
+	if not enhanced_renderer.plant_renderer:
+		LogManager.warning("⚠️ PlantRenderer 未初始化")
+		components_ready = false
+	
+	if not enhanced_renderer.mineral_renderer:
+		LogManager.warning("⚠️ MineralRenderer 未初始化")
+		components_ready = false
+	
+	if not enhanced_renderer.resource_renderer:
+		LogManager.warning("⚠️ ResourceRenderer 未初始化")
+		components_ready = false
+	
+	if components_ready:
+		LogManager.info("✅ 所有渲染器组件已准备就绪")
+	else:
+		LogManager.error("❌ 部分渲染器组件未准备就绪")
+	
+	return components_ready
 
 
 func _setup_resource_manager():
@@ -190,7 +307,7 @@ func _setup_resource_manager():
 func _setup_mining_manager():
 	"""设置挖矿管理器"""
 	if not mining_manager:
-		mining_manager = preload("res://scripts/managers/MiningManager.gd").new()
+		mining_manager = preload("res://scripts/managers/resource/MiningManager.gd").new()
 		mining_manager.name = "MiningManager"
 		add_child(mining_manager)
 		
@@ -204,6 +321,63 @@ func _setup_mining_manager():
 		LogManager.info("挖矿管理器已初始化")
 
 
+func _setup_unit_name_display_manager():
+	"""设置单位名称显示管理器"""
+	if not unit_name_display_manager:
+		unit_name_display_manager = UnitNameDisplayManager.new()
+		unit_name_display_manager.name = "UnitNameDisplayManager"
+		add_child(unit_name_display_manager)
+		
+		# 设置默认配置
+		var config = {
+			"enabled": true,
+			"show_names": true,
+			"show_health": true, # 🔧 启用生命值显示
+			"show_faction": false,
+			"update_interval": 0.5,
+			"max_displays": 100,
+			"performance_mode": true,
+			"auto_cleanup": true
+		}
+		unit_name_display_manager.update_global_config(config)
+		
+		GameServices.register("unit_name_display_manager", unit_name_display_manager) # ✅ 注册服务
+		
+		# 🔧 为现有角色创建名称显示
+		call_deferred("_create_displays_for_existing_characters")
+		
+		LogManager.info("单位名称显示管理器已初始化")
+
+
+func _create_displays_for_existing_characters():
+	"""为现有角色创建名称显示"""
+	if not unit_name_display_manager:
+		return
+	
+	# 获取所有现有角色
+	var characters = _get_all_existing_characters()
+	
+	# 为每个角色创建名称显示
+	for character in characters:
+		if character and is_instance_valid(character):
+			unit_name_display_manager.create_display_for_unit(character)
+	
+	LogManager.info("🏷️ [Main] 为 %d 个现有角色创建了名称显示" % characters.size())
+
+func _get_all_existing_characters() -> Array:
+	"""获取所有现有角色"""
+	var characters = []
+	
+	# 从CharacterManager获取
+	if character_manager and character_manager.has_method("get_all_characters"):
+		var nodes = character_manager.get_all_characters()
+		for node in nodes:
+			if node is CharacterBase:
+				characters.append(node)
+	
+	return characters
+
+
 # _setup_status_indicator_manager() 已删除，状态指示器功能已整合到角色系统中
 
 # _setup_physics_system() 已删除，使用 Godot 内置物理系统
@@ -214,7 +388,6 @@ func _setup_placement_system():
 	placement_system.name = "PlacementSystem"
 	add_child(placement_system)
 	
-	# 初始化系统引用
 	placement_system.initialize_systems(self, tile_manager, character_manager, resource_manager, building_manager)
 	
 	GameServices.register("placement_system", placement_system) # ✅ 注册服务
@@ -228,7 +401,6 @@ func _setup_building_manager():
 		building_manager.name = "BuildingManager"
 		add_child(building_manager)
 	
-	# 初始化系统引用
 	if building_manager:
 		building_manager.initialize_systems(self, tile_manager, character_manager, resource_manager)
 		GameServices.register("building_manager", building_manager) # ✅ 注册服务
@@ -246,10 +418,7 @@ func _setup_building_selection_ui():
 	
 	LogManager.info("建筑选择UI已初始化")
 
-# 地形管理器已删除，使用 CavityManager 统一管理
 	
-	# 地形管理器已删除，使用 CavityManager 统一管理
-
 func _setup_character_atlas_ui():
 	"""设置角色图鉴UI"""
 	character_atlas_ui = CharacterAtlasUI.new()
@@ -316,6 +485,9 @@ func regenerate_map():
 	
 	# 清理现有地图
 	if map_generator:
+		# 🔧 确保渲染器在地图生成前完全初始化
+		_ensure_renderers_ready()
+		
 		# 清理现有地形
 		_clear_existing_map()
 		
@@ -323,7 +495,6 @@ func regenerate_map():
 		var config = MapGenerator.MapGeneratorConfig.new(MapConfig.get_map_size())
 		await map_generator.generate_map(config)
 		
-		# 注册地形到地形管理器
 		register_terrain_from_cavities()
 		
 		# 重新创建地牢之心
@@ -340,7 +511,6 @@ func register_terrain_from_cavities():
 	"""从空洞系统注册地形到地形管理器"""
 	LogManager.info("=== 开始地形注册过程 ===")
 	
-	# 地形管理器已删除，使用 CavityManager 统一管理
 	
 	# 获取空洞管理器
 	var cavity_manager = get_node("MapGenerator/CavityManager")
@@ -367,7 +537,19 @@ func register_terrain_from_cavities():
 		LogManager.warning("  3. 地图生成过程中断")
 		return
 	
-	LogManager.info("空洞数据已通过 CavityManager 统一管理，无需额外注册")
+	# 注册空洞到地形管理器
+	LogManager.info("开始注册空洞到地形管理器...")
+	var terrain_manager = map_generator.get_node("TerrainManager")
+	if not terrain_manager:
+		LogManager.error("未找到 TerrainManager 节点")
+		return
+	
+	var registered_count = 0
+	for cavity in all_cavities:
+		if terrain_manager.register_terrain_from_cavity(cavity.id):
+			registered_count += 1
+	
+	LogManager.info("地形注册完成: 成功注册 %d/%d 个空洞" % [registered_count, all_cavities.size()])
 	
 	# 调试空洞信息
 	LogManager.info("=== 空洞统计信息 ===")
@@ -402,9 +584,10 @@ func _clear_existing_map():
 	if character_manager:
 		character_manager.clear_all_characters()
 	
-	# 清理金矿
-	if gold_mine_manager:
-		gold_mine_manager.clear_all_mines()
+	# 清理金矿（金矿系统已整合到资源管理器）
+	if resource_manager:
+		# 清理金矿数据
+		resource_manager.gold_mines.clear()
 	
 	LogManager.info("现有地图清理完成")
 
@@ -423,7 +606,6 @@ func setup_camera():
 
 func setup_ui():
 	"""初始化UI系统"""
-	# 初始化UI系统
 	_initialize_ui_system()
 
 
@@ -455,10 +637,27 @@ func _initialize_ui_system():
 	if logistics_ui:
 		logistics_ui.set_logistics_selected_callback(_on_logistics_selected)
 
-	# 初始化挖掘系统
-	if gold_mine_manager and character_manager:
+	# 初始化资源可视化UI
+	if resource_visualization_ui:
+		# 设置世界节点引用，用于添加3D标记
+		if world:
+			resource_visualization_ui.set_world_node(world)
+		LogManager.info("ResourceVisualizationUI 初始化完成")
+
+	# 初始化资源采集UI
+	if resource_collection_ui:
+		LogManager.info("ResourceCollectionUI 初始化完成")
+
+	# 初始化资源密度UI
+	if resource_density_ui:
+		LogManager.info("ResourceDensityUI 初始化完成")
+
+	# 渲染器初始化已移至 _initialize_renderers() 函数
+
+	# 初始化挖掘系统（金矿系统已整合到资源管理器）
+	if resource_manager and character_manager:
 		if character_manager.has_method("set_gold_mine_manager"):
-			character_manager.set_gold_mine_manager(gold_mine_manager)
+			character_manager.set_gold_mine_manager(resource_manager)
 
 	# 初始化建筑系统
 	if building_manager and character_manager:
@@ -475,17 +674,19 @@ func _initialize_ui_system():
 	
 	# UI 仍需要设置管理器（UI不使用GameServices，避免循环依赖）
 	if mining_ui:
-		mining_ui.set_managers(gold_mine_manager, character_manager)
+		mining_ui.set_managers(resource_manager, character_manager) # 金矿系统已整合到资源管理器
 
 
 func create_initial_dungeon():
 	"""创建初始地牢环境"""
 	if map_generator:
+		# 🔧 确保渲染器在地图生成前完全初始化
+		_ensure_renderers_ready()
+		
 		# 🔧 直接调用 generate_map（便捷函数已删除）
 		var config = MapGenerator.MapGeneratorConfig.new(MapConfig.get_map_size())
 		await map_generator.generate_map(config)
 		
-		# 注册地形到地形管理器
 		register_terrain_from_cavities()
 		
 		# 生成后重置摄像机到地图中心
@@ -493,7 +694,6 @@ func create_initial_dungeon():
 	else:
 		LogManager.error("MapGenerator 未找到！")
 	
-	# 创建地牢之心建筑对象
 	create_dungeon_heart()
 
 
@@ -505,7 +705,6 @@ func create_dungeon_heart():
 	var center_z = int(map_size.z / 2)
 	var heart_position = Vector3(center_x, 0.05, center_z)
 	
-	# 创建地牢之心建筑对象（使用3D版本）
 	var DungeonHeartScript = preload("res://scripts/characters/buildings/DungeonHeart3D.gd")
 	var dungeon_heart = DungeonHeartScript.new()
 	# 🔧 2x2 建筑，位置直接设置在2x2区域的几何中心
@@ -622,8 +821,6 @@ func handle_input(event: InputEvent):
 		mouse_position = event.position
 		update_world_position()
 		
-		# 地形显示功能已移至 CavityHighlightSystem
-
 	elif event is InputEventMouseButton:
 		handle_mouse_click(event)
 
@@ -729,7 +926,6 @@ func _handle_click_with_placement_system():
 	else:
 		LogManager.warning("放置失败: " + result.message + " 实体ID: " + entity_id + " 位置: " + str(world_position))
 
-# 回退函数已删除 - 统一使用PlacementSystem
 
 func _get_current_entity_id() -> String:
 	"""获取当前实体ID"""
@@ -1068,8 +1264,6 @@ func _show_terrain_highlight_status(terrain_type: String):
 	add_child(timer)
 	timer.start()
 
-# 废弃函数已删除 - 统一使用PlacementSystem
-
 
 func toggle_bestiary():
 	"""切换角色图鉴"""
@@ -1233,8 +1427,6 @@ func _update_highlight_with_placement_system():
 	# 更新高亮
 	selection_highlight.update_highlight(world_position, entity_id, current_build_mode, highlight_color)
 
-# 回退函数已删除 - 统一使用PlacementSystem
-
 
 func _find_best_tile_hit(space_state, from: Vector3, to: Vector3):
 	"""寻找最佳的瓦片击中点，考虑遮挡关系"""
@@ -1249,7 +1441,6 @@ func _find_best_tile_hit(space_state, from: Vector3, to: Vector3):
 		var hit_position = result.position
 		var snapped_pos = _snap_to_tile_center(hit_position)
 		
-		# 验证这个位置确实有瓦片数据
 		if tile_manager and tile_manager.get_tile_data(snapped_pos):
 			return result
 	
@@ -1278,7 +1469,6 @@ func _try_multi_raycast(space_state, from: Vector3, to: Vector3):
 			var hit_position = result.position
 			var snapped_pos = _snap_to_tile_center(hit_position)
 			
-			# 验证这个位置确实有瓦片数据
 			if tile_manager and tile_manager.get_tile_data(snapped_pos):
 				return result
 	
@@ -1303,7 +1493,6 @@ func _get_ground_projection():
 	
 	if intersection:
 		var snapped_pos = _snap_to_tile_center(intersection)
-		# 验证这个位置确实有瓦片数据
 		if tile_manager.get_tile_data(snapped_pos):
 			return snapped_pos
 	
@@ -1326,7 +1515,6 @@ func _get_screen_to_tile_projection():
 	var snapped_z = floor(world_pos.z / tile_size.z) * tile_size.z
 	var snapped_y = 0.0
 	
-	# 边界检查
 	snapped_x = clamp(snapped_x, 0, map_size.x - 1)
 	snapped_z = clamp(snapped_z, 0, map_size.z - 1)
 	
@@ -1350,10 +1538,8 @@ func _snap_to_tile_center(position: Vector3) -> Vector3:
 	var snapped_x = floor(position.x / tile_size.x) * tile_size.x
 	var snapped_z = floor(position.z / tile_size.z) * tile_size.z
 	
-	# 单层地图约束：Y坐标严格为0
 	var snapped_y = 0.0
 	
-	# 边界检查：确保位置在地图范围内
 	snapped_x = clamp(snapped_x, 0, map_size.x - 1)
 	snapped_z = clamp(snapped_z, 0, map_size.z - 1)
 	

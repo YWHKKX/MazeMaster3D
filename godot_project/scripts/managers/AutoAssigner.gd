@@ -107,9 +107,24 @@ func _initialize_assigner():
 
 func _setup_manager_references():
 	"""使用 GameServices 设置管理器引用"""
-	gold_mine_manager = GameServices.gold_mine_manager
-	building_manager = GameServices.building_manager
-	character_manager = GameServices.character_manager
+	# 安全地获取管理器引用，避免空值错误
+	if GameServices.is_service_ready("resource_manager"):
+		gold_mine_manager = GameServices.get_gold_mines() # 金矿系统已并入资源管理器
+	else:
+		gold_mine_manager = null
+		LogManager.warning("AutoAssigner - GoldMineManager不可用")
+	
+	if GameServices.is_service_ready("building_manager"):
+		building_manager = GameServices.get_buildings()
+	else:
+		building_manager = null
+		LogManager.warning("AutoAssigner - BuildingManager不可用")
+	
+	if GameServices.is_service_ready("character_manager"):
+		character_manager = GameServices.get_characters()
+	else:
+		character_manager = null
+		LogManager.warning("AutoAssigner - CharacterManager不可用")
 	
 	# 检查管理器引用是否获取成功
 
@@ -167,7 +182,7 @@ func _scan_mining_tasks():
 	# 获取所有活跃的金矿
 	var active_mines = []
 	for mine in gold_mine_manager.gold_mines:
-		if mine.status == GoldMineManager.MineStatus.ACTIVE and mine.can_accept_miner():
+		if mine.status == ResourceManager.MineStatus.ACTIVE and mine.can_accept_miner():
 			active_mines.append(mine)
 
 	# 为每个可达的金矿创建挖掘任务

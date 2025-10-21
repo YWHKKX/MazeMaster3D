@@ -63,7 +63,7 @@ func _ready() -> void:
 	super._ready()
 	
 	# 设置怪物阵营
-	faction = MonstersTypes.Faction.MONSTERS
+	faction = FactionManager.Faction.MONSTERS
 	
 	# 🔧 [特殊处理] GoblinWorker 和 GoblinEngineer 使用场景预配置的状态机
 	if _is_special_goblin_unit():

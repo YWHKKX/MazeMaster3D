@@ -26,11 +26,11 @@ class WastelandConfig:
 func generate_wasteland_resources(region: EcosystemRegion.RegionData) -> Array[ResourceTypes.ResourceSpawn]:
 	"""生成荒地资源"""
 	var resources: Array[ResourceTypes.ResourceSpawn] = []
-	var config = WastelandConfig.new()
+	var _config = WastelandConfig.new()
 	var area = region.get_area()
 	
 	# 生成稀有矿物
-	var rare_mineral_count = int(area * config.rare_mineral_density)
+	var rare_mineral_count = int(area * _config.rare_mineral_density)
 	for i in range(rare_mineral_count):
 		var pos = region.get_random_point()
 		var amount = randi_range(2, 8) # 每点2-8稀有矿物
@@ -38,11 +38,19 @@ func generate_wasteland_resources(region: EcosystemRegion.RegionData) -> Array[R
 		resources.append(resource)
 	
 	# 生成石头
-	var stone_count = int(area * config.stone_density)
+	var stone_count = int(area * _config.stone_density)
 	for i in range(stone_count):
 		var pos = region.get_random_point()
 		var amount = randi_range(8, 25) # 每点8-25石头
 		var resource = ResourceTypes.ResourceSpawn.new(ResourceTypes.ResourceType.STONE, Vector3(pos.x, 0, pos.y), amount, 900.0)
+		resources.append(resource)
+	
+	# 生成腐化植物
+	var corrupted_plant_count = int(area * _config.resource_density * 1.5)
+	for i in range(corrupted_plant_count):
+		var pos = region.get_random_point()
+		var amount = randi_range(3, 12) # 每点3-12腐化植物
+		var resource = ResourceTypes.ResourceSpawn.new(ResourceTypes.ResourceType.CORRUPTED_PLANT, Vector3(pos.x, 0, pos.y), amount, 800.0)
 		resources.append(resource)
 	
 	return resources
@@ -54,7 +62,7 @@ func generate_wasteland_resources(region: EcosystemRegion.RegionData) -> Array[R
 func generate_wasteland_creatures(region: EcosystemRegion.RegionData) -> Array[BeastsTypes.BeastSpawn]:
 	"""生成荒地生物"""
 	var creatures: Array[BeastsTypes.BeastSpawn] = []
-	var config = WastelandConfig.new()
+	var _config = WastelandConfig.new()
 	var area = region.get_area()
 	
 	# 生成巨蜥（荒地主要生物）
@@ -110,7 +118,7 @@ func generate_wasteland_features(region: EcosystemRegion.RegionData) -> Array[Ec
 # 荒地生态系统
 # ============================================================================
 
-func update_wasteland_ecosystem(creatures: Array[BeastsTypes.BeastSpawn], delta: float) -> void:
+func update_wasteland_ecosystem(creatures: Array[BeastsTypes.BeastSpawn], _delta: float) -> void:
 	"""更新荒地生态系统"""
 	var lizards = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.GIANT_LIZARD)
 	
@@ -141,7 +149,7 @@ func update_lizard_territory_behavior(lizards: Array[BeastsTypes.BeastSpawn]) ->
 		# 巨蜥守卫领地
 		LogManager.info("巨蜥在守卫领地")
 
-func find_nearby_resources(position: Vector3, radius: float, resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
+func find_nearby_resources(_position: Vector3, _radius: float, _resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
 	"""查找附近的资源"""
 	# 简化实现，返回空数组
 	return []

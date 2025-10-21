@@ -69,7 +69,7 @@ func _ready() -> void:
 	super._ready()
 	
 	# 设置野兽阵营
-	faction = BeastsTypes.Faction.BEASTS
+	faction = FactionManager.Faction.BEASTS
 	
 	# 野兽默认不是战斗单位（除非是攻击性的）
 	is_combat_unit = is_aggressive

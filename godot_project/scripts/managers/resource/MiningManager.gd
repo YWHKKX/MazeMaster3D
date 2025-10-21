@@ -3,7 +3,7 @@ class_name MiningManager
 
 # 预加载必要的类型
 const TileManager = preload("res://scripts/managers/TileManager.gd")
-const ResourceManagerClass = preload("res://scripts/managers/ResourceManager.gd")
+const ResourceManagerClass = preload("res://scripts/managers/resource/ResourceManager.gd")
 
 # 挖矿管理器 - 统一管理所有挖矿相关的操作
 # 参考MINING_SYSTEM.md GOLD_SYSTEM.md 设计

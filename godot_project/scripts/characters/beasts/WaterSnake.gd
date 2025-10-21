@@ -20,37 +20,8 @@ func _init_water_snake_data() -> void:
 	data.speed = 35 # 游泳速度
 	data.size = 12 # 中等体型
 	
-	# 设置阵营为野兽（中立）
-	data.faction = 3 # BeastsTypes.Faction.BEASTS
-	
 	# 设置行为属性
-	data.is_hostile = false # 野兽阵营中立
-	data.is_aquatic = true # 水生动物
-	
-	# 设置生态属性
-	data.ecosystem_type = EcosystemRegion.EcosystemType.LAKE
-	data.food_chain_level = 2 # 次级消费者
-	
-	# 设置觅食偏好
-	data.preferred_food_types = [ResourceTypes.ResourceType.AQUATIC_PLANT, ResourceTypes.ResourceType.FOOD]
-	
-	# 设置捕食行为
-	data.is_predator = true
-	data.prey_types = [BeastsTypes.BeastType.WATER_GRASS_FISH, BeastsTypes.BeastType.FISH]
-	
-	# 设置潜伏行为
-	data.ambush_behavior = true # 潜伏攻击
-	data.ambush_duration = 3.0 # 潜伏3秒
-	data.ambush_damage_multiplier = 1.5 # 潜伏攻击伤害提升50%
-	
-	# 设置游泳能力
-	data.swim_speed = data.speed * 1.3 # 游泳比陆地移动快
-	data.dive_depth = 15.0 # 可以潜水到15米深
-	data.underwater_breathing = true # 可以在水下呼吸
-	
-	# 设置领地行为
-	data.territory_size = 20.0 # 守卫浅水区域
-	data.territory_behavior = true
+	# 注意：生态属性由BeastBase类自动设置，不需要手动设置
 	
 	# 应用数据
 	character_data = data

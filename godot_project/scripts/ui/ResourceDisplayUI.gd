@@ -6,7 +6,7 @@ class_name ResourceDisplayUI
 
 # 导入UI工具类
 const UIDesignConstants = preload("res://scripts/ui/UIDesignConstants.gd")
-const ResourceManager = preload("res://scripts/managers/ResourceManager.gd")
+const ResourceManager = preload("res://scripts/managers/resource/ResourceManager.gd")
 
 # UI配置
 var ui_config = {
@@ -102,29 +102,41 @@ func _create_resource_section():
 
 
 func _create_resource_labels():
-	"""创建资源标签"""
-	# 主要资源（金币和法力）
-	var main_resources = [ResourceManager.ResourceType.GOLD, ResourceManager.ResourceType.MANA]
+	"""创建资源标签 - 按三级分类显示"""
+	if not resource_manager:
+		return
 	
-	for resource_type in main_resources:
-		_create_resource_label(resource_type)
+	# 创建分类标题和资源标签
+	_create_resource_category_section("🥇 核心资源", ResourceManager.ResourceCategory.CORE)
+	_create_resource_category_section("🥈 基础资源", ResourceManager.ResourceCategory.BASIC)
+	_create_resource_category_section("🥉 特殊资源", ResourceManager.ResourceCategory.SPECIAL)
 
+func _create_resource_category_section(title: String, category: ResourceManager.ResourceCategory):
+	"""创建资源分类区域"""
+	# 分类标题
+	var category_label = UIUtils.create_label(
+		title, UIDesignConstants.FontSizes.NORMAL, UIDesignConstants.Colors.TEXT_SECONDARY
+	)
+	resource_container.add_child(category_label)
+	
+	# 获取该分类的资源
+	var resources = resource_manager.get_resources_by_category(category)
+	
+	for resource_info in resources:
+		_create_resource_label_from_info(resource_info)
 
-func _create_resource_label(resource_type: ResourceManager.ResourceType):
-	"""创建单个资源标签"""
+func _create_resource_label_from_info(resource_info: Dictionary):
+	"""从资源信息创建标签"""
 	var label_container = UIUtils.create_hbox_container(UIDesignConstants.Spacing.SM)
 	resource_container.add_child(label_container)
 	
 	# 资源图标和名称
-	var icon_name = _get_resource_icon_name(resource_type)
-	var resource_name = _get_resource_display_name(resource_type)
-	
 	var icon_label = UIUtils.create_label(
-		icon_name, UIDesignConstants.FontSizes.LARGE, UIDesignConstants.Colors.TEXT_PRIMARY
+		resource_info.icon, UIDesignConstants.FontSizes.LARGE, UIDesignConstants.Colors.TEXT_PRIMARY
 	)
 	
 	var name_label = UIUtils.create_label(
-		resource_name, UIDesignConstants.FontSizes.LARGE, UIDesignConstants.Colors.TEXT_PRIMARY
+		resource_info.name + ":", UIDesignConstants.FontSizes.LARGE, UIDesignConstants.Colors.TEXT_PRIMARY
 	)
 	
 	var amount_label = UIUtils.create_label(
@@ -136,7 +148,11 @@ func _create_resource_label(resource_type: ResourceManager.ResourceType):
 	label_container.add_child(amount_label)
 	
 	# 存储标签引用
-	resource_labels[resource_type] = amount_label
+	resource_labels[resource_info.type] = amount_label
+
+
+# 已废弃：_create_resource_label函数已删除
+# 现在使用_create_resource_label_from_info函数统一处理
 
 
 func _connect_signals():
@@ -211,34 +227,62 @@ func _show_resource_effect(resource_type: ResourceManager.ResourceType, text: St
 
 func _get_resource_icon_name(resource_type: ResourceManager.ResourceType) -> String:
 	"""获取资源图标"""
+	if resource_manager:
+		return resource_manager.get_resource_icon(resource_type)
+	
+	# 备用图标（如果ResourceManager不可用）
 	match resource_type:
 		ResourceManager.ResourceType.GOLD:
 			return "💰"
-		ResourceManager.ResourceType.MANA:
-			return "🔮"
+		ResourceManager.ResourceType.FOOD:
+			return "🍖"
 		ResourceManager.ResourceType.STONE:
-			return "🗿"
+			return "🔳" # 使用方块替代石头
 		ResourceManager.ResourceType.WOOD:
-			return "🪵"
+			return "📦" # 使用箱子替代木材
 		ResourceManager.ResourceType.IRON:
-			return "⚒️"
+			return "⛏️"
+		ResourceManager.ResourceType.GEM:
+			return "💎"
+		ResourceManager.ResourceType.MAGIC_HERB:
+			return "🌿"
+		ResourceManager.ResourceType.MAGIC_CRYSTAL:
+			return "✨"
+		ResourceManager.ResourceType.DEMON_CORE:
+			return "👹"
+		ResourceManager.ResourceType.MANA:
+			return "✨"
 		_:
 			return "❓"
 
 
 func _get_resource_display_name(resource_type: ResourceManager.ResourceType) -> String:
 	"""获取资源显示名称"""
+	if resource_manager:
+		return resource_manager.get_resource_name(resource_type) + ":"
+	
+	# 备用名称（如果ResourceManager不可用）
 	match resource_type:
 		ResourceManager.ResourceType.GOLD:
 			return "金币:"
-		ResourceManager.ResourceType.MANA:
-			return "法力:"
+		ResourceManager.ResourceType.FOOD:
+			return "食物:"
 		ResourceManager.ResourceType.STONE:
 			return "石头:"
 		ResourceManager.ResourceType.WOOD:
 			return "木材:"
 		ResourceManager.ResourceType.IRON:
-			return "铁:"
+			return "铁矿:"
+		ResourceManager.ResourceType.GEM:
+			return "宝石:"
+		ResourceManager.ResourceType.MAGIC_HERB:
+			return "魔法草药:"
+		ResourceManager.ResourceType.MAGIC_CRYSTAL:
+			return "魔法水晶:"
+		ResourceManager.ResourceType.DEMON_CORE:
+			return "恶魔核心:"
+		ResourceManager.ResourceType.MANA:
+			return "魔力:"
 		_:
 			return "未知:"
 
@@ -263,10 +307,9 @@ func _get_resource_capacity(resource_type: ResourceManager.ResourceType) -> int:
 				var mana_info = resource_manager.get_total_mana()
 				return mana_info.capacity if mana_info else 2000
 			return 2000
-		ResourceManager.ResourceType.STONE, ResourceManager.ResourceType.WOOD, ResourceManager.ResourceType.IRON:
-			return 999999 # 其他资源无限容量
 		_:
-			return 0
+			# 其他资源类型使用无限容量
+			return 999999
 
 
 # 公共接口
@@ -323,7 +366,13 @@ func refresh_display():
 func add_resource_type(resource_type: ResourceManager.ResourceType):
 	"""动态添加资源类型显示"""
 	if not resource_type in resource_labels:
-		_create_resource_label(resource_type)
+		# 使用新的函数创建资源标签
+		var resource_info = {
+			"type": resource_type,
+			"name": _get_resource_display_name(resource_type).replace(":", ""),
+			"icon": _get_resource_icon_name(resource_type)
+		}
+		_create_resource_label_from_info(resource_info)
 		_update_resource_display(resource_type)
 
 

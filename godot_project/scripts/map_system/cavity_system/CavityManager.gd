@@ -8,6 +8,7 @@ extends Node
 # ============================================================================
 
 const Cavity = preload("res://scripts/map_system/cavity_system/cavities/Cavity.gd")
+const CavityGenerator = preload("res://scripts/map_system/cavity_system/algorithms/CavityGenerator.gd")
 
 # ============================================================================
 # 属性
@@ -18,6 +19,9 @@ var cavities_by_type: Dictionary = {} # type -> Array[Cavity]
 var cavities_by_content: Dictionary = {} # content_type -> Array[Cavity]
 var cavity_count: int = 0
 
+# 生成器引用
+var cavity_generator: CavityGenerator
+
 # ============================================================================
 # 初始化
 # ============================================================================
@@ -25,7 +29,14 @@ var cavity_count: int = 0
 func _ready():
 	"""初始化空洞管理器"""
 	name = "CavityManager"
+	_initialize_generator()
 	LogManager.info("CavityManager - 空洞管理器已初始化")
+
+func _initialize_generator() -> void:
+	"""初始化空洞生成器"""
+	cavity_generator = CavityGenerator.new()
+	add_child(cavity_generator)
+	LogManager.info("CavityManager - 空洞生成器已初始化")
 
 # ============================================================================
 # 空洞注册
@@ -57,6 +68,10 @@ func register_cavity(cavity: Cavity) -> void:
 	cavities_by_content[cavity.content_type].append(cavity)
 	
 	# LogManager.info("CavityManager - 注册空洞: %s (%s, %s)" % [cavity.id, cavity.type, cavity.content_type])
+
+func add_cavity(cavity: Cavity) -> void:
+	"""添加空洞（register_cavity的别名）"""
+	register_cavity(cavity)
 
 func unregister_cavity(cavity_id: String) -> bool:
 	"""注销空洞"""
@@ -346,3 +361,43 @@ func print_cavity_list() -> void:
 		var cavity = cavities[cavity_id]
 		LogManager.info("  %s: %s (%s) - %d 位置" % [cavity_id, cavity.type, cavity.content_type, cavity.positions.size()])
 	LogManager.info("===============")
+
+# ============================================================================
+# 空洞生成
+# ============================================================================
+
+func generate_cavities_with_constraints() -> Array[Cavity]:
+	"""生成带约束条件的空洞"""
+	if not cavity_generator:
+		LogManager.error("CavityManager - 空洞生成器未初始化")
+		return []
+	
+	LogManager.info("CavityManager - 开始生成约束空洞")
+	
+	# 使用生成器生成空洞
+	var generated_cavities = cavity_generator.generate_cavities_with_constraints()
+	
+	# 注册所有生成的空洞
+	for cavity in generated_cavities:
+		register_cavity(cavity)
+	
+	LogManager.info("CavityManager - 生成并注册了 %d 个约束空洞" % generated_cavities.size())
+	return generated_cavities
+
+func generate_cavities() -> Array[Cavity]:
+	"""生成普通空洞"""
+	if not cavity_generator:
+		LogManager.error("CavityManager - 空洞生成器未初始化")
+		return []
+	
+	LogManager.info("CavityManager - 开始生成空洞")
+	
+	# 使用生成器生成空洞
+	var generated_cavities = cavity_generator.generate_cavities()
+	
+	# 注册所有生成的空洞
+	for cavity in generated_cavities:
+		register_cavity(cavity)
+	
+	LogManager.info("CavityManager - 生成并注册了 %d 个空洞" % generated_cavities.size())
+	return generated_cavities

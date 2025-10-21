@@ -1,4 +1,4 @@
-[gd_scene load_steps=20 format=3 uid="uid://bqxv8jxq8jqjx"]
+[gd_scene load_steps=29 format=3 uid="uid://bqxv8jxq8jqjx"]
 
 [ext_resource type="Script" path="res://scripts/main.gd" id="1_0x8jx"]
 [ext_resource type="Script" path="res://scripts/managers/GameManager.gd" id="2_1x9jy"]
@@ -11,14 +11,23 @@
 [ext_resource type="Script" path="res://scripts/ui/BuildingSelectionUI.gd" id="10_building_ui"]
 [ext_resource type="Script" path="res://scripts/ui/MonsterSelectionUI.gd" id="11_monster_ui"]
 [ext_resource type="Script" path="res://scripts/ui/LogisticsSelectionUI.gd" id="12_logistics_ui"]
-[ext_resource type="Script" path="res://scripts/managers/GoldMineManager.gd" id="13_gold_mine_manager"]
 [ext_resource type="Script" path="res://scripts/ui/MiningSystemUI.gd" id="14_mining_ui"]
 [ext_resource type="Script" path="res://scripts/managers/BuildingManager.gd" id="15_building_manager"]
 [ext_resource type="Script" path="res://scripts/managers/AutoAssigner.gd" id="16_auto_assigner"]
 [ext_resource type="Script" path="res://scripts/managers/CombatManager.gd" id="17_combat_manager"]
 [ext_resource type="Script" path="res://scripts/ui/SelectionHighlightSystem.gd" id="19_selection_highlight"]
-[ext_resource type="Script" path="res://scripts/managers/ResourceManager.gd" id="20_resource_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceCollectionManager.gd" id="20_resource_collection_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceManager.gd" id="20_resource_manager"]
 [ext_resource type="Script" path="res://scripts/ui/ResourceDisplayUI.gd" id="21_resource_display_ui"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceVisualizationUI.gd" id="22_resource_visualization_ui"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceCollectionUI.gd" id="23_resource_collection_ui"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceDensityUI.gd" id="24_resource_density_ui"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceTradeManager.gd" id="25_resource_trade_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourcePredictionManager.gd" id="26_resource_prediction_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceAllocationManager.gd" id="27_resource_allocation_manager"]
+[ext_resource type="Script" path="res://scripts/managers/rendering/PlantRenderer.gd" id="28_plant_renderer"]
+[ext_resource type="Script" path="res://scripts/managers/rendering/MineralRenderer.gd" id="29_mineral_renderer"]
+[ext_resource type="Script" path="res://scripts/managers/rendering/EnhancedResourceRenderer.gd" id="30_enhanced_resource_renderer"]
 
 [node name="Main" type="Node3D"]
 script = ExtResource("1_0x8jx")
@@ -38,9 +47,6 @@ script = ExtResource("5_character_manager")
 [node name="GridManager" type="Node3D" parent="."]
 script = ExtResource("6_grid_manager")
 
-[node name="GoldMineManager" type="Node" parent="."]
-script = ExtResource("13_gold_mine_manager")
-
 [node name="BuildingManager" type="Node" parent="."]
 script = ExtResource("15_building_manager")
 
@@ -55,6 +61,27 @@ script = ExtResource("19_selection_highlight")
 
 [node name="ResourceManager" type="Node" parent="."]
 script = ExtResource("20_resource_manager")
+
+[node name="ResourceCollectionManager" type="Node" parent="."]
+script = ExtResource("20_resource_collection_manager")
+
+[node name="ResourceTradeManager" type="Node" parent="."]
+script = ExtResource("25_resource_trade_manager")
+
+[node name="ResourcePredictionManager" type="Node" parent="."]
+script = ExtResource("26_resource_prediction_manager")
+
+[node name="ResourceAllocationManager" type="Node" parent="."]
+script = ExtResource("27_resource_allocation_manager")
+
+[node name="PlantRenderer" type="Node" parent="."]
+script = ExtResource("28_plant_renderer")
+
+[node name="MineralRenderer" type="Node" parent="."]
+script = ExtResource("29_mineral_renderer")
+
+[node name="EnhancedResourceRenderer" type="Node" parent="."]
+script = ExtResource("30_enhanced_resource_renderer")
 
 [node name="World" type="Node3D" parent="."]
 
@@ -174,6 +201,21 @@ script = ExtResource("14_mining_ui")
 layout_mode = 3
 anchors_preset = 0
 script = ExtResource("21_resource_display_ui")
+
+[node name="ResourceVisualizationUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("22_resource_visualization_ui")
+
+[node name="ResourceCollectionUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("23_resource_collection_ui")
+
+[node name="ResourceDensityUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("24_resource_density_ui")
 
 [node name="ResourcePanel" type="Control" parent="UI"]
 layout_mode = 3

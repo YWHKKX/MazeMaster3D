@@ -8,7 +8,6 @@ class_name GameUI
 const UIDesignConstants = preload("res://scripts/ui/UIDesignConstants.gd")
 
 # UI面板引用
-var resource_panel: Control
 var build_panel: Control
 var status_panel: Control
 var game_info_panel: Control
@@ -20,10 +19,8 @@ var main_game: Node = null
 # UI配置
 var ui_config = {"panel_width": 350, "panel_height": 200, "margin": 30, "show_shortcuts": true}
 
-# 资源显示相关
-var resource_labels: Dictionary = {} # 存储资源标签引用
+# 资源显示相关（已简化，主要资源显示由ResourceDisplayUI处理）
 var resource_manager = null # ResourceManager引用
-var update_timer: Timer = null # 更新定时器
 
 
 func _ready():
@@ -34,19 +31,12 @@ func _ready():
 	# 等待一帧，确保GameServices和ResourceManager都已初始化
 	await get_tree().process_frame
 	
-	# 从GameServices获取ResourceManager
+	# 从GameServices获取ResourceManager（仅用于状态显示）
 	resource_manager = GameServices.resource_manager
 	if resource_manager:
 		LogManager.info("GameUI - ResourceManager已连接")
-		# 连接资源变化信号
-		resource_manager.resource_changed.connect(_on_resource_changed)
-		resource_manager.resource_added.connect(_on_resource_added)
-		resource_manager.resource_removed.connect(_on_resource_removed)
 	else:
 		LogManager.error("GameUI - 无法获取ResourceManager！")
-	
-	# 设置定期更新定时器
-	_setup_update_timer()
 	
 	# 初始时隐藏，等待主菜单结束后再显示
 	hide_ui()
@@ -58,8 +48,7 @@ func _setup_game_ui():
 	# 设置全屏
 	set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 
-	# 创建各个面板
-	_create_resource_panel()
+	# 创建各个面板（资源显示由ResourceDisplayUI处理）
 	_create_build_panel()
 	_create_status_panel()
 	_create_game_info_panel()
@@ -69,112 +58,13 @@ func _setup_game_ui():
 	_setup_input_handling()
 
 
-func _setup_update_timer():
-	"""设置定期更新定时器"""
-	update_timer = Timer.new()
-	update_timer.wait_time = 0.5 # 每0.5秒更新一次
-	update_timer.timeout.connect(_update_resource_display)
-	add_child(update_timer)
-	update_timer.start()
-	LogManager.info("GameUI - 资源更新定时器已启动")
+# 资源显示功能已移除，由ResourceDisplayUI统一处理
 
 
-func _update_resource_display():
-	"""更新资源显示"""
-	if not resource_manager:
-		return
-	
-	# 更新金币显示
-	if "gold" in resource_labels:
-		var gold_info = resource_manager.get_total_gold()
-		var gold_amount = gold_info.total if gold_info else 0
-		resource_labels["gold"].text = str(gold_amount)
-		
-		# 根据金币数量设置颜色
-		var gold_capacity = gold_info.capacity if gold_info else 5000
-		var gold_percentage = float(gold_amount) / float(gold_capacity) * 100.0
-		if gold_percentage >= 80:
-			resource_labels["gold"].modulate = UIDesignConstants.Colors.SUCCESS
-		elif gold_percentage >= 50:
-			resource_labels["gold"].modulate = UIDesignConstants.Colors.WARNING
-		else:
-			resource_labels["gold"].modulate = UIDesignConstants.Colors.ERROR
-	
-	# 更新魔力显示
-	if "mana" in resource_labels:
-		var mana_info = resource_manager.get_total_mana()
-		var mana_amount = mana_info.total if mana_info else 0
-		resource_labels["mana"].text = str(mana_amount)
-		
-		# 根据魔力数量设置颜色
-		var mana_capacity = mana_info.capacity if mana_info else 2000
-		var mana_percentage = float(mana_amount) / float(mana_capacity) * 100.0
-		if mana_percentage >= 80:
-			resource_labels["mana"].modulate = UIDesignConstants.Colors.SUCCESS
-		elif mana_percentage >= 50:
-			resource_labels["mana"].modulate = UIDesignConstants.Colors.WARNING
-		else:
-			resource_labels["mana"].modulate = UIDesignConstants.Colors.ERROR
+# 资源信号处理已移除，由ResourceDisplayUI统一处理
 
 
-# 信号处理函数
-func _on_resource_changed(resource_type: int, amount: int, old_amount: int):
-	"""资源变化信号处理"""
-	# 立即更新显示
-	_update_resource_display()
-
-
-func _on_resource_added(resource_type: int, amount: int):
-	"""资源添加信号处理"""
-	# 立即更新显示
-	_update_resource_display()
-
-
-func _on_resource_removed(resource_type: int, amount: int):
-	"""资源移除信号处理"""
-	# 立即更新显示
-	_update_resource_display()
-	
-	# 更新其他资源显示（暂时保持静态）
-	if "food" in resource_labels:
-		resource_labels["food"].text = "0"
-	if "raw_gold" in resource_labels:
-		resource_labels["raw_gold"].text = "0"
-	if "monsters" in resource_labels:
-		resource_labels["monsters"].text = "0"
-	if "score" in resource_labels:
-		resource_labels["score"].text = "0"
-
-
-func _create_resource_panel():
-	"""创建资源面板 (左上角)"""
-	resource_panel = UIUtils.create_panel(
-		Vector2(ui_config.panel_width, ui_config.panel_height), UIDesignConstants.Colors.PANEL
-	)
-	resource_panel.position = Vector2(ui_config.margin, ui_config.margin)
-	resource_panel.name = "ResourcePanel"
-
-	# 创建标题
-	var title = UIUtils.create_label(
-		"📊 资源状态", UIDesignConstants.FontSizes.H3, UIDesignConstants.Colors.TEXT_PRIMARY
-	)
-	title.position = Vector2(UIDesignConstants.Spacing.MD, UIDesignConstants.Spacing.MD)
-	resource_panel.add_child(title)
-
-	# 创建资源列表
-	var resource_container = UIUtils.create_vbox_container(UIDesignConstants.Spacing.SM)
-	resource_container.position = Vector2(
-		UIDesignConstants.Spacing.MD, UIDesignConstants.Spacing.XL
-	)
-	resource_panel.add_child(resource_container)
-
-	# 资源项目 - 存储标签引用以便更新
-	resource_labels["gold"] = _create_resource_item(resource_container, "💰", "黄金", "0")
-	resource_labels["mana"] = _create_resource_item(resource_container, "🔮", "法力", "0")
-	resource_labels["food"] = _create_resource_item(resource_container, "🍖", "食物", "0")
-	resource_labels["raw_gold"] = _create_resource_item(resource_container, "⚒️", "原始黄金", "0")
-	resource_labels["monsters"] = _create_resource_item(resource_container, "👹", "怪物数量", "0")
-	resource_labels["score"] = _create_resource_item(resource_container, "🏆", "当前分数", "0")
+# 资源面板创建函数已移除，由ResourceDisplayUI统一处理
 
 
 func _create_build_panel():
@@ -260,34 +150,7 @@ func _create_game_info_panel():
 	_create_info_item(info_container, "⌨️", "ESC", "取消模式")
 
 
-# 辅助创建方法
-func _create_resource_item(container: VBoxContainer, emoji: String, name: String, value: String) -> Label:
-	"""创建资源项目，返回数值标签引用"""
-	var hbox = UIUtils.create_hbox_container(0)
-
-	var emoji_label = UIUtils.create_label(
-		emoji, UIDesignConstants.FontSizes.LARGE, UIDesignConstants.Colors.TEXT_PRIMARY
-	)
-	var name_label = UIUtils.create_label(
-		name, UIDesignConstants.FontSizes.NORMAL, UIDesignConstants.Colors.TEXT_SECONDARY
-	)
-	var value_label = UIUtils.create_label(
-		value, UIDesignConstants.FontSizes.NORMAL, UIDesignConstants.Colors.SUCCESS
-	)
-
-	# 设置标签宽度
-	name_label.custom_minimum_size.x = 80
-	value_label.custom_minimum_size.x = 60
-	value_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
-
-	hbox.add_child(emoji_label)
-	hbox.add_child(name_label)
-	hbox.add_child(value_label)
-
-	container.add_child(hbox)
-	
-	# 返回数值标签引用，用于后续更新
-	return value_label
+# 资源相关辅助函数已移除，由ResourceDisplayUI统一处理
 
 
 func _create_build_option(
@@ -427,28 +290,7 @@ func _update_current_mode(mode: String):
 			value_label.text = mode
 
 
-# 更新方法
-func update_resource_display(resources: Dictionary):
-	"""更新资源显示"""
-	var resource_container = resource_panel.get_child(1) # 资源容器
-	if not resource_container:
-		return
-
-	var resource_items = [
-		{"emoji": "💰", "name": "黄金", "key": "gold"},
-		{"emoji": "🔮", "name": "法力", "key": "mana"},
-		{"emoji": "🍖", "name": "食物", "key": "food"},
-		{"emoji": "⚒️", "name": "原始黄金", "key": "raw_gold"},
-		{"emoji": "👹", "name": "怪物数量", "key": "monsters"},
-		{"emoji": "🏆", "name": "当前分数", "key": "score"}
-	]
-
-	for i in range(min(resource_items.size(), resource_container.get_child_count())):
-		var item = resource_items[i]
-		var container = resource_container.get_child(i)
-		if container and container.get_child_count() > 2:
-			var value_label = container.get_child(2)
-			value_label.text = str(resources.get(item.key, 0))
+# 资源更新方法已移除，由ResourceDisplayUI统一处理
 
 
 func update_mouse_position(mouse_pos: Vector2, world_pos: Vector3):
@@ -507,9 +349,6 @@ func toggle_ui_visibility():
 func show_ui():
 	"""显示UI"""
 	visible = true
-	
-	# 立即更新一次资源显示
-	_update_resource_display()
 
 
 func hide_ui():

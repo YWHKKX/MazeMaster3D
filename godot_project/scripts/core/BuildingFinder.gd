@@ -173,14 +173,35 @@ static func find_nearest_accessible_gold_mine(character: Node) -> RefCounted:
 	Returns:
 		RefCounted: 金矿对象，如果没找到返回null
 	"""
-	if not character.gold_mine_manager:
+	# 使用 ResourceManager 替代旧 GoldMineManager：活跃金矿 + 本地筛选
+	var resource_manager = GameServices.get_gold_mines()
+	if not resource_manager or not resource_manager.has_method("get_active_gold_mines"):
 		return null
 	
-	# 使用可达性检查的方法（从GoldMineManager获取可达金矿）
-	var reachable_mines = character.gold_mine_manager.get_reachable_mines_in_radius(
-		character.global_position,
-		100.0 # 搜索半径
-	)
+	var reachable_mines = []
+	var origin = character.global_position
+	var radius = 100.0
+	for mine in resource_manager.get_active_gold_mines():
+		# 距离过滤（XZ 平面或3D距离，这里用3D距离）
+		if origin.distance_to(mine.position) <= radius:
+			# 可达性：优先使用 GridPathFinder 校验；若不可用，退化为 TileManager.is_walkable 邻域检查
+			var is_reachable = false
+			if GridPathFinder and GridPathFinder.is_ready():
+				var from_grid = GridPathFinder.world_to_grid(origin)
+				var to_grid = GridPathFinder.world_to_grid(mine.position)
+				is_reachable = GridPathFinder.is_reachable(from_grid, to_grid)
+			else:
+				var tm = GameServices.tile_manager
+				if tm:
+					# 检查矿周围是否有可走格
+					var offsets = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
+					for off in offsets:
+						var adj = Vector3(floor(mine.position.x) + off.x, 0, floor(mine.position.z) + off.y)
+						if tm.is_walkable(adj):
+							is_reachable = true
+							break
+			if is_reachable:
+				reachable_mines.append(mine)
 	
 	if reachable_mines.is_empty():
 		return null

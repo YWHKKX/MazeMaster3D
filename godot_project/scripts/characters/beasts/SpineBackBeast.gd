@@ -20,42 +20,12 @@ func _init_spine_back_beast_data() -> void:
 	data.speed = 30 # 移动速度
 	data.size = 28 # 大型体型
 	
-	# 设置阵营为野兽（中立）
-	data.faction = 3 # BeastsTypes.Faction.BEASTS
-	
-	# 设置行为属性
-	data.is_hostile = false # 野兽阵营中立
-	
-	# 设置生态属性
-	data.ecosystem_type = EcosystemRegion.EcosystemType.DEAD_LAND
-	data.food_chain_level = 1 # 初级消费者
-	
-	# 设置觅食偏好
-	data.preferred_food_types = [ResourceTypes.ResourceType.HERB, ResourceTypes.ResourceType.MUSHROOM]
-	
-	# 设置棘背威慑
-	data.spine_intimidation = true # 棘背威慑
-	data.intimidation_radius = 15.0 # 威慑半径15米
-	data.spine_attack = true # 棘刺攻击
-	data.spine_damage_multiplier = 1.3 # 棘刺攻击伤害提升30%
-	
-	# 设置群体行为
-	data.group_size = 8 # 形成警戒性族群
-	data.group_behavior = true
-	data.vigilant_formation = true # 警戒阵型
-	
-	# 设置警戒行为
-	data.alert_behavior = true # 警戒行为
-	data.alert_radius = 25.0 # 警戒半径25米
-	data.alert_duration = 10.0 # 警戒持续10秒
-	
-	# 设置适应能力
-	data.primitive_adaptation = true # 适应原始环境
-	data.herbivore_specialization = true # 食草特化
-	
 	# 应用数据
 	character_data = data
 	_init_from_character_data()
+	
+	# 设置野兽特有属性（在BeastBase中定义）
+	# 注意：生态属性由BeastBase类自动设置，不需要手动设置
 
 ## 获取生物描述
 func get_creature_description() -> String:

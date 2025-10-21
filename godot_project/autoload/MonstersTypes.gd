@@ -60,14 +60,7 @@ enum WorkerStatus {
 	ESCAPING ## 逃跑状态
 }
 
-# 阵营系统枚举（统一）
-enum Faction {
-	PLAYER = 0, ## 玩家阵营
-	HEROES = 1, ## 英雄阵营（友方）
-	MONSTERS = 2, ## 怪物阵营（敌对）
-	BEASTS = 3, ## 野兽阵营（中立）
-	NEUTRAL = 4 ## 中立阵营
-}
+# 阵营系统已统一到 FactionManager.gd
 
 # ============================================================================
 # 怪物类型字符串常量
@@ -212,7 +205,7 @@ static func get_all_monster_types() -> Array[String]:
 		HELLHOUND, TREANT, SUCCUBUS, SHADOW_LORD, STONE_GOLEM, BONE_DRAGON
 	]
 
-## 获取怪物阵营
+## 获取怪物阵营（已废弃，使用FactionManager）
 static func get_monster_faction(_monster_type: String) -> String:
 	return "MONSTERS" # 所有怪物都属于怪物阵营
 

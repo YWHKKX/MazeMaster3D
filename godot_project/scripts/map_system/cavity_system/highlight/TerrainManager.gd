@@ -17,7 +17,8 @@ enum TerrainType {
 	CAVE, # 洞穴
 	WASTELAND, # 荒地
 	SWAMP, # 沼泽
-	DEAD_LAND # 死地
+	DEAD_LAND, # 死地
+	PRIMITIVE # 原始生态
 	# 注意：HERO_CAMP 已移除，英雄营地现在作为建筑物系统
 }
 
@@ -140,6 +141,8 @@ func _map_content_type_to_terrain(content_type: String) -> int:
 			return TerrainType.SWAMP
 		"DEAD_LAND":
 			return TerrainType.DEAD_LAND
+		"PRIMITIVE":
+			return TerrainType.PRIMITIVE
 		# 特殊建筑类型，不作为地形处理
 		"DUNGEON_HEART", "PORTAL":
 			return -2 # 特殊标记，表示跳过
@@ -241,6 +244,8 @@ static func _get_color_for_terrain_type_static(type: TerrainType) -> Color:
 			return Color(0.4, 0.6, 0.2, 0.8) # 黄绿
 		TerrainType.DEAD_LAND:
 			return Color(0.3, 0.3, 0.3, 0.8) # 深灰
+		TerrainType.PRIMITIVE:
+			return Color(0.8, 0.4, 0.0, 0.8) # 橙红色
 		_:
 			return Color.WHITE
 
@@ -265,6 +270,8 @@ func _get_terrain_type_name(terrain_type: TerrainType) -> String:
 			return "沼泽"
 		TerrainType.DEAD_LAND:
 			return "死地"
+		TerrainType.PRIMITIVE:
+			return "原始生态"
 		_:
 			return "未知"
 

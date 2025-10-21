@@ -37,14 +37,7 @@ enum HeroStatus {
 	BUFFING ## 增益中
 }
 
-# 阵营系统枚举（统一）
-enum Faction {
-	PLAYER = 0, ## 玩家阵营
-	HEROES = 1, ## 英雄阵营（友方）
-	MONSTERS = 2, ## 怪物阵营（敌对）
-	BEASTS = 3, ## 野兽阵营（中立）
-	NEUTRAL = 4 ## 中立阵营
-}
+# 阵营系统已统一到 FactionManager.gd
 
 # ============================================================================
 # 英雄类型字符串常量
@@ -169,7 +162,7 @@ static func get_all_hero_types() -> Array[String]:
 		THIEF, ASSASSIN, ENGINEER
 	]
 
-## 获取英雄阵营
+## 获取英雄阵营（已废弃，使用FactionManager）
 static func get_hero_faction(_hero_type: String) -> String:
 	return "HEROES" # 所有英雄都属于英雄阵营
 

@@ -57,6 +57,43 @@ func _initialize_mesh_configs():
 			"type": "box",
 			"size": Vector3(1.0, 0.05, 1.0),
 			"description": "空地面 - 用于EMPTY类型"
+		},
+		
+		# 生态系统地块网格
+		"floor_forest": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "森林地面 - 用于所有森林地块"
+		},
+		"floor_grassland": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "草地地面 - 用于所有草地地块"
+		},
+		"floor_water": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "水域地面 - 用于所有湖泊地块"
+		},
+		"floor_cave": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "洞穴地面 - 用于所有洞穴地块"
+		},
+		"floor_wasteland": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "荒地地面 - 用于所有荒地地块"
+		},
+		"floor_deadland": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "死地地面 - 用于所有死地地块"
+		},
+		"floor_primitive": {
+			"type": "box",
+			"size": Vector3(1.0, 0.05, 1.0),
+			"description": "原始地面 - 用于所有原始地块"
 		}
 	}
 

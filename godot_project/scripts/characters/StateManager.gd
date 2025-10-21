@@ -10,12 +10,12 @@ class_name StateManagerClass
 ## 阵营常量定义
 ## ============================================================================
 
-## 阵营类型常量
-const FACTION_BEASTS = 3
-const FACTION_HEROES = 1
-const FACTION_MONSTERS = 2
+## 阵营类型常量（使用FactionManager）
+const FACTION_BEASTS = FactionManager.Faction.BEASTS
+const FACTION_HEROES = FactionManager.Faction.HEROES
+const FACTION_MONSTERS = FactionManager.Faction.MONSTERS
 
-## 阵营名称映射
+## 阵营名称映射（使用FactionManager）
 const FACTION_NAMES = {
 	FACTION_BEASTS: "野兽",
 	FACTION_HEROES: "英雄",
@@ -233,10 +233,10 @@ func print_state_machine_stats() -> void:
 ## 辅助函数
 ## ============================================================================
 
-## 获取阵营名称
+## 获取阵营名称（使用FactionManager）
 func _get_faction_name(faction: int) -> String:
 	"""获取阵营名称"""
-	return FACTION_NAMES.get(faction, "未知")
+	return FactionManager.get_faction_name(faction)
 
 ## ============================================================================
 ## 单例模式

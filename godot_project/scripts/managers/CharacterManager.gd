@@ -56,7 +56,8 @@ func _setup_manager_references():
 	"""使用 GameServices 设置管理器引用"""
 	building_manager = GameServices.building_manager
 	auto_assigner = GameServices.auto_assigner
-	gold_mine_manager = GameServices.gold_mine_manager
+	# 金矿系统已并入资源管理器
+	gold_mine_manager = GameServices.get_gold_mines()
 	tile_manager = GameServices.tile_manager
 
 # ============================================================================
@@ -69,6 +70,10 @@ func create_goblin_worker(pos: Vector3) -> GoblinWorker:
 	# 必须先 add_child 再设置 global_position
 	worker.global_position = pos
 	# [新架构] Worker 通过 GameServices 自动获取管理器引用
+	
+	# 🔧 发射角色生成信号
+	GameEvents.character_spawned.emit(worker)
+	
 	return worker
 
 func create_goblin_engineer(pos: Vector3) -> GoblinEngineer:
@@ -77,6 +82,10 @@ func create_goblin_engineer(pos: Vector3) -> GoblinEngineer:
 	# 必须先 add_child 再设置 global_position
 	engineer.global_position = pos
 	# [新架构] Engineer 通过 GameServices 自动获取管理器引用
+	
+	# 🔧 发射角色生成信号
+	GameEvents.character_spawned.emit(engineer)
+	
 	return engineer
 
 # ============================================================================

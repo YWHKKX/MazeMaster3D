@@ -119,33 +119,66 @@ func generate_lake_features(region: EcosystemRegion.RegionData) -> Array[Ecosyst
 # 湖泊食物链系统
 # ============================================================================
 
-func update_lake_food_chain(creatures: Array[BeastsTypes.BeastSpawn], delta: float) -> void:
+func update_lake_food_chain(creatures: Array[BeastsTypes.BeastSpawn], _delta: float) -> void:
 	"""更新湖泊食物链"""
-	# 鱼人捕食鱼类
-	var fishmen = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.FISH_MAN)
-	var fishes = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.FISH)
+	# 分类所有生物
+	var fish = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.FISH)
+	var birds = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.WATER_BIRD)
+	var turtles = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.WATER_TURTLE)
+	var crocodiles = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.WATER_CROCODILE)
+	var lake_monsters = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.LAKE_MONSTER)
 	
-	for fishman in fishmen:
-		# 寻找附近的鱼
-		var nearest_fish = find_nearest_creature(fishman.position, fishes, 12.0)
-		if nearest_fish:
-			var distance = fishman.position.distance_to(nearest_fish.position)
-			if distance < 2.0: # 捕食范围
-				nearest_fish.is_active = false
-				LogManager.info("鱼人捕食了鱼")
+	# 湖怪捕食所有其他生物（顶级掠食者）
+	for monster in lake_monsters:
+		if monster.is_active:
+			var all_prey = fish + birds + turtles + crocodiles
+			var nearest_prey = find_nearest_creature(monster.position, all_prey, 25.0)
+			if nearest_prey:
+				var distance = monster.position.distance_to(nearest_prey.position)
+				if distance < 5.0: # 捕食范围
+					nearest_prey.is_active = false
+					LogManager.info("湖怪捕食了" + BeastsTypes.get_beast_name(nearest_prey.creature_type))
 	
-	# 鱼类觅食水生植物
-	for fish in fishes:
-		if fish.is_active:
-			var nearby_plants = find_nearby_resources(fish.position, 6.0, [ResourceTypes.ResourceType.AQUATIC_PLANT])
-			if nearby_plants.size() > 0:
-				LogManager.info("鱼在觅食水生植物")
+	# 鳄鱼捕食鱼类、鸟类和乌龟
+	for crocodile in crocodiles:
+		if crocodile.is_active:
+			var all_prey = fish + birds + turtles
+			var nearest_prey = find_nearest_creature(crocodile.position, all_prey, 15.0)
+			if nearest_prey:
+				var distance = crocodile.position.distance_to(nearest_prey.position)
+				if distance < 3.0: # 捕食范围
+					nearest_prey.is_active = false
+					LogManager.info("鳄鱼捕食了" + BeastsTypes.get_beast_name(nearest_prey.creature_type))
+	
+	# 水鸟捕食鱼类
+	for bird in birds:
+		if bird.is_active:
+			var nearest_fish = find_nearest_creature(bird.position, fish, 12.0)
+			if nearest_fish:
+				var distance = bird.position.distance_to(nearest_fish.position)
+				if distance < 2.5: # 捕食范围
+					nearest_fish.is_active = false
+					LogManager.info("水鸟捕食了鱼类")
+	
+	# 乌龟觅食水草
+	for turtle in turtles:
+		if turtle.is_active:
+			var nearby_food = find_nearby_resources(turtle.position, 8.0, [ResourceTypes.ResourceType.AQUATIC_PLANT])
+			if nearby_food.size() > 0:
+				LogManager.info("乌龟在觅食水草")
+	
+	# 鱼类觅食浮游生物和水草
+	for fish_creature in fish:
+		if fish_creature.is_active:
+			var nearby_food = find_nearby_resources(fish_creature.position, 8.0, [ResourceTypes.ResourceType.AQUATIC_PLANT])
+			if nearby_food.size() > 0:
+				LogManager.info("鱼类在觅食")
 	
 	# 鱼群行为
-	update_fish_school_behavior(fishes)
+	update_fish_school_behavior(fish)
 	
-	# 鱼人领地行为
-	update_fishman_territory_behavior(fishmen)
+	# 水鸟群行为
+	update_bird_flock_behavior(birds)
 
 func update_fish_school_behavior(fishes: Array[BeastsTypes.BeastSpawn]) -> void:
 	"""更新鱼群行为"""
@@ -164,11 +197,17 @@ func update_fish_school_behavior(fishes: Array[BeastsTypes.BeastSpawn]) -> void:
 			var center = (fish1.position + fish2.position + fish3.position) / 3
 			LogManager.info("鱼群聚集在位置: " + str(center))
 
-func update_fishman_territory_behavior(fishmen: Array[BeastsTypes.BeastSpawn]) -> void:
-	"""更新鱼人领地行为"""
-	for fishman in fishmen:
-		# 鱼人守卫领地
-		LogManager.info("鱼人在守卫领地")
+func update_bird_flock_behavior(birds: Array[BeastsTypes.BeastSpawn]) -> void:
+	"""更新水鸟群行为"""
+	var active_birds = birds.filter(func(b): return b.is_active)
+	if active_birds.size() < 2:
+		return
+	
+	# 水鸟群聚行为
+	for bird in active_birds:
+		var nearby_birds = find_creatures_in_radius(bird.position, active_birds, 10.0)
+		if nearby_birds.size() > 1:
+			LogManager.info("水鸟群聚在一起")
 
 func find_nearest_creature(position: Vector3, creatures: Array[BeastsTypes.BeastSpawn], max_distance: float) -> BeastsTypes.BeastSpawn:
 	"""查找最近的生物"""
@@ -186,7 +225,15 @@ func find_nearest_creature(position: Vector3, creatures: Array[BeastsTypes.Beast
 	
 	return nearest
 
-func find_nearby_resources(position: Vector3, radius: float, resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
+func find_creatures_in_radius(position: Vector3, creatures: Array[BeastsTypes.BeastSpawn], radius: float) -> Array[BeastsTypes.BeastSpawn]:
+	"""查找指定半径内的生物"""
+	var nearby_creatures: Array[BeastsTypes.BeastSpawn] = []
+	for creature in creatures:
+		if creature.is_active and position.distance_to(creature.position) <= radius:
+			nearby_creatures.append(creature)
+	return nearby_creatures
+
+func find_nearby_resources(_position: Vector3, _radius: float, _resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
 	"""查找附近的资源"""
 	# 简化实现，返回空数组
 	return []

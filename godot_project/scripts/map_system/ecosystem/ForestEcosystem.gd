@@ -74,11 +74,27 @@ func generate_forest_creatures(region: EcosystemRegion.RegionData) -> Array[Beas
 		creatures.append(creature)
 	
 	# 生成掠食者（森林狼）
-	var wolf_count = int(area * config.predator_prey_ratio * 0.6)
+	var wolf_count = int(area * config.predator_prey_ratio * 0.4)
 	for i in range(wolf_count):
 		var pos = region.get_random_point()
 		var level = randi_range(2, 4)
 		var creature = BeastsTypes.BeastSpawn.new(BeastsTypes.BeastType.FOREST_WOLF, Vector3(pos.x, 0, pos.y), level, true, 900.0)
+		creatures.append(creature)
+	
+	# 生成影刃虎（顶级掠食者）
+	var tiger_count = int(area * config.predator_prey_ratio * 0.3)
+	for i in range(tiger_count):
+		var pos = region.get_random_point()
+		var level = randi_range(4, 6)
+		var creature = BeastsTypes.BeastSpawn.new(BeastsTypes.BeastType.SHADOW_TIGER, Vector3(pos.x, 0, pos.y), level, true, 1200.0)
+		creatures.append(creature)
+	
+	# 生成巨爪熊（顶级掠食者）
+	var bear_count = int(area * config.predator_prey_ratio * 0.3)
+	for i in range(bear_count):
+		var pos = region.get_random_point()
+		var level = randi_range(5, 7)
+		var creature = BeastsTypes.BeastSpawn.new(BeastsTypes.BeastType.CLAW_BEAR, Vector3(pos.x, 0, pos.y), level, true, 1500.0)
 		creatures.append(creature)
 	
 	return creatures
@@ -119,30 +135,52 @@ func generate_forest_features(region: EcosystemRegion.RegionData) -> Array[Ecosy
 # 森林食物链系统
 # ============================================================================
 
-func update_forest_food_chain(creatures: Array[BeastsTypes.BeastSpawn], delta: float) -> void:
+func update_forest_food_chain(creatures: Array[BeastsTypes.BeastSpawn], _delta: float) -> void:
 	"""更新森林食物链"""
-	# 掠食者捕食食草动物
-	var predators = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.FOREST_WOLF)
-	var prey = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.DEER)
+	# 分类所有生物
+	var deer = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.DEER)
+	var wolves = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.FOREST_WOLF)
+	var tigers = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.SHADOW_TIGER)
+	var bears = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.CLAW_BEAR)
 	
-	for predator in predators:
-		# 寻找附近的猎物
-		var nearest_prey = find_nearest_creature(predator.position, prey, 15.0)
-		if nearest_prey:
-			# 掠食者接近猎物
-			var distance = predator.position.distance_to(nearest_prey.position)
-			if distance < 3.0: # 捕食范围
-				# 捕食成功，猎物死亡
-				nearest_prey.is_active = false
-				LogManager.info("森林狼捕食了鹿")
+	# 影刃虎捕食森林狼和鹿
+	for tiger in tigers:
+		if tiger.is_active:
+			var all_prey = wolves + deer
+			var nearest_prey = find_nearest_creature(tiger.position, all_prey, 20.0)
+			if nearest_prey:
+				var distance = tiger.position.distance_to(nearest_prey.position)
+				if distance < 4.0: # 捕食范围
+					nearest_prey.is_active = false
+					LogManager.info("影刃虎捕食了" + BeastsTypes.get_beast_name(nearest_prey.creature_type))
+	
+	# 巨爪熊捕食森林狼和鹿（杂食性）
+	for bear in bears:
+		if bear.is_active:
+			var all_prey = wolves + deer
+			var nearest_prey = find_nearest_creature(bear.position, all_prey, 18.0)
+			if nearest_prey:
+				var distance = bear.position.distance_to(nearest_prey.position)
+				if distance < 3.5: # 捕食范围
+					nearest_prey.is_active = false
+					LogManager.info("巨爪熊捕食了" + BeastsTypes.get_beast_name(nearest_prey.creature_type))
+	
+	# 森林狼捕食鹿
+	for wolf in wolves:
+		if wolf.is_active:
+			var nearest_prey = find_nearest_creature(wolf.position, deer, 15.0)
+			if nearest_prey:
+				var distance = wolf.position.distance_to(nearest_prey.position)
+				if distance < 3.0: # 捕食范围
+					nearest_prey.is_active = false
+					LogManager.info("森林狼捕食了鹿")
 	
 	# 食草动物觅食
-	for deer in prey:
-		if deer.is_active:
+	for deer_creature in deer:
+		if deer_creature.is_active:
 			# 寻找食物源（浆果、草药）
-			var nearby_food = find_nearby_resources(deer.position, 10.0, [ResourceTypes.ResourceType.BERRY, ResourceTypes.ResourceType.HERB])
+			var nearby_food = find_nearby_resources(deer_creature.position, 10.0, [ResourceTypes.ResourceType.BERRY, ResourceTypes.ResourceType.HERB])
 			if nearby_food.size() > 0:
-				# 食草动物觅食
 				LogManager.info("鹿在觅食")
 
 func find_nearest_creature(position: Vector3, creatures: Array[BeastsTypes.BeastSpawn], max_distance: float) -> BeastsTypes.BeastSpawn:
@@ -161,7 +199,7 @@ func find_nearest_creature(position: Vector3, creatures: Array[BeastsTypes.Beast
 	
 	return nearest
 
-func find_nearby_resources(position: Vector3, radius: float, resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
+func find_nearby_resources(_position: Vector3, _radius: float, _resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
 	"""查找附近的资源"""
 	# 这里需要从EcosystemManager获取资源列表
 	# 简化实现，返回空数组

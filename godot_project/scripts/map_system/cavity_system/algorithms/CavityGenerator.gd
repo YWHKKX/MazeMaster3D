@@ -349,7 +349,7 @@ func _ensure_cavity_spacing(cavities: Array[Cavity]) -> Array[Cavity]:
 
 func _get_random_content_type() -> String:
 	"""获取随机内容类型"""
-	var content_types = ["FOREST", "LAKE", "CAVE", "WASTELAND", "ROOM_SYSTEM", "MAZE_SYSTEM"]
+	var content_types = ["FOREST", "GRASSLAND", "LAKE", "CAVE", "WASTELAND", "DEAD_LAND", "PRIMITIVE", "ROOM_SYSTEM", "MAZE_SYSTEM"]
 	return content_types[randi() % content_types.size()]
 
 func _get_random_cavity_color() -> Color:

@@ -22,8 +22,8 @@ var worker_list: VBoxContainer = null
 var mine_list: VBoxContainer = null
 
 # 管理器引用
-var gold_mine_manager: GoldMineManager = null
-var character_manager = null
+var gold_mine_manager: ResourceManager = null
+var character_manager: CharacterManager = null
 
 
 func _ready():
@@ -304,7 +304,7 @@ func toggle_ui():
 		show_ui()
 
 
-func set_managers(gold_mine_mgr, char_mgr):
+func set_managers(gold_mine_mgr: ResourceManager, char_mgr: CharacterManager):
 	"""设置管理器引用"""
 	gold_mine_manager = gold_mine_mgr
 	character_manager = char_mgr

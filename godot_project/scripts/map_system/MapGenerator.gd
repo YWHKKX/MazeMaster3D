@@ -9,9 +9,6 @@ class_name MapGenerator
 const Cavity = preload("res://scripts/map_system/cavity_system/cavities/Cavity.gd")
 const CavityExcavator = preload("res://scripts/map_system/cavity_system/algorithms/CavityExcavator.gd")
 
-# ============================================================================
-# 区域类型枚举
-# ============================================================================
 
 enum RegionType {
 	ROOM_SYSTEM, # 房间系统
@@ -20,9 +17,6 @@ enum RegionType {
 	HERO_CAMP_PORTAL # 英雄营地/传送门
 }
 
-# ============================================================================
-# 生态区域类型
-# ============================================================================
 
 enum EcosystemType {
 	FOREST, # 森林
@@ -34,9 +28,6 @@ enum EcosystemType {
 	DEAD_LAND # 死地
 }
 
-# ============================================================================
-# 地图配置类
-# ============================================================================
 
 class MapGeneratorConfig:
 	var size: Vector3
@@ -121,11 +112,6 @@ class MapGeneratorConfig:
 		wasteland_probability = ecosystem_ratios.wasteland
 	
 
-# ============================================================================
-# 数据结构类
-# ============================================================================
-
-## 房间数据结构
 class Room:
 	var position: Vector2i
 	var size: Vector2i
@@ -161,7 +147,6 @@ class Room:
 			points.append(Vector2i(position.x + size.x - 1, y)) # 右边
 		return points
 
-## 分块数据结构
 class Chunk:
 	var chunk_pos: Vector2i
 	var world_pos: Vector2i
@@ -175,7 +160,6 @@ class Chunk:
 		world_pos = pos * chunk_size
 		size = chunk_size
 
-## 生态区域数据结构
 class EcosystemRegionData:
 	var position: Vector2i
 	var size: Vector2i
@@ -188,7 +172,6 @@ class EcosystemRegionData:
 		size = region_size
 		ecosystem_type = eco_type
 
-## 英雄营地/传送门数据结构
 class HeroCamp:
 	var position: Vector2i
 	var camp_type: String
@@ -199,9 +182,6 @@ class HeroCamp:
 		position = pos
 		camp_type = type
 
-# ============================================================================
-# 空洞系统集成
-# ============================================================================
 
 var cavity_excavator: CavityExcavator
 var cavity_manager: CavityManager
@@ -209,9 +189,6 @@ var terrain_manager: TerrainManager
 var terrain_highlight_system: Node
 var flood_fill_system: FloodFillSystem
 
-# ============================================================================
-# 地图生成器核心变量
-# ============================================================================
 
 var tile_manager: Node
 var character_manager: Node
@@ -219,35 +196,22 @@ var ecosystem_manager: Node
 var rooms: Array[Room] = []
 var room_counter: int = 0
 
-# 🔧 [新增] 简化房间生成器
 var simple_room_generator: SimpleRoomGenerator
 var simple_rooms: Array[SimpleRoom] = []
 
-# 废弃的高级房间生成器已删除
 
-# 🔧 [统一数据管理] 移除地形管理器，使用 TileManager 统一管理
-
-# 地形高亮系统已移至 CavityHighlightSystem
-
-# 分块系统
 var chunks: Dictionary = {} # Vector2i -> Chunk
 var loaded_chunks: Array[Vector2i] = []
 var chunk_size: int = 16
 
-# 噪声生成器
 var height_noise: FastNoiseLite
 var humidity_noise: FastNoiseLite
 var temperature_noise: FastNoiseLite
 
-# 🔧 [统一数据管理] 移除重复的数据存储系统
-# 所有地形数据统一由 TileManager 管理，不再维护重复的存储
-# 只保留必要的生成配置和临时数据
 
-# 配置参数（从autoload获取）
 var config: MapGeneratorConfig
 
 func _ready():
-	"""初始化高级地图生成器"""
 	LogManager.info("=== 高级地图生成器初始化开始 ===")
 	
 	# 获取管理器引用
@@ -298,10 +262,6 @@ func _ready():
 			simple_room_generator.set_flood_fill_system(flood_fill_system)
 		add_child(simple_room_generator)
 		LogManager.info("SimpleRoomGenerator 创建成功")
-	
-	# 废弃的高级房间生成器已删除
-	
-	# 地形高亮功能已移至 CavityHighlightSystem
 	
 	# 初始化噪声生成器
 	_initialize_noise_generators()
@@ -438,7 +398,7 @@ func generate_map(_config: MapGeneratorConfig) -> void:
 	
 	# 第三步：使用泊松圆盘分布生成不规则空洞
 	LogManager.info("=== 第三步：生成泊松圆盘空洞 ===")
-	await _generate_poisson_cavities(_config)
+	await _generate_cavities_with_constraints(_config)
 	
 	# 第四步：填充空洞内容
 	LogManager.info("=== 第四步：填充空洞内容 ===")
@@ -453,6 +413,33 @@ func generate_map(_config: MapGeneratorConfig) -> void:
 	# 发射地图生成完成事件
 	GameEvents.map_generated.emit()
 	LogManager.info("✅ 已发射 map_generated 事件")
+
+func _generate_cavities_with_constraints(_config: MapGeneratorConfig) -> void:
+	"""生成带约束条件的空洞"""
+	LogManager.info("CavitySystem - 开始生成约束空洞")
+	
+	# 检查空洞管理器是否已初始化
+	if not cavity_manager:
+		LogManager.error("ERROR: CavityManager 未初始化")
+		return
+	
+	# 检查空洞生成器是否已初始化
+	if not cavity_manager.has_method("generate_cavities_with_constraints"):
+		LogManager.error("ERROR: CavityManager 缺少 generate_cavities_with_constraints 方法")
+		return
+	
+	# 使用空洞管理器生成约束空洞
+	var cavities = cavity_manager.generate_cavities_with_constraints()
+	
+	if cavities.is_empty():
+		LogManager.warning("WARNING: 未生成任何空洞")
+		return
+	
+	# 将空洞添加到空洞管理器
+	for cavity in cavities:
+		cavity_manager.add_cavity(cavity)
+	
+	LogManager.info("CavitySystem - 成功生成 %d 个约束空洞" % cavities.size())
 
 func _validate_region_allocation(_config: MapGeneratorConfig) -> void:
 	"""🔧 [数据验证] 验证区域分配比例 - 增强版本"""
@@ -587,7 +574,6 @@ func _generate_noise_terrain_with_regions(_config: MapGeneratorConfig) -> void:
 	var map_size_z = int(_config.size.z)
 	var total_tiles = map_size_x * map_size_z
 	
-	# 更新噪声参数
 	height_noise.frequency = _config.noise_scale
 	humidity_noise.frequency = _config.noise_scale * 0.8
 	temperature_noise.frequency = _config.noise_scale * 1.2
@@ -761,7 +747,6 @@ func _generate_noise_terrain(_config: MapGeneratorConfig) -> void:
 	var map_size_x = int(_config.size.x)
 	var map_size_z = int(_config.size.z)
 	
-	# 更新噪声参数
 	height_noise.frequency = _config.noise_scale
 	humidity_noise.frequency = _config.noise_scale * 0.8
 	temperature_noise.frequency = _config.noise_scale * 1.2
@@ -841,7 +826,6 @@ func _generate_dungeon_heart_area(_config: MapGeneratorConfig) -> void:
 		for dz in range(-reserve_radius, reserve_radius + 1):
 			var pos = Vector3(center_x + dx, 0, center_z + dz)
 			
-			# 检查边界
 			if pos.x < 0 or pos.x >= _config.size.x or pos.z < 0 or pos.z >= _config.size.z:
 				continue
 			
@@ -868,7 +852,6 @@ func _generate_room_system_areas(_config: MapGeneratorConfig) -> void:
 		for dz in range(-half_size, half_size + 1):
 			var pos = Vector3(center_x + dx, 0, center_z + dz)
 			
-			# 检查边界
 			if pos.x < 0 or pos.x >= _config.size.x or pos.z < 0 or pos.z >= _config.size.z:
 				continue
 			
@@ -896,7 +879,6 @@ func _generate_maze_system_areas(_config: MapGeneratorConfig) -> void:
 		for z in range(maze_height):
 			var pos = Vector3(maze_start_x + x, 0, maze_start_z + z)
 			
-			# 检查边界
 			if pos.x < 0 or pos.x >= _config.size.x or pos.z < 0 or pos.z >= _config.size.z:
 				continue
 			
@@ -933,7 +915,6 @@ func _generate_ecosystem_areas(_config: MapGeneratorConfig) -> void:
 			for dz in range(region_size.y):
 				var pos = Vector3(region_pos.x + dx, 0, region_pos.y + dz)
 				
-				# 检查边界
 				if pos.x < 0 or pos.x >= _config.size.x or pos.z < 0 or pos.z >= _config.size.z:
 					continue
 				
@@ -1013,7 +994,6 @@ func _refine_room_system_region(_config: MapGeneratorConfig) -> void:
 		# 实际的房间生成将在空洞填充阶段进行
 		LogManager.info("简化房间生成器已准备就绪，将在空洞填充阶段生成房间")
 		return
-	# 废弃的高级房间生成器已删除
 	
 	# 备用方案：原有的简单房间生成逻辑
 	LogManager.warning("使用简单房间生成逻辑...")
@@ -1054,14 +1034,6 @@ func _apply_room_walls_to_map(room, adjusted_pos: Vector2i, _config: MapGenerato
 func _is_valid_position(pos: Vector3, map_size_x: int, map_size_z: int) -> bool:
 	"""检查位置是否有效"""
 	return pos.x >= 0 and pos.x < map_size_x and pos.z >= 0 and pos.z < map_size_z
-
-# 地形显示功能已移至 CavityHighlightSystem
-
-# 地形显示功能已移除
-# func _apply_room_terrain_theme(room, room_rect: Rect2i) -> void:
-# 	"""为房间应用地形主题"""
-# 	# 功能已移除
-# 	pass
 
 func _generate_simple_rooms(_config: MapGeneratorConfig) -> void:
 	"""生成简单房间（备用方案）"""
@@ -1216,8 +1188,6 @@ func _determine_ecosystem_type_improved(height: float, humidity: float, temperat
 		else:
 			return EcosystemType.WASTELAND # 低地 + 干燥 = 荒地
 
-# 生态系统装饰物功能已移除
-# 生态系统装饰功能已移至 CavityHighlightSystem
 
 func _refine_hero_camp_region(_config: MapGeneratorConfig) -> void:
 	"""细化英雄营地区域"""
@@ -1257,7 +1227,6 @@ func _generate_room_system(_config: MapGeneratorConfig) -> void:
 	"""生成房间系统"""
 	LogManager.info("生成房间系统...")
 	
-	# 清空房间列表
 	rooms.clear()
 	room_counter = 0
 	
@@ -1268,13 +1237,11 @@ func _generate_room_system(_config: MapGeneratorConfig) -> void:
 		# 实际的房间生成将在空洞填充阶段进行
 		LogManager.info("简化房间生成器已准备就绪，将在空洞填充阶段生成房间")
 		return
-	# 废弃的高级房间生成器已删除
 	
 	# 备用方案：原有的简单房间生成逻辑
 	LogManager.warning("使用简单房间生成逻辑...")
 	_generate_random_rooms(_config)
 	
-	# 连接所有房间
 	_connect_rooms()
 	
 	# 生成地牢之心
@@ -1357,9 +1324,15 @@ func _generate_ecosystem_regions(_config: MapGeneratorConfig) -> void:
 		LogManager.error("ERROR: EcosystemManager 未找到！无法生成生态系统区域")
 		return
 	
+	# 设置生态系统管理器的引用
+	ecosystem_manager.set_tile_manager(tile_manager)
+	ecosystem_manager.set_character_manager(character_manager)
+	
 	# 使用生态系统管理器生成区域
-	# 🔧 [统一数据管理] 生态系统数据直接存储在 TileManager 中
-	LogManager.info("生态系统区域生成完成")
+	var region_count = randi_range(3, 6) # 生成3-6个生态区域
+	var regions = ecosystem_manager.generate_ecosystem_regions(_config.size, region_count)
+	
+	LogManager.info("生态系统区域生成完成，共生成 %d 个区域" % regions.size())
 
 func _apply_ecosystem_region(region) -> void:
 	"""将生态区域应用到地图"""
@@ -1401,8 +1374,8 @@ func _generate_resources_and_creatures(_config: MapGeneratorConfig) -> void:
 	"""第四步：生成资源和生物"""
 	LogManager.info("生成资源和生物...")
 	
-	# 生成金矿（使用autoload中的概率和储量）
-	_generate_gold_veins(config.resource_density * 0.016, 500)
+	# 生成金矿（提高概率：从0.016提升到0.08，5倍提升）
+	_generate_gold_veins(config.resource_density * 0.08, 500)
 	
 	# 在生态区域生成资源
 	# 🔧 [统一数据管理] 生态系统资源生成已简化
@@ -1503,14 +1476,12 @@ func _generate_rooms_on_map(_config: MapGeneratorConfig) -> void:
 	# 根据地图类型调整参数
 	_adjust_config_for_type(_config)
 	
-	# 清空房间列表
 	rooms.clear()
 	room_counter = 0
 	
 	# 在地图中心25x25区域内生成随机房间
 	_generate_random_rooms(_config)
 	
-	# 连接所有房间
 	_connect_rooms()
 	
 	# 最后生成地牢之心，并将周围区域强制修改为EMPTY
@@ -1619,16 +1590,17 @@ func _generate_gold_veins(probability: float, vein_capacity: int) -> void:
 	LogManager.info("扫描了 " + str(unexcavated_count) + " 个未挖掘地块")
 	LogManager.info("成功生成 " + str(generated_count) + " 个金矿")
 	
-	# 通知 GoldMineManager 重新扫描金矿
-	LogManager.info("MapGenerator - 通知 GoldMineManager 重新扫描")
-	var gold_mine_manager = get_node_or_null("/root/Main/GoldMineManager")
-	if gold_mine_manager and gold_mine_manager.has_method("rescan_gold_mines"):
-		# 延迟一帧确保瓦片数据已更新
-		gold_mine_manager.call_deferred("rescan_gold_mines")
-	elif gold_mine_manager:
-		LogManager.error("GoldMineManager 没有 rescan_gold_mines 方法")
+	# 通知资源管理器（整合金矿系统）重新扫描金矿
+	LogManager.info("MapGenerator - 通知 ResourceManager 重新扫描金矿")
+	if GameServices.is_service_ready("resource_manager"):
+		var resource_manager = GameServices.get_gold_mines()
+		if resource_manager and resource_manager.has_method("rescan_gold_mines"):
+			# 延迟一帧确保瓦片数据已更新
+			resource_manager.call_deferred("rescan_gold_mines")
+		else:
+			LogManager.warning("ResourceManager 没有 rescan_gold_mines 方法，跳过")
 	else:
-		LogManager.error("未找到 GoldMineManager")
+		LogManager.warning("ResourceManager 未就绪，跳过金矿重扫通知")
 
 
 func _create_random_room(_config: MapGeneratorConfig) -> Room:
@@ -1771,7 +1743,6 @@ func _mark_connection(point1: Vector2i, point2: Vector2i) -> void:
 
 func _should_place_corridor(position: Vector3) -> bool:
 	"""判断是否应该在此位置放置走廊"""
-	# 检查边界
 	if position.x < 0 or position.x >= tile_manager.map_size.x or position.z < 0 or position.z >= tile_manager.map_size.z:
 		return false
 	
@@ -2000,7 +1971,6 @@ func _generate_room_walls(room: Room) -> void:
 
 func _should_place_wall(position: Vector3) -> bool:
 	"""判断是否应该在此位置放置墙壁"""
-	# 检查边界
 	if position.x < 0 or position.x >= tile_manager.map_size.x or position.z < 0 or position.z >= tile_manager.map_size.z:
 		return false
 	
@@ -2096,7 +2066,6 @@ func _initialize_critical_buildings(_config: MapGeneratorConfig) -> void:
 	# 挖掘关键空洞
 	var critical_cavities = cavity_excavator.excavate_critical_cavities()
 	
-	# 注册到空洞管理器
 	for cavity in critical_cavities:
 		cavity_manager.register_cavity(cavity)
 		# 同时注册到地形管理器
@@ -2117,7 +2086,6 @@ func _generate_poisson_cavities(_config: MapGeneratorConfig) -> void:
 		LogManager.warning("⚠️ 没有生成任何空洞！")
 		return
 	
-	# 注册到空洞管理器
 	LogManager.info("CavitySystem - 开始注册空洞到管理器...")
 	var registered_count = 0
 	for i in range(all_cavities.size()):
@@ -2160,6 +2128,8 @@ func _populate_cavity_contents(_config: MapGeneratorConfig) -> void:
 				_populate_grassland_cavity(cavity)
 			"DEAD_LAND":
 				_populate_dead_land_cavity(cavity)
+			"PRIMITIVE":
+				_populate_primitive_cavity(cavity)
 			"ROOM_SYSTEM":
 				_populate_room_system_cavity(cavity)
 			"MAZE_SYSTEM":
@@ -2168,69 +2138,161 @@ func _populate_cavity_contents(_config: MapGeneratorConfig) -> void:
 				LogManager.debug("CavitySystem - 跳过未知内容类型: %s" % cavity.content_type)
 	
 	LogManager.info("CavitySystem - 空洞内容填充完成")
+	
+	# 生成资源和生物
+	_generate_resources_and_creatures(_config)
 
 func _populate_forest_cavity(cavity: Cavity) -> void:
-	"""填充森林空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.FOREST)
+	"""填充森林空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🌲 填充森林空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
-	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
-		ecosystem_manager.populate_ecosystem_region(cavity.positions, "FOREST")
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成森林特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "FOREST")
+	
+	# 使用生态系统管理器填充区域
+	if ecosystem_manager:
+		if ecosystem_manager.has_method("populate_ecosystem_region"):
+			ecosystem_manager.populate_ecosystem_region(cavity.positions, "FOREST")
+		else:
+			LogManager.warning("EcosystemManager 缺少 populate_ecosystem_region 方法")
+	else:
+		LogManager.warning("EcosystemManager 未初始化")
+	
+	LogManager.info("🌲 森林空洞填充完成")
 
 func _populate_lake_cavity(cavity: Cavity) -> void:
-	"""填充湖泊空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.WATER)
+	"""填充湖泊空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🏞️ 填充湖泊空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
-	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
-		ecosystem_manager.populate_ecosystem_region(cavity.positions, "LAKE")
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成湖泊特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "LAKE")
+	
+	# 使用生态系统管理器填充区域
+	if ecosystem_manager:
+		if ecosystem_manager.has_method("populate_ecosystem_region"):
+			ecosystem_manager.populate_ecosystem_region(cavity.positions, "LAKE")
+		else:
+			LogManager.warning("EcosystemManager 缺少 populate_ecosystem_region 方法")
+	else:
+		LogManager.warning("EcosystemManager 未初始化")
+	
+	LogManager.info("🏞️ 湖泊空洞填充完成")
 
 func _populate_cave_cavity(cavity: Cavity) -> void:
-	"""填充洞穴空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.CAVE)
+	"""填充洞穴空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🕳️ 填充洞穴空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
-	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
-		ecosystem_manager.populate_ecosystem_region(cavity.positions, "CAVE")
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成洞穴特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "CAVE")
+	
+	# 使用生态系统管理器填充区域
+	if ecosystem_manager:
+		if ecosystem_manager.has_method("populate_ecosystem_region"):
+			ecosystem_manager.populate_ecosystem_region(cavity.positions, "CAVE")
+		else:
+			LogManager.warning("EcosystemManager 缺少 populate_ecosystem_region 方法")
+	else:
+		LogManager.warning("EcosystemManager 未初始化")
+	
+	LogManager.info("🕳️ 洞穴空洞填充完成")
 
 func _populate_wasteland_cavity(cavity: Cavity) -> void:
-	"""填充荒地空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.WASTELAND)
+	"""填充荒地空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🏜️ 填充荒地空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
-	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
-		ecosystem_manager.populate_ecosystem_region(cavity.positions, "WASTELAND")
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成荒地特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "WASTELAND")
+	
+	# 使用生态系统管理器填充区域
+	if ecosystem_manager:
+		if ecosystem_manager.has_method("populate_ecosystem_region"):
+			ecosystem_manager.populate_ecosystem_region(cavity.positions, "WASTELAND")
+		else:
+			LogManager.warning("EcosystemManager 缺少 populate_ecosystem_region 方法")
+	else:
+		LogManager.warning("EcosystemManager 未初始化")
+	
+	LogManager.info("🏜️ 荒地空洞填充完成")
 
 func _populate_swamp_cavity(cavity: Cavity) -> void:
-	"""填充沼泽空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.SWAMP)
+	"""填充沼泽空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🐊 填充沼泽空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成沼泽特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "SWAMP")
+	
 	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
 		ecosystem_manager.populate_ecosystem_region(cavity.positions, "SWAMP")
+	
+	LogManager.info("🐊 沼泽空洞填充完成")
 
 func _populate_grassland_cavity(cavity: Cavity) -> void:
-	"""填充草地空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY) # 草地使用空地瓦片
+	"""填充草地空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🌱 填充草地空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成草地特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "GRASSLAND")
+	
 	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
 		ecosystem_manager.populate_ecosystem_region(cavity.positions, "GRASSLAND")
+	
+	LogManager.info("🌱 草地空洞填充完成")
 
 func _populate_dead_land_cavity(cavity: Cavity) -> void:
-	"""填充死地空洞"""
-	for pos in cavity.positions:
-		tile_manager.set_tile_type(pos, TileTypes.TileType.WASTELAND) # 死地使用荒地瓦片
+	"""填充死地空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("💀 填充死地空洞，位置数量: %d" % cavity.positions.size())
 	
-	# 调用生态系统管理器填充内容
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成死地特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "DEAD_LAND")
+	
 	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
 		ecosystem_manager.populate_ecosystem_region(cavity.positions, "DEAD_LAND")
+	
+	LogManager.info("💀 死地空洞填充完成")
+
+func _populate_primitive_cavity(cavity: Cavity) -> void:
+	"""填充原始生态空洞 - 以EMPTY为主，特殊地块聚类生成"""
+	LogManager.info("🌿 填充原始生态空洞，位置数量: %d" % cavity.positions.size())
+	
+	# 首先将所有位置设置为EMPTY
+	for pos in cavity.positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.EMPTY)
+	
+	# 生成原始生态特殊地块的聚类区域
+	_generate_ecosystem_clusters(cavity.positions, "PRIMITIVE")
+	
+	if ecosystem_manager and ecosystem_manager.has_method("populate_ecosystem_region"):
+		ecosystem_manager.populate_ecosystem_region(cavity.positions, "PRIMITIVE")
+	
+	LogManager.info("🌿 原始生态空洞填充完成")
 
 func _populate_room_system_cavity(cavity: Cavity) -> void:
 	"""填充房间系统空洞"""
@@ -2238,33 +2300,47 @@ func _populate_room_system_cavity(cavity: Cavity) -> void:
 	
 	# 🔧 [新增] 使用简化房间生成器在空洞内生成房间
 	if simple_room_generator:
-		LogManager.info("使用简化房间生成器在空洞内生成房间...")
-		var generated_rooms = simple_room_generator.generate_rooms_in_cavity(cavity)
-		
-		if generated_rooms.size() > 0:
-			LogManager.info("在空洞 %s 内成功生成 %d 个简化房间" % [cavity.id, generated_rooms.size()])
-			# 应用房间到地图
-			simple_room_generator.apply_rooms_to_map(generated_rooms)
-			# 保存到全局房间列表
-			simple_rooms.append_array(generated_rooms)
+		if simple_room_generator.has_method("generate_rooms_in_cavity"):
+			LogManager.info("使用简化房间生成器在空洞内生成房间...")
+			var generated_rooms = simple_room_generator.generate_rooms_in_cavity(cavity)
+			
+			if generated_rooms.size() > 0:
+				LogManager.info("在空洞 %s 内成功生成 %d 个简化房间" % [cavity.id, generated_rooms.size()])
+				# 应用房间到地图
+				if simple_room_generator.has_method("apply_rooms_to_map"):
+					simple_room_generator.apply_rooms_to_map(generated_rooms)
+				# 保存到全局房间列表
+				simple_rooms.append_array(generated_rooms)
+			else:
+				LogManager.warning("在空洞 %s 内未生成任何房间" % cavity.id)
 		else:
-			LogManager.warning("在空洞 %s 内未生成任何房间" % cavity.id)
+			LogManager.error("SimpleRoomGenerator 缺少 generate_rooms_in_cavity 方法")
+	else:
+		LogManager.error("SimpleRoomGenerator 未初始化")
 
 
 func _populate_maze_system_cavity(cavity: Cavity) -> void:
 	"""填充迷宫系统空洞"""
-	# 使用SimpleMazeGenerator在空洞内生成迷宫
-	if not has_node("SimpleMazeGenerator"):
-		LogManager.error("MapGenerator - SimpleMazeGenerator 未找到")
+	LogManager.info("在空洞 %s 内生成迷宫系统..." % cavity.id)
+	
+	# 检查SimpleMazeGenerator是否存在
+	var maze_generator = get_node_or_null("SimpleMazeGenerator")
+	if not maze_generator:
+		LogManager.error("SimpleMazeGenerator 未找到")
 		return
 	
-	var maze_generator = get_node("SimpleMazeGenerator")
+	# 检查必要的方法是否存在
+	if not maze_generator.has_method("generate_maze_in_cavity"):
+		LogManager.error("SimpleMazeGenerator 缺少 generate_maze_in_cavity 方法")
+		return
+	
+	# 生成迷宫
 	var maze_data = maze_generator.generate_maze_in_cavity(cavity)
 	
 	if maze_data:
-		LogManager.info("MapGenerator - 迷宫生成成功: %dx%d" % [maze_data.size.x, maze_data.size.y])
+		LogManager.info("在空洞 %s 内迷宫生成成功: %dx%d" % [cavity.id, maze_data.size.x, maze_data.size.y])
 	else:
-		LogManager.warning("MapGenerator - 迷宫生成失败")
+		LogManager.warning("在空洞 %s 内迷宫生成失败" % cavity.id)
 
 func _generate_room_in_cavity(cavity: Cavity) -> Room:
 	"""在空洞内生成房间"""
@@ -2352,31 +2428,1021 @@ func _generate_maze_in_cavity(cavity: Cavity) -> void:
 
 func _validate_cavity_generation(_config: MapGeneratorConfig) -> void:
 	"""验证空洞生成结果"""
-	LogManager.info("CavitySystem - 验证空洞生成结果")
+	LogManager.info("CavitySystem - 开始验证空洞生成结果")
 	
+	# 检查空洞管理器
+	if not cavity_manager:
+		LogManager.error("ERROR: CavityManager 未初始化")
+		return
+	
+	# 获取所有空洞
 	var all_cavities = cavity_manager.get_all_cavities()
-	var stats = cavity_manager.get_cavity_statistics()
+	if all_cavities.is_empty():
+		LogManager.warning("WARNING: 未生成任何空洞")
+		return
 	
-	LogManager.info("CavitySystem - 空洞统计:")
-	LogManager.info("  总空洞数: %d" % stats.total_cavities)
-	LogManager.info("  按类型分布: %s" % stats.cavities_by_type)
-	LogManager.info("  按内容分布: %s" % stats.cavities_by_content)
-	LogManager.info("  总面积: %.2f" % stats.total_area)
-	LogManager.info("  平均面积: %.2f" % stats.average_area)
+	# 统计各种类型的空洞
+	var cavity_stats = {}
+	var total_positions = 0
 	
-	# 验证空洞连通性
-	var valid_cavities = 0
 	for cavity in all_cavities:
-		if cavity.check_connectivity():
-			valid_cavities += 1
+		var content_type = cavity.content_type
+		if not cavity_stats.has(content_type):
+			cavity_stats[content_type] = {"count": 0, "positions": 0}
+		
+		cavity_stats[content_type]["count"] += 1
+		cavity_stats[content_type]["positions"] += cavity.positions.size()
+		total_positions += cavity.positions.size()
 	
-	LogManager.info("CavitySystem - 连通空洞数: %d/%d" % [valid_cavities, all_cavities.size()])
+	# 输出统计信息
+	LogManager.info("CavitySystem - 空洞生成统计:")
+	LogManager.info("  总空洞数: %d" % all_cavities.size())
+	LogManager.info("  总位置数: %d" % total_positions)
 	
-	# 验证空洞配置
-	if CavityConfig.validate_config():
-		LogManager.info("CavitySystem - 空洞配置验证通过")
+	for content_type in cavity_stats.keys():
+		var stats = cavity_stats[content_type]
+		LogManager.info("  %s: %d 个空洞, %d 个位置" % [content_type, stats["count"], stats["positions"]])
+	
+	# 检查地图覆盖率
+	var map_size = int(_config.size.x * _config.size.z)
+	var coverage_percentage = (total_positions * 100.0) / map_size
+	LogManager.info("CavitySystem - 地图覆盖率: %.2f%%" % coverage_percentage)
+	
+	if coverage_percentage < 10.0:
+		LogManager.warning("WARNING: 地图覆盖率过低 (%.2f%%)" % coverage_percentage)
+	elif coverage_percentage > 80.0:
+		LogManager.warning("WARNING: 地图覆盖率过高 (%.2f%%)" % coverage_percentage)
 	else:
-		LogManager.warning("CavitySystem - 空洞配置验证失败")
+		LogManager.info("CavitySystem - 地图覆盖率正常")
+	
+	LogManager.info("CavitySystem - 空洞生成验证完成")
+
+# ============================================================================
+# 生态系统地块聚类生成函数
+# ============================================================================
+
+func _generate_ecosystem_clusters(positions: Array, ecosystem_type: String) -> void:
+	"""在空洞中生成聚类的生态系统特殊地块"""
+	if positions.is_empty():
+		return
+	
+	# ============================================================================
+	# 特殊生态系统处理 - 使用专门的地理分布算法
+	# ============================================================================
+	
+	var special_distribution_ecosystems = {
+		"LAKE": _generate_lake_geographic_distribution,
+		"FOREST": _generate_forest_geographic_distribution,
+		"CAVE": _generate_cave_geographic_distribution,
+		"WASTELAND": _generate_wasteland_geographic_distribution,
+		"GRASSLAND": _generate_grassland_geographic_distribution,
+		"PRIMITIVE": _generate_primitive_geographic_distribution,
+		"DEAD_LAND": _generate_dead_land_geographic_distribution
+	}
+	
+	# 检查是否为特殊生态系统
+	if ecosystem_type in special_distribution_ecosystems:
+		var distribution_func = special_distribution_ecosystems[ecosystem_type]
+		distribution_func.call(positions)
+		return
+	
+	# ============================================================================
+	# 通用生态系统处理 - 使用标准聚类算法
+	# ============================================================================
+	
+	_generate_generic_ecosystem_clusters(positions, ecosystem_type)
+
+func _generate_generic_ecosystem_clusters(positions: Array, ecosystem_type: String) -> void:
+	"""为通用生态系统生成聚类地块"""
+	# 计算要生成的特殊地块数量
+	var total_positions = positions.size()
+	var special_tile_count = int(total_positions * randf_range(0.4, 0.5))
+	
+	if special_tile_count <= 0:
+		return
+	
+	# 获取该生态系统的特殊地块类型
+	var special_tiles = _get_ecosystem_special_tiles(ecosystem_type)
+	if special_tiles.is_empty():
+		return
+	
+	# 🌍 使用改进的聚类算法，确保不同类型地块保持距离
+	var clusters = _generate_spaced_cluster_regions(positions, special_tile_count, special_tiles.size())
+	
+	# 为每个聚类分配特殊地块类型，确保不同类型不相邻
+	_assign_tile_types_with_spacing(clusters, special_tiles)
+	
+	var empty_percentage = (total_positions - special_tile_count) * 100.0 / total_positions
+	LogManager.info("🌍 为 %s 生态系统生成了 %d 个聚类区域，共 %d 个特殊地块，空地比例: %.1f%%" % [ecosystem_type, clusters.size(), special_tile_count, empty_percentage])
+
+func _get_ecosystem_special_tiles(ecosystem_type: String) -> Array:
+	"""获取生态系统的特殊地块类型列表"""
+	match ecosystem_type:
+		"FOREST":
+			return [
+				TileTypes.TileType.FOREST_CLEARING,
+				TileTypes.TileType.DENSE_FOREST,
+				TileTypes.TileType.FOREST_EDGE,
+				TileTypes.TileType.ANCIENT_FOREST
+			]
+		"LAKE":
+			return [
+				TileTypes.TileType.LAKE_SHALLOW,
+				TileTypes.TileType.LAKE_DEEP,
+				TileTypes.TileType.LAKE_SHORE,
+				TileTypes.TileType.LAKE_ISLAND
+			]
+		"CAVE":
+			return [
+				TileTypes.TileType.CAVE_DEEP,
+				TileTypes.TileType.CAVE_CRYSTAL,
+				TileTypes.TileType.CAVE_UNDERGROUND_LAKE
+			]
+		"WASTELAND":
+			return [
+				TileTypes.TileType.WASTELAND_DESERT,
+				TileTypes.TileType.WASTELAND_ROCKS,
+				TileTypes.TileType.WASTELAND_RUINS,
+				TileTypes.TileType.WASTELAND_TOXIC
+			]
+		"PRIMITIVE":
+			return [
+				TileTypes.TileType.PRIMITIVE_JUNGLE,
+				TileTypes.TileType.PRIMITIVE_SWAMP,
+				TileTypes.TileType.PRIMITIVE_VOLCANO
+			]
+		"GRASSLAND":
+			return [
+				TileTypes.TileType.GRASSLAND_PLAINS,
+				TileTypes.TileType.GRASSLAND_HILLS,
+				TileTypes.TileType.GRASSLAND_WETLANDS,
+				TileTypes.TileType.GRASSLAND_FIELDS
+			]
+		"DEAD_LAND":
+			return [
+				TileTypes.TileType.DEAD_LAND_SWAMP,
+				TileTypes.TileType.DEAD_LAND_GRAVEYARD
+			]
+		_:
+			return []
+
+func _generate_grassland_geographic_distribution(positions: Array) -> void:
+	"""生成草地的地理分布 - 符合草原生态规律"""
+	if positions.is_empty():
+		return
+	
+	var total_positions = positions.size()
+	LogManager.info("🌱 开始生成草地地理分布，位置数量: %d" % total_positions)
+	
+	# 🌱 第一步：生成草地区域（草原平原 + 其他草地类型 = 60%）
+	var grassland_positions = positions.duplicate()
+	var grassland_count = int(total_positions * 0.6) # 60%为草地区域
+	
+	# 随机选择草地位置
+	grassland_positions.shuffle()
+	var selected_grassland_positions = grassland_positions.slice(0, grassland_count)
+	
+	# 🌱 第二步：在草地中划分草原平原和其他草地类型
+	var plains_count = int(grassland_count * 0.6) # 60%为草原平原
+	var other_count = grassland_count - plains_count # 40%为其他草地类型
+	
+	# 生成草原平原（主要区域）
+	var plains_positions = selected_grassland_positions.slice(0, plains_count)
+	
+	# 生成其他草地类型（剩余草地位置）
+	var other_positions = selected_grassland_positions.slice(plains_count, grassland_count)
+	
+	# 🌱 第三步：在其他草地类型中分配丘陵、湿地、农田
+	var hills_count = int(other_count * 0.4) # 40%为丘陵
+	var wetlands_count = int(other_count * 0.3) # 30%为湿地
+	var fields_count = other_count - hills_count - wetlands_count # 30%为农田
+	
+	# 分配其他草地类型
+	var hills_positions = other_positions.slice(0, hills_count)
+	var wetlands_positions = other_positions.slice(hills_count, hills_count + wetlands_count)
+	var fields_positions = other_positions.slice(hills_count + wetlands_count, other_count)
+	
+	# 🌱 应用地块类型
+	for pos in plains_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.GRASSLAND_PLAINS)
+	
+	for pos in hills_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.GRASSLAND_HILLS)
+	
+	for pos in wetlands_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.GRASSLAND_WETLANDS)
+	
+	for pos in fields_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.GRASSLAND_FIELDS)
+	
+	# 统计信息
+	var empty_count = total_positions - grassland_count
+	var empty_percentage = empty_count * 100.0 / total_positions
+	
+	LogManager.info("🌱 草地地理分布完成:")
+	LogManager.info("  - 草原平原: %d 个地块 (%.1f%%)" % [plains_positions.size(), plains_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 草原丘陵: %d 个地块 (%.1f%%)" % [hills_positions.size(), hills_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 草原湿地: %d 个地块 (%.1f%%)" % [wetlands_positions.size(), wetlands_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 草原农田: %d 个地块 (%.1f%%)" % [fields_positions.size(), fields_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 空地: %d 个地块 (%.1f%%)" % [empty_count, empty_percentage])
+
+func _generate_cave_geographic_distribution(positions: Array) -> void:
+	"""生成洞穴的地理分布 - 符合洞穴生态规律"""
+	if positions.is_empty():
+		return
+	
+	var total_positions = positions.size()
+	LogManager.info("🕳️ 开始生成洞穴地理分布，位置数量: %d" % total_positions)
+	
+	# 🕳️ 第一步：生成洞穴区域（60%）
+	var cave_positions = positions.duplicate()
+	var cave_count = int(total_positions * 0.6) # 60%为洞穴区域
+	
+	# 随机选择洞穴位置
+	cave_positions.shuffle()
+	var selected_cave_positions = cave_positions.slice(0, cave_count)
+	
+	# 🕳️ 第二步：在洞穴中分配深洞、水晶洞、地下湖
+	var deep_count = int(cave_count * 0.2) # 20%为深洞
+	var crystal_count = int(cave_count * 0.15) # 15%为水晶洞
+	var lake_count = cave_count - deep_count - crystal_count # 65%为地下湖
+	
+	# 🕳️ 第三步：生成地下湖（中心区域）
+	var lake_positions = _generate_cave_underground_lake_center_positions(selected_cave_positions, lake_count)
+	
+	# 🕳️ 第四步：生成深洞和水晶洞（剩余位置）
+	var remaining_positions = []
+	for pos in selected_cave_positions:
+		if pos not in lake_positions:
+			remaining_positions.append(pos)
+	
+	var deep_count_actual = min(deep_count, remaining_positions.size())
+	var crystal_count_actual = min(crystal_count, remaining_positions.size() - deep_count_actual)
+	
+	var deep_positions = remaining_positions.slice(0, deep_count_actual)
+	var crystal_positions = remaining_positions.slice(deep_count_actual, deep_count_actual + crystal_count_actual)
+	
+	# 🕳️ 应用地块类型
+	for pos in deep_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.CAVE_DEEP)
+	
+	for pos in crystal_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.CAVE_CRYSTAL)
+	
+	for pos in lake_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.CAVE_UNDERGROUND_LAKE)
+	
+	# 🕳️ 记录生成结果
+	LogManager.info("🕳️ 洞穴地理分布完成:")
+	LogManager.info("  - 深洞: %d 个 (%.1f%%)" % [deep_positions.size(), float(deep_positions.size()) / total_positions * 100])
+	LogManager.info("  - 水晶洞: %d 个 (%.1f%%)" % [crystal_positions.size(), float(crystal_positions.size()) / total_positions * 100])
+	LogManager.info("  - 地下湖: %d 个 (%.1f%%)" % [lake_positions.size(), float(lake_positions.size()) / total_positions * 100])
+	LogManager.info("  - 空地: %d 个 (%.1f%%)" % [total_positions - cave_count, float(total_positions - cave_count) / total_positions * 100])
+
+func _generate_cave_underground_lake_center_positions(all_positions: Array, target_count: int) -> Array:
+	"""生成地下湖中心位置"""
+	if all_positions.is_empty() or target_count <= 0:
+		return []
+	
+	# 计算中心点
+	var center_x = 0.0
+	var center_z = 0.0
+	for pos in all_positions:
+		center_x += pos.x
+		center_z += pos.z
+	center_x /= all_positions.size()
+	center_z /= all_positions.size()
+	
+	# 计算每个位置到中心的距离
+	var positions_with_distance = []
+	for pos in all_positions:
+		var distance = Vector2(pos.x - center_x, pos.z - center_z).length()
+		positions_with_distance.append({"position": pos, "distance": distance})
+	
+	# 按距离排序，选择距离中心最近的位置
+	positions_with_distance.sort_custom(func(a, b): return a.distance < b.distance)
+	
+	var center_positions = []
+	for i in range(min(target_count, positions_with_distance.size())):
+		center_positions.append(positions_with_distance[i].position)
+	
+	return center_positions
+
+func _generate_forest_geographic_distribution(positions: Array) -> void:
+	"""生成森林的地理分布 - 符合森林生态规律"""
+	if positions.is_empty():
+		return
+	
+	var total_positions = positions.size()
+	LogManager.info("🌲 开始生成森林地理分布，位置数量: %d" % total_positions)
+	
+	# 🌲 第一步：生成森林区域（茂密森林 + 古树区域 = 60%）
+	var forest_positions = positions.duplicate()
+	var forest_count = int(total_positions * 0.6) # 60%为森林区域
+	
+	# 随机选择森林位置
+	forest_positions.shuffle()
+	var selected_forest_positions = forest_positions.slice(0, forest_count)
+	
+	# 🌲 第二步：在森林中划分茂密森林和古树区域
+	var dense_count = int(forest_count * 0.7) # 70%为茂密森林
+	var ancient_count = forest_count - dense_count # 30%为古树区域
+	
+	# 生成古树区域聚类（中心区域）
+	var ancient_positions = _generate_ancient_forest_clusters(selected_forest_positions, ancient_count)
+	
+	# 生成茂密森林（剩余森林位置）
+	var dense_positions = []
+	for pos in selected_forest_positions:
+		if pos not in ancient_positions:
+			dense_positions.append(pos)
+	
+	# 🌲 第三步：生成森林边缘（围绕茂密森林和古树区域的边缘）
+	var edge_positions = _generate_forest_edge_positions(positions, selected_forest_positions)
+	
+	# 🌲 第四步：生成森林空地（在森林内部的小片空地）
+	var clearing_positions = _generate_forest_clearing_positions(dense_positions, ancient_positions)
+	
+	# 🌲 应用地块类型
+	for pos in dense_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.DENSE_FOREST)
+	
+	for pos in ancient_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.ANCIENT_FOREST)
+	
+	for pos in edge_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.FOREST_EDGE)
+	
+	for pos in clearing_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.FOREST_CLEARING)
+	
+	# 统计信息
+	var empty_count = total_positions - forest_count - edge_positions.size() - clearing_positions.size()
+	var empty_percentage = empty_count * 100.0 / total_positions
+	
+	LogManager.info("🌲 森林地理分布完成:")
+	LogManager.info("  - 茂密森林: %d 个地块 (%.1f%%)" % [dense_positions.size(), dense_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 古树区域: %d 个地块 (%.1f%%)" % [ancient_positions.size(), ancient_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 森林边缘: %d 个地块 (%.1f%%)" % [edge_positions.size(), edge_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 森林空地: %d 个地块 (%.1f%%)" % [clearing_positions.size(), clearing_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 空地: %d 个地块 (%.1f%%)" % [empty_count, empty_percentage])
+
+func _generate_ancient_forest_clusters(forest_positions: Array, target_count: int) -> Array:
+	"""生成古树区域聚类（中心区域）"""
+	if forest_positions.is_empty() or target_count <= 0:
+		return []
+	
+	# 计算空洞的中心点
+	var center_x = 0.0
+	var center_z = 0.0
+	for pos in forest_positions:
+		center_x += pos.x
+		center_z += pos.z
+	center_x /= forest_positions.size()
+	center_z /= forest_positions.size()
+	var center = Vector3(center_x, 0, center_z)
+	
+	# 按距离中心点的距离排序
+	var sorted_positions = forest_positions.duplicate()
+	sorted_positions.sort_custom(func(a, b): return a.distance_to(center) < b.distance_to(center))
+	
+	# 选择最靠近中心的位置作为古树区域
+	var ancient_positions = sorted_positions.slice(0, target_count)
+	
+	# 使用聚类算法确保古树区域连接
+	return _grow_connected_cluster(ancient_positions, target_count)
+
+func _generate_forest_edge_positions(all_positions: Array, forest_positions: Array) -> Array:
+	"""生成森林边缘位置（围绕森林区域的边缘）"""
+	var edge_positions: Array = []
+	var forest_set = {}
+	
+	# 创建森林位置集合以便快速查找
+	for pos in forest_positions:
+		forest_set[pos] = true
+	
+	# 检查所有位置，找到与森林相邻但不是森林的位置
+	for pos in all_positions:
+		if pos in forest_set:
+			continue # 跳过森林位置
+		
+		# 检查是否与森林相邻
+		var neighbors = _get_neighbors(pos)
+		var has_forest_neighbor = false
+		for neighbor in neighbors:
+			if neighbor in forest_set:
+				has_forest_neighbor = true
+				break
+		
+		if has_forest_neighbor:
+			edge_positions.append(pos)
+	
+	return edge_positions
+
+func _generate_forest_clearing_positions(dense_positions: Array, ancient_positions: Array) -> Array:
+	"""生成森林空地位置（在森林内部的小片空地）"""
+	var clearing_positions: Array = []
+	var forest_positions = dense_positions + ancient_positions
+	
+	if forest_positions.is_empty():
+		return []
+	
+	# 在森林内部生成2-5个空地
+	var clearing_count = randi_range(2, min(5, forest_positions.size() / 20))
+	
+	for i in range(clearing_count):
+		# 随机选择一个森林位置作为空地中心
+		var center_pos = forest_positions[randi() % forest_positions.size()]
+		
+		# 在中心位置附近生成1-3个空地
+		var clearing_size = randi_range(1, 3)
+		for j in range(clearing_size):
+			var offset_x = randi_range(-1, 1)
+			var offset_z = randi_range(-1, 1)
+			var clearing_pos = Vector3(center_pos.x + offset_x, 0, center_pos.z + offset_z)
+			
+			# 确保位置在森林中
+			if clearing_pos in forest_positions:
+				clearing_positions.append(clearing_pos)
+	
+	return clearing_positions
+	
+func _generate_lake_geographic_distribution(positions: Array) -> void:
+	"""生成湖泊的地理分布 - 符合现实地理规律"""
+	if positions.is_empty():
+		return
+	
+	var total_positions = positions.size()
+	LogManager.info("🌊 开始生成湖泊地理分布，位置数量: %d" % total_positions)
+	
+	# 🌊 第一步：生成水域区域（浅水区 + 深水区 = 80%）
+	var water_positions = positions.duplicate()
+	var water_count = int(total_positions * 0.8) # 80%为水域
+	
+	# 随机选择水域位置
+	water_positions.shuffle()
+	var selected_water_positions = water_positions.slice(0, water_count)
+	
+	# 🌊 第二步：在水域中划分浅水区和深水区
+	var shallow_count = int(water_count * 0.6) # 60%为浅水区
+	var deep_count = water_count - shallow_count # 40%为深水区
+	
+	# 生成深水区聚类（中心区域）
+	var deep_positions = _generate_deep_water_clusters(selected_water_positions, deep_count)
+	
+	# 生成浅水区（剩余的水域位置）
+	var shallow_positions = []
+	for pos in selected_water_positions:
+		if pos not in deep_positions:
+			shallow_positions.append(pos)
+	
+	# 🌊 第三步：生成湖岸（围绕水域的边缘）
+	var shore_positions = _generate_lake_shore_positions(positions, selected_water_positions)
+	
+	# 🌊 第四步：生成湖心岛（在深水区中心）
+	var island_positions = _generate_lake_island_positions(deep_positions)
+	
+	# 🌊 应用地块类型
+	for pos in shallow_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.LAKE_SHALLOW)
+	
+	for pos in deep_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.LAKE_DEEP)
+	
+	for pos in shore_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.LAKE_SHORE)
+	
+	for pos in island_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.LAKE_ISLAND)
+	
+	# 统计信息
+	var empty_count = total_positions - water_count - shore_positions.size() - island_positions.size()
+	var empty_percentage = empty_count * 100.0 / total_positions
+	
+	LogManager.info("🌊 湖泊地理分布完成:")
+	LogManager.info("  - 浅水区: %d 个地块 (%.1f%%)" % [shallow_positions.size(), shallow_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 深水区: %d 个地块 (%.1f%%)" % [deep_positions.size(), deep_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 湖岸: %d 个地块 (%.1f%%)" % [shore_positions.size(), shore_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 湖心岛: %d 个地块 (%.1f%%)" % [island_positions.size(), island_positions.size() * 100.0 / total_positions])
+	LogManager.info("  - 空地: %d 个地块 (%.1f%%)" % [empty_count, empty_percentage])
+
+func _generate_deep_water_clusters(water_positions: Array, target_count: int) -> Array:
+	"""生成深水区聚类（中心区域）"""
+	if water_positions.is_empty() or target_count <= 0:
+		return []
+	
+	# 计算空洞的中心点
+	var center_x = 0.0
+	var center_z = 0.0
+	for pos in water_positions:
+		center_x += pos.x
+		center_z += pos.z
+	center_x /= water_positions.size()
+	center_z /= water_positions.size()
+	var center = Vector3(center_x, 0, center_z)
+	
+	# 按距离中心点的距离排序
+	var sorted_positions = water_positions.duplicate()
+	sorted_positions.sort_custom(func(a, b): return a.distance_to(center) < b.distance_to(center))
+	
+	# 选择最靠近中心的位置作为深水区
+	var deep_positions = sorted_positions.slice(0, target_count)
+	
+	# 使用聚类算法确保深水区连接
+	return _grow_connected_cluster(deep_positions, target_count)
+
+func _generate_lake_shore_positions(all_positions: Array, water_positions: Array) -> Array:
+	"""生成湖岸位置（围绕水域的边缘）"""
+	var shore_positions: Array = []
+	var water_set = {}
+	
+	# 创建水域位置集合以便快速查找
+	for pos in water_positions:
+		water_set[pos] = true
+	
+	# 检查所有位置，找到与水域相邻但不是水域的位置
+	for pos in all_positions:
+		if pos in water_set:
+			continue # 跳过水域位置
+		
+		# 检查是否与水域相邻
+		var neighbors = _get_neighbors(pos)
+		var has_water_neighbor = false
+		for neighbor in neighbors:
+			if neighbor in water_set:
+				has_water_neighbor = true
+				break
+		
+		if has_water_neighbor:
+			shore_positions.append(pos)
+	
+	return shore_positions
+
+func _generate_lake_island_positions(deep_positions: Array) -> Array:
+	"""生成湖心岛位置（在深水区中心）"""
+	if deep_positions.is_empty():
+		return []
+	
+	# 计算深水区的中心点
+	var center_x = 0.0
+	var center_z = 0.0
+	for pos in deep_positions:
+		center_x += pos.x
+		center_z += pos.z
+	center_x /= deep_positions.size()
+	center_z /= deep_positions.size()
+	var center = Vector3(center_x, 0, center_z)
+	
+	# 在深水区中心附近生成1-3个湖心岛
+	var island_count = randi_range(1, min(3, deep_positions.size() / 10))
+	var island_positions: Array = []
+	
+	for i in range(island_count):
+		# 在中心附近随机选择位置
+		var offset_x = randi_range(-3, 3)
+		var offset_z = randi_range(-3, 3)
+		var island_pos = Vector3(center.x + offset_x, 0, center.z + offset_z)
+		
+		# 确保位置在深水区中
+		if island_pos in deep_positions:
+			island_positions.append(island_pos)
+	
+	return island_positions
+
+func _grow_connected_cluster(positions: Array, target_size: int) -> Array:
+	"""确保聚类连接"""
+	if positions.is_empty():
+		return []
+	
+	var cluster: Array = []
+	var queue: Array = []
+	var visited: Dictionary = {}
+	
+	# 从第一个位置开始
+	var start_pos = positions[0]
+	cluster.append(start_pos)
+	queue.append(start_pos)
+	visited[start_pos] = true
+	
+	# 使用BFS扩展聚类
+	while not queue.is_empty() and cluster.size() < target_size:
+		var current_pos = queue.pop_front()
+		
+		# 检查相邻位置
+		var neighbors = _get_neighbors(current_pos)
+		for neighbor in neighbors:
+			if neighbor in positions and not visited.has(neighbor) and cluster.size() < target_size:
+				visited[neighbor] = true
+				cluster.append(neighbor)
+				queue.append(neighbor)
+	
+	return cluster
+
+func _generate_spaced_cluster_regions(positions: Array, target_count: int, tile_type_count: int) -> Array:
+	"""生成间距控制的聚类区域，确保不同类型地块保持距离"""
+	var clusters: Array = []
+	var used_positions: Dictionary = {}
+	var remaining_positions = positions.duplicate()
+	
+	# 🌍 增加聚类群数量，减少每个聚类的地块数量
+	# 每个地块类型至少生成2-3个聚类群，确保分布均匀
+	var min_clusters_per_type = 2
+	var max_clusters_per_type = 3
+	var total_cluster_count = tile_type_count * randi_range(min_clusters_per_type, max_clusters_per_type)
+	
+	# 限制最大聚类数量，避免过多小聚类
+	total_cluster_count = min(total_cluster_count, target_count / 2)
+	
+	# 计算每个聚类的目标大小（更小的聚类）
+	var target_cluster_size = max(2, target_count / total_cluster_count)
+	
+	LogManager.info("🌍 计划生成 %d 个聚类群，每个聚类目标大小: %d" % [total_cluster_count, target_cluster_size])
+	
+	for i in range(total_cluster_count):
+		if remaining_positions.is_empty():
+			break
+		
+		# 随机选择一个起始位置
+		var start_pos = remaining_positions[randi() % remaining_positions.size()]
+		var cluster = _grow_spaced_cluster(start_pos, remaining_positions, target_cluster_size, used_positions)
+		
+		if cluster.size() > 0:
+			clusters.append(cluster)
+			# 从剩余位置中移除已使用的位置
+			for pos in cluster:
+				remaining_positions.erase(pos)
+				used_positions[pos] = true
+	
+	LogManager.info("🌍 实际生成了 %d 个聚类群" % clusters.size())
+	return clusters
+
+func _grow_spaced_cluster(start_pos: Vector3, available_positions: Array, target_size: int, used_positions: Dictionary) -> Array:
+	"""从起始位置开始生长聚类，考虑间距控制"""
+	var cluster: Array = [start_pos]
+	var queue: Array = [start_pos]
+	var visited: Dictionary = {start_pos: true}
+	
+	# 🌍 间距控制：不同类型地块之间的最小距离
+	var min_distance = 2 # 最小距离为2格
+	
+	while not queue.is_empty() and cluster.size() < target_size:
+		var current_pos = queue.pop_front()
+		
+		# 检查相邻位置
+		var neighbors = _get_neighbors(current_pos)
+		for neighbor in neighbors:
+			if neighbor in available_positions and not visited.has(neighbor):
+				# 🌍 检查是否与已使用的位置太近
+				if _is_position_too_close_to_used(neighbor, used_positions, min_distance):
+					continue
+				
+				visited[neighbor] = true
+				cluster.append(neighbor)
+				queue.append(neighbor)
+				
+				if cluster.size() >= target_size:
+					break
+	
+	return cluster
+
+func _is_position_too_close_to_used(pos: Vector3, used_positions: Dictionary, min_distance: int) -> bool:
+	"""检查位置是否与已使用的位置太近"""
+	for used_pos in used_positions.keys():
+		var distance = int(pos.distance_to(used_pos))
+		if distance < min_distance:
+			return true
+	return false
+
+func _assign_tile_types_with_spacing(clusters: Array, special_tiles: Array) -> void:
+	"""为聚类分配地块类型，确保不同类型不相邻"""
+	var tile_type_usage: Dictionary = {} # 记录每种地块类型的使用次数
+	
+	# 初始化地块类型使用计数
+	for tile_type in special_tiles:
+		tile_type_usage[tile_type] = 0
+	
+	# 为每个聚类分配地块类型
+	for i in range(clusters.size()):
+		var cluster = clusters[i]
+		
+		# 🌍 选择使用次数最少的地块类型，确保均匀分布
+		var selected_tile_type = _select_least_used_tile_type(special_tiles, tile_type_usage)
+		
+		# 应用地块类型到聚类中的所有位置
+		for pos in cluster:
+			tile_manager.set_tile_type(pos, selected_tile_type)
+		
+		# 更新使用计数
+		tile_type_usage[selected_tile_type] += 1
+		
+		LogManager.debug("🌍 聚类 %d: 分配地块类型 %d，大小: %d" % [i, selected_tile_type, cluster.size()])
+
+func _select_least_used_tile_type(special_tiles: Array, tile_type_usage: Dictionary) -> int:
+	"""选择使用次数最少的地块类型"""
+	var min_usage = INF
+	var selected_tile_type = special_tiles[0]
+	
+	for tile_type in special_tiles:
+		var usage_count = tile_type_usage.get(tile_type, 0)
+		if usage_count < min_usage:
+			min_usage = usage_count
+			selected_tile_type = tile_type
+	
+	return selected_tile_type
+
+func _generate_cluster_regions(positions: Array, target_count: int) -> Array:
+	"""生成聚类区域，确保同一类型的地块连接在一起（旧版本，保留兼容性）"""
+	var clusters: Array = []
+	var used_positions: Dictionary = {}
+	var remaining_positions = positions.duplicate()
+	
+	# 生成2-4个聚类区域
+	var cluster_count = randi_range(2, min(4, target_count / 3))
+	
+	for i in range(cluster_count):
+		if remaining_positions.is_empty():
+			break
+		
+		# 随机选择一个起始位置
+		var start_pos = remaining_positions[randi() % remaining_positions.size()]
+		var cluster = _grow_cluster(start_pos, remaining_positions, target_count / cluster_count)
+		
+		if cluster.size() > 0:
+			clusters.append(cluster)
+			# 从剩余位置中移除已使用的位置
+			for pos in cluster:
+				remaining_positions.erase(pos)
+				used_positions[pos] = true
+	
+	return clusters
+
+func _grow_cluster(start_pos: Vector3, available_positions: Array, target_size: int) -> Array:
+	"""从起始位置开始生长聚类"""
+	var cluster: Array = [start_pos]
+	var queue: Array = [start_pos]
+	var visited: Dictionary = {start_pos: true}
+	
+	while not queue.is_empty() and cluster.size() < target_size:
+		var current_pos = queue.pop_front()
+		
+		# 检查相邻位置
+		var neighbors = _get_neighbors(current_pos)
+		for neighbor in neighbors:
+			if neighbor in available_positions and not visited.has(neighbor):
+				visited[neighbor] = true
+				cluster.append(neighbor)
+				queue.append(neighbor)
+				
+				if cluster.size() >= target_size:
+					break
+	
+	return cluster
+
+func _get_neighbors(pos: Vector3) -> Array:
+	"""获取位置的相邻位置"""
+	var neighbors: Array = []
+	var directions = [
+		Vector3(1, 0, 0), # 右
+		Vector3(-1, 0, 0), # 左
+		Vector3(0, 0, 1), # 前
+		Vector3(0, 0, -1), # 后
+		Vector3(1, 0, 1), # 右前
+		Vector3(-1, 0, 1), # 左前
+		Vector3(1, 0, -1), # 右后
+		Vector3(-1, 0, -1) # 左后
+	]
+	
+	for direction in directions:
+		neighbors.append(pos + direction)
+	
+	return neighbors
+
+# ============================================================================
+# 生态系统地块类型选择函数
+# ============================================================================
+
+func _get_random_forest_tile() -> int:
+	"""随机选择森林地块类型"""
+	var forest_tiles = [
+		TileTypes.TileType.FOREST_CLEARING,
+		TileTypes.TileType.DENSE_FOREST,
+		TileTypes.TileType.FOREST_EDGE,
+		TileTypes.TileType.ANCIENT_FOREST
+	]
+	return forest_tiles[randi() % forest_tiles.size()]
+
+func _get_random_grassland_tile() -> int:
+	"""随机选择草地地块类型"""
+	var grassland_tiles = [
+		TileTypes.TileType.GRASSLAND_PLAINS,
+		TileTypes.TileType.GRASSLAND_HILLS,
+		TileTypes.TileType.GRASSLAND_WETLANDS,
+		TileTypes.TileType.GRASSLAND_FIELDS
+	]
+	return grassland_tiles[randi() % grassland_tiles.size()]
+
+func _get_random_lake_tile() -> int:
+	"""随机选择湖泊地块类型"""
+	var lake_tiles = [
+		TileTypes.TileType.LAKE_SHALLOW,
+		TileTypes.TileType.LAKE_DEEP,
+		TileTypes.TileType.LAKE_SHORE,
+		TileTypes.TileType.LAKE_ISLAND
+	]
+	return lake_tiles[randi() % lake_tiles.size()]
+
+func _get_random_cave_tile() -> int:
+	"""随机选择洞穴地块类型"""
+	var cave_tiles = [
+		TileTypes.TileType.CAVE_DEEP,
+		TileTypes.TileType.CAVE_CRYSTAL,
+		TileTypes.TileType.CAVE_UNDERGROUND_LAKE
+	]
+	return cave_tiles[randi() % cave_tiles.size()]
+
+func _get_random_wasteland_tile() -> int:
+	"""随机选择荒地地块类型"""
+	var wasteland_tiles = [
+		TileTypes.TileType.WASTELAND_DESERT,
+		TileTypes.TileType.WASTELAND_ROCKS,
+		TileTypes.TileType.WASTELAND_RUINS,
+		TileTypes.TileType.WASTELAND_TOXIC
+	]
+	return wasteland_tiles[randi() % wasteland_tiles.size()]
+
+func _get_random_deadland_tile() -> int:
+	"""随机选择死地地块类型"""
+	var deadland_tiles = [
+		TileTypes.TileType.DEAD_LAND_SWAMP,
+		TileTypes.TileType.DEAD_LAND_GRAVEYARD
+	]
+	return deadland_tiles[randi() % deadland_tiles.size()]
+
+func _generate_wasteland_geographic_distribution(positions: Array) -> void:
+	"""生成荒地的地理分布 - 符合荒地生态规律"""
+	if positions.is_empty():
+		return
+	
+	var total_positions = positions.size()
+	LogManager.info("🏜️ 开始生成荒地地理分布，位置数量: %d" % total_positions)
+	
+	# 🏜️ 第一步：生成荒地区域（60%为荒地，40%为空地）
+	var wasteland_positions = positions.duplicate()
+	var wasteland_count = int(total_positions * 0.6) # 60%为荒地区域
+	
+	# 随机选择荒地位置
+	wasteland_positions.shuffle()
+	var selected_wasteland_positions = wasteland_positions.slice(0, wasteland_count)
+	
+	# 🏜️ 第二步：在荒地中分配不同类型
+	var desert_count = int(wasteland_count * 0.4) # 40%为沙漠
+	var rocks_count = int(wasteland_count * 0.3) # 30%为岩石
+	var ruins_count = int(wasteland_count * 0.2) # 20%为废墟
+	var toxic_count = wasteland_count - desert_count - rocks_count - ruins_count # 10%为毒区
+	
+	# 🏜️ 第三步：生成沙漠区域（主要区域）
+	var desert_positions = selected_wasteland_positions.slice(0, desert_count)
+	
+	# 🏜️ 第四步：生成岩石区域
+	var rocks_positions = selected_wasteland_positions.slice(desert_count, desert_count + rocks_count)
+	
+	# 🏜️ 第五步：生成废墟区域
+	var ruins_positions = selected_wasteland_positions.slice(desert_count + rocks_count, desert_count + rocks_count + ruins_count)
+	
+	# 🏜️ 第六步：生成毒区区域（在边缘区域）
+	var toxic_positions = selected_wasteland_positions.slice(desert_count + rocks_count + ruins_count, wasteland_count)
+	
+	# 🏜️ 第七步：将毒区重新分配到边缘位置
+	toxic_positions = _generate_wasteland_toxic_edge_positions(positions, toxic_count)
+	
+	# 🏜️ 第八步：设置地块类型
+	for pos in desert_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.WASTELAND_DESERT)
+	
+	for pos in rocks_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.WASTELAND_ROCKS)
+	
+	for pos in ruins_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.WASTELAND_RUINS)
+	
+	for pos in toxic_positions:
+		tile_manager.set_tile_type(pos, TileTypes.TileType.WASTELAND_TOXIC)
+	
+	# 🏜️ 第九步：记录生成结果
+	var empty_count = total_positions - wasteland_count
+	LogManager.info("🏜️ 荒地地理分布生成完成:")
+	LogManager.info("  沙漠: %d (%.1f%%)" % [desert_count, float(desert_count) / total_positions * 100])
+	LogManager.info("  岩石: %d (%.1f%%)" % [rocks_count, float(rocks_count) / total_positions * 100])
+	LogManager.info("  废墟: %d (%.1f%%)" % [ruins_count, float(ruins_count) / total_positions * 100])
+	LogManager.info("  毒区: %d (%.1f%%)" % [toxic_count, float(toxic_count) / total_positions * 100])
+	LogManager.info("  空地: %d (%.1f%%)" % [empty_count, float(empty_count) / total_positions * 100])
+
+func _generate_wasteland_toxic_edge_positions(all_positions: Array, target_count: int) -> Array:
+	"""生成荒地毒区的边缘位置"""
+	if all_positions.is_empty() or target_count <= 0:
+		return []
+	
+	# 计算边界范围
+	var min_x = all_positions[0].x
+	var max_x = all_positions[0].x
+	var min_z = all_positions[0].z
+	var max_z = all_positions[0].z
+	
+	for pos in all_positions:
+		min_x = min(min_x, pos.x)
+		max_x = max(max_x, pos.x)
+		min_z = min(min_z, pos.z)
+		max_z = max(max_z, pos.z)
+	
+	# 找到边缘位置（距离边界1-2格的位置）
+	var edge_positions = []
+	for pos in all_positions:
+		var distance_to_edge = min(
+			min(pos.x - min_x, max_x - pos.x),
+			min(pos.z - min_z, max_z - pos.z)
+		)
+		# 边缘位置：距离边界1-2格
+		if distance_to_edge >= 1 and distance_to_edge <= 2:
+			edge_positions.append(pos)
+	
+	# 如果边缘位置不够，扩大范围
+	if edge_positions.size() < target_count:
+		for pos in all_positions:
+			var distance_to_edge = min(
+				min(pos.x - min_x, max_x - pos.x),
+				min(pos.z - min_z, max_z - pos.z)
+			)
+			# 扩大范围：距离边界0-3格
+			if distance_to_edge >= 0 and distance_to_edge <= 3:
+				if not pos in edge_positions:
+					edge_positions.append(pos)
+	
+	# 随机选择目标数量的边缘位置
+	edge_positions.shuffle()
+	return edge_positions.slice(0, min(target_count, edge_positions.size()))
+
+func _get_random_primitive_tile() -> int:
+	"""随机选择原始地块类型"""
+	var primitive_tiles = [
+		TileTypes.TileType.PRIMITIVE_JUNGLE,
+		TileTypes.TileType.PRIMITIVE_VOLCANO,
+		TileTypes.TileType.PRIMITIVE_SWAMP
+	]
+	return primitive_tiles[randi() % primitive_tiles.size()]
+
+func _generate_primitive_geographic_distribution(positions: Array) -> void:
+	"""生成原始生态系统的地理分布 - 使用聚类算法"""
+	if positions.is_empty():
+		return
+	
+	LogManager.info("🌿 生成原始生态系统地理分布...")
+	
+	# 计算要生成的特殊地块数量（40-50%）
+	var total_positions = positions.size()
+	var special_tile_count = int(total_positions * randf_range(0.4, 0.5))
+	
+	if special_tile_count <= 0:
+		return
+	
+	# 获取原始生态系统的特殊地块类型
+	var primitive_tiles = [
+		TileTypes.TileType.PRIMITIVE_VOLCANO,
+		TileTypes.TileType.PRIMITIVE_SWAMP
+	]
+	
+	# 使用聚类算法生成原始特殊地块
+	var clusters = _generate_spaced_cluster_regions(positions, special_tile_count, primitive_tiles.size())
+	_assign_tile_types_with_spacing(clusters, primitive_tiles)
+	
+	var empty_percentage = (total_positions - special_tile_count) * 100.0 / total_positions
+	LogManager.info("🌿 原始生态系统地理分布完成: %d 个聚类区域，共 %d 个特殊地块，空地比例: %.1f%%" % [clusters.size(), special_tile_count, empty_percentage])
+
+func _generate_dead_land_geographic_distribution(positions: Array) -> void:
+	"""生成死地生态系统的地理分布 - 使用聚类算法"""
+	if positions.is_empty():
+		return
+	
+	LogManager.info("💀 生成死地生态系统地理分布...")
+	
+	# 计算要生成的特殊地块数量（40-50%）
+	var total_positions = positions.size()
+	var special_tile_count = int(total_positions * randf_range(0.4, 0.5))
+	
+	if special_tile_count <= 0:
+		return
+	
+	# 获取死地生态系统的特殊地块类型
+	var dead_land_tiles = [
+		TileTypes.TileType.DEAD_LAND_GRAVEYARD,
+		TileTypes.TileType.DEAD_LAND_SWAMP
+	]
+	
+	# 使用聚类算法生成死地特殊地块
+	var clusters = _generate_spaced_cluster_regions(positions, special_tile_count, dead_land_tiles.size())
+	_assign_tile_types_with_spacing(clusters, dead_land_tiles)
+	
+	var empty_percentage = (total_positions - special_tile_count) * 100.0 / total_positions
+	LogManager.info("💀 死地生态系统地理分布完成: %d 个聚类区域，共 %d 个特殊地块，空地比例: %.1f%%" % [clusters.size(), special_tile_count, empty_percentage])
 
 # ============================================================================
 # 地图生成器重构完成

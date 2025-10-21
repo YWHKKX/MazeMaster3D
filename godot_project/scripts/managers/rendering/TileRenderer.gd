@@ -6,6 +6,7 @@ class_name TileRenderer
 
 # 依赖组件
 var mesh_factory: TileMeshFactory
+var ecosystem_renderer: EcosystemTileRenderer
 
 # 渲染配置
 var render_config = {
@@ -32,6 +33,10 @@ func _ready():
 	mesh_factory = TileMeshFactory.new()
 	add_child(mesh_factory)
 	
+	# 创建生态系统渲染器
+	ecosystem_renderer = EcosystemTileRenderer.new()
+	add_child(ecosystem_renderer)
+	
 	LogManager.info("TileRenderer - 初始化完成")
 
 func render_tile(tile_data, parent_node: Node3D) -> Node3D:
@@ -42,6 +47,10 @@ func render_tile(tile_data, parent_node: Node3D) -> Node3D:
 		parent_node.add_child(tile_object)
 		tile_data.tile_object = tile_object
 		render_stats["rendered_tiles"] += 1
+		
+		# 🌍 为生态系统地块添加装饰效果
+		if ecosystem_renderer and _is_ecosystem_tile(tile_data.type):
+			ecosystem_renderer.render_tile_decorations(tile_data.type, tile_data.position)
 	
 	return tile_object
 
@@ -178,6 +187,16 @@ func enable_debug_mode(enabled: bool) -> void:
 	"""启用/禁用调试模式"""
 	# 这里可以添加调试相关的功能
 	LogManager.info("🔍 [TileRenderer] 调试模式: %s" % ("启用" if enabled else "禁用"))
+
+func _is_ecosystem_tile(tile_type: int) -> bool:
+	"""检查是否为生态系统地块"""
+	return tile_type >= TileTypes.TileType.FOREST_CLEARING and tile_type <= TileTypes.TileType.PRIMITIVE_VOLCANO
+
+func set_world_node(world: Node3D):
+	"""设置世界节点引用"""
+	if ecosystem_renderer:
+		ecosystem_renderer.set_world_node(world)
+	LogManager.info("TileRenderer - 世界节点已设置")
 
 func _get_tile_type_name(tile_type: int) -> String:
 	"""获取瓦片类型名称（用于日志）"""

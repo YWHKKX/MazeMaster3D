@@ -1,0 +1,18 @@
+[gd_scene load_steps=3 format=3 uid="uid://bqxvh8xqjqxqx"]
+
+[ext_resource type="Script" path="res://scripts/ui/ResourceMarker.gd" id="1_resource_marker"]
+
+[sub_resource type="CylinderMesh" id="CylinderMesh_1"]
+top_radius = 0.3
+bottom_radius = 0.3
+height = 0.5
+
+[node name="ResourceMarker" type="Node3D"]
+script = ExtResource("1_resource_marker")
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("CylinderMesh_1")
+
+[node name="Label3D" type="Label3D" parent="."]
+pixel_size = 0.02
+text = "Resource"

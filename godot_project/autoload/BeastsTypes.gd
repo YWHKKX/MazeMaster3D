@@ -4,6 +4,13 @@ extends Node
 ## 定义所有生态系统中可能出现的野兽类型
 
 # ============================================================================
+# 阵营枚举（使用统一阵营管理器）
+# ============================================================================
+
+# 阵营枚举已移至 FactionManager.gd
+# 使用 FactionManager.Faction 访问阵营枚举
+
+# ============================================================================
 # 野兽类型枚举
 # ============================================================================
 
@@ -26,6 +33,8 @@ enum BeastType {
 	WATER_SNAKE, # 水蛇
 	FISH_MAN, # 鱼人
 	WATER_BIRD, # 水鸟
+	WATER_TURTLE, # 水龟
+	WATER_CROCODILE, # 水鳄
 	LAKE_MONSTER, # 湖怪
 	
 	# 洞穴野兽
@@ -49,9 +58,6 @@ enum BeastType {
 	HELLHOUND, # 地狱犬
 	SHADOW_PANTHER, # 暗影魔豹
 	ABYSS_DRAGON, # 深渊魔龙
-	SKELETON, # 骷髅
-	ZOMBIE, # 僵尸
-	DEMON, # 恶魔
 	SHADOW_BEAST, # 暗影兽
 	CLAW_HUNTER_BEAST, # 利爪猎兽
 	
@@ -182,6 +188,8 @@ static func get_beast_name(beast_type: BeastType) -> String:
 		BeastType.WATER_SNAKE: return "水蛇"
 		BeastType.FISH_MAN: return "鱼人"
 		BeastType.WATER_BIRD: return "水鸟"
+		BeastType.WATER_TURTLE: return "水龟"
+		BeastType.WATER_CROCODILE: return "水鳄"
 		BeastType.LAKE_MONSTER: return "湖怪"
 		
 		# 洞穴野兽
@@ -205,9 +213,6 @@ static func get_beast_name(beast_type: BeastType) -> String:
 		BeastType.HELLHOUND: return "地狱犬"
 		BeastType.SHADOW_PANTHER: return "暗影魔豹"
 		BeastType.ABYSS_DRAGON: return "深渊魔龙"
-		BeastType.SKELETON: return "骷髅"
-		BeastType.ZOMBIE: return "僵尸"
-		BeastType.DEMON: return "恶魔"
 		BeastType.SHADOW_BEAST: return "暗影兽"
 		BeastType.CLAW_HUNTER_BEAST: return "利爪猎兽"
 		
@@ -239,11 +244,11 @@ static func get_ecosystem_beasts(ecosystem_type: String) -> Dictionary:
 		"PRIMITIVE": return PRIMITIVE_BEASTS
 		_: return {}
 
-static func is_beast_creature(beast_type: BeastType) -> bool:
+static func is_beast_creature(_beast_type: BeastType) -> bool:
 	"""检查是否为野兽类型（所有生态系统生物都是野兽）"""
 	return true # 所有生态系统生物都属于野兽阵营
 
-static func get_beast_faction(beast_type: BeastType) -> String:
+static func get_beast_faction(_beast_type: BeastType) -> String:
 	"""获取野兽阵营"""
 	return "BEAST" # 所有生态系统生物都属于野兽阵营
 

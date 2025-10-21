@@ -45,6 +45,14 @@ func generate_grassland_resources(region: EcosystemRegion.RegionData) -> Array[R
 		var resource = ResourceTypes.ResourceSpawn.new(ResourceTypes.ResourceType.HERB, Vector3(pos.x, 0, pos.y), amount, 360.0)
 		resources.append(resource)
 	
+	# 生成耕地作物
+	var crop_count = int(area * config.resource_density * 1.2)
+	for i in range(crop_count):
+		var pos = region.get_random_point()
+		var amount = randi_range(5, 20) # 每点5-20耕地作物
+		var resource = ResourceTypes.ResourceSpawn.new(ResourceTypes.ResourceType.CROP, Vector3(pos.x, 0, pos.y), amount, 400.0)
+		resources.append(resource)
+	
 	return resources
 
 # ============================================================================
@@ -112,7 +120,7 @@ func generate_grassland_features(region: EcosystemRegion.RegionData) -> Array[Ec
 # 草地食物链系统
 # ============================================================================
 
-func update_grassland_food_chain(creatures: Array[BeastsTypes.BeastSpawn], delta: float) -> void:
+func update_grassland_food_chain(creatures: Array[BeastsTypes.BeastSpawn], _delta: float) -> void:
 	"""更新草地食物链"""
 	# 草原狼捕食野兔
 	var wolves = creatures.filter(func(c): return c.creature_type == BeastsTypes.BeastType.GRASSLAND_WOLF)
@@ -174,7 +182,7 @@ func find_creatures_in_radius(position: Vector3, creatures: Array[BeastsTypes.Be
 	
 	return nearby_creatures
 
-func find_nearby_resources(position: Vector3, radius: float, resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
+func find_nearby_resources(_position: Vector3, _radius: float, _resource_types: Array) -> Array[ResourceTypes.ResourceSpawn]:
 	"""查找附近的资源"""
 	# 简化实现，返回空数组
 	return []

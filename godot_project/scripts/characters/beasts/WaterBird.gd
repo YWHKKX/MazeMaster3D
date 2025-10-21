@@ -20,41 +20,10 @@ func _init_water_bird_data() -> void:
 	data.speed = 60 # 飞行速度
 	data.size = 10 # 中等体型
 	
-	# 设置阵营为野兽（中立）
-	data.faction = 3 # BeastsTypes.Faction.BEASTS
-	
 	# 设置行为属性
-	data.is_hostile = false # 野兽阵营中立
-	data.is_aquatic = true # 水生动物
-	data.can_fly = true # 飞行能力
+	data.can_fly = true # 飞行能力（这是CharacterData中的有效属性）
 	
-	# 设置生态属性
-	data.ecosystem_type = EcosystemRegion.EcosystemType.LAKE
-	data.food_chain_level = 3 # 高级消费者
-	
-	# 设置觅食偏好
-	data.preferred_food_types = [ResourceTypes.ResourceType.AQUATIC_PLANT, ResourceTypes.ResourceType.FOOD]
-	
-	# 设置捕食行为
-	data.is_predator = true
-	data.prey_types = [BeastsTypes.BeastType.WATER_GRASS_FISH, BeastsTypes.BeastType.FISH, BeastsTypes.BeastType.WATER_SNAKE]
-	
-	# 设置飞行行为
-	data.flight_height = 10.0 # 飞行高度10米
-	data.dive_attack = true # 俯冲攻击
-	data.dive_damage_multiplier = 1.3 # 俯冲攻击伤害提升30%
-	
-	# 设置游泳能力
-	data.swim_speed = data.speed * 0.8 # 游泳比飞行慢
-	data.dive_depth = 8.0 # 可以潜水到8米深
-	
-	# 设置群体行为
-	data.group_size = 8 # 群体狩猎和栖息
-	data.group_behavior = true
-	
-	# 设置领地行为
-	data.territory_size = 30.0 # 守卫湖泊周边区域
-	data.territory_behavior = true
+	# 注意：生态属性由BeastBase类自动设置，不需要手动设置
 	
 	# 应用数据
 	character_data = data
