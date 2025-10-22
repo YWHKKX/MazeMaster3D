@@ -55,15 +55,15 @@ var plant_meshes: Dictionary = {} # {plant_type: ArrayMesh}
 
 # 植物模型映射
 var plant_models = {
-	PlantType.TREE: "res://img/scenes/models/plants/tree.tscn",
-	PlantType.BUSH: "res://img/scenes/models/plants/bush.tscn",
-	PlantType.HERB: "res://img/scenes/models/plants/herb.tscn",
-	PlantType.MUSHROOM: "res://img/scenes/models/plants/mushroom.tscn",
-	PlantType.FLOWER: "res://img/scenes/models/plants/flower.tscn",
-	PlantType.GRASS: "res://img/scenes/models/plants/grass.tscn",
-	PlantType.AQUATIC_PLANT: "res://img/scenes/models/plants/aquatic_plant.tscn",
-	PlantType.CROP: "res://img/scenes/models/plants/crop.tscn",
-	PlantType.CORRUPTED_PLANT: "res://img/scenes/models/plants/corrupted_plant.tscn"
+	PlantType.TREE: "res://scenes/models/plants/tree.tscn",
+	PlantType.BUSH: "res://scenes/models/plants/bush.tscn",
+	PlantType.HERB: "res://scenes/models/plants/herb.tscn",
+	PlantType.MUSHROOM: "res://scenes/models/plants/mushroom.tscn",
+	PlantType.FLOWER: "res://scenes/models/plants/flower.tscn",
+	PlantType.GRASS: "res://scenes/models/plants/grass.tscn",
+	PlantType.AQUATIC_PLANT: "res://scenes/models/plants/aquatic_plant.tscn",
+	PlantType.CROP: "res://scenes/models/plants/crop.tscn",
+	PlantType.CORRUPTED_PLANT: "res://scenes/models/plants/corrupted_plant.tscn"
 }
 
 # 植物颜色映射
@@ -121,7 +121,9 @@ func create_plant(plant_type: PlantType, position: Vector3, scale: float = 1.0) 
 		var plant_id = _get_position_key(position)
 		plant_instances[plant_id] = plant_node
 		
-		LogManager.debug("PlantRenderer - 创建植物: %s 在位置 %s" % [PlantType.keys()[plant_type], str(position)])
+		LogManager.info("✅ PlantRenderer - 创建植物: %s 在位置 %s" % [PlantType.keys()[plant_type], str(position)])
+	else:
+		LogManager.warning("❌ PlantRenderer - 植物创建失败: %s 在位置 %s" % [PlantType.keys()[plant_type], str(position)])
 	
 	return plant_node
 

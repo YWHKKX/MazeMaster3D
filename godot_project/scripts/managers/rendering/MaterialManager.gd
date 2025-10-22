@@ -382,6 +382,14 @@ func _initialize_material_configs():
 			"emission": Color(0.0, 0.0, 0.0),
 			"emission_energy": 0.0
 		},
+		"deadland_swamp": {
+			"albedo_color": Color(0.2, 0.3, 0.2),
+			"roughness": 0.9,
+			"metallic": 0.0,
+			"transparency": BaseMaterial3D.TRANSPARENCY_DISABLED,
+			"emission": Color(0.0, 0.1, 0.0),
+			"emission_energy": 0.1
+		},
 		
 		# 原始生态系统地块材质
 		"primitive_jungle": {

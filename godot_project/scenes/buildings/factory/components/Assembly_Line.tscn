@@ -1,0 +1,22 @@
+[gd_scene load_steps=4 format=3 uid="uid://s7m1i9j0k3l4r"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/components/BuildingComponent.gd" id="1"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.6, 0.15, 0.2)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.4, 0.3, 0.2, 1)
+roughness = 0.5
+metallic = 0.7
+emission_enabled = true
+emission = Color(0.5, 0.4, 0.3, 1)
+emission_energy = 0.3
+
+[node name="Assembly_Line" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "structure"
+component_material = "metal"
+component_id = 1601
+mesh = SubResource("BoxMesh_1")
+surface_material_override/0 = SubResource("StandardMaterial3D_1")

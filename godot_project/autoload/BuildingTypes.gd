@@ -10,24 +10,24 @@ extends Node
 enum BuildingType {
 	DUNGEON_HEART = 0, ## 地牢之心
 	TREASURY = 1, ## 金库
-	LAIR = 2, ## 巢穴
-	DEMON_LAIR = 3, ## 恶魔巢穴
-	ORC_LAIR = 4, ## 兽人巢穴
-	TRAINING_ROOM = 5, ## 训练室
-	LIBRARY = 6, ## 图书馆
-	WORKSHOP = 7, ## 工坊
-	PRISON = 8, ## 监狱
-	TORTURE_CHAMBER = 9, ## 刑房
-	ARROW_TOWER = 10, ## 箭塔
-	ARCANE_TOWER = 11, ## 奥术塔
-	DEFENSE_WORKS = 12, ## 防御工事
-	MAGIC_ALTAR = 23, ## 魔法祭坛
-	SHADOW_TEMPLE = 24, ## 暗影神殿
-	MAGIC_RESEARCH_INSTITUTE = 25, ## 魔法研究院
-	ACADEMY = 26, ## 学院
-	HOSPITAL = 27, ## 医院
-	FACTORY = 28, ## 工厂
-	MARKET = 29 ## 市场
+	DEMON_LAIR = 2, ## 恶魔巢穴
+	ORC_LAIR = 3, ## 兽人巢穴
+	TRAINING_ROOM = 4, ## 训练室
+	LIBRARY = 5, ## 图书馆
+	WORKSHOP = 6, ## 工坊
+	PRISON = 7, ## 监狱
+	TORTURE_CHAMBER = 8, ## 刑房
+	ARROW_TOWER = 9, ## 箭塔
+	ARCANE_TOWER = 10, ## 奥术塔
+	DEFENSE_WORKS = 11, ## 防御工事
+	MAGIC_ALTAR = 12, ## 魔法祭坛
+	SHADOW_TEMPLE = 13, ## 暗影神殿
+	MAGIC_RESEARCH_INSTITUTE = 14, ## 魔法研究院
+	ACADEMY = 15, ## 学院
+	HOSPITAL = 16, ## 医院
+	FACTORY = 17, ## 工厂
+	MARKET = 18, ## 市场
+	BARRACKS = 19 ## 兵营
 }
 
 # 建筑状态枚举
@@ -71,7 +71,6 @@ static func get_building_name(building_type: BuildingType) -> String:
 	match building_type:
 		BuildingType.DUNGEON_HEART: return "地牢之心"
 		BuildingType.TREASURY: return "金库"
-		BuildingType.LAIR: return "巢穴"
 		BuildingType.DEMON_LAIR: return "恶魔巢穴"
 		BuildingType.ORC_LAIR: return "兽人巢穴"
 		BuildingType.TRAINING_ROOM: return "训练室"
@@ -89,12 +88,13 @@ static func get_building_name(building_type: BuildingType) -> String:
 		BuildingType.HOSPITAL: return "医院"
 		BuildingType.FACTORY: return "工厂"
 		BuildingType.MARKET: return "市场"
+		BuildingType.BARRACKS: return "兵营"
 		_: return "未知建筑"
 
 
 static func is_infrastructure_building(building_type: int) -> bool:
 	"""检查是否为基础设施建筑"""
-	return building_type in [BuildingType.TREASURY, BuildingType.LAIR, BuildingType.DEMON_LAIR, BuildingType.ORC_LAIR]
+	return building_type in [BuildingType.TREASURY, BuildingType.DEMON_LAIR, BuildingType.ORC_LAIR]
 
 
 static func is_functional_building(building_type: int) -> bool:
@@ -116,11 +116,12 @@ static func get_all_building_types() -> Array[int]:
 	"""获取所有建筑类型"""
 	var types: Array[int] = [
 		BuildingType.DUNGEON_HEART,
-		BuildingType.TREASURY, BuildingType.LAIR, BuildingType.DEMON_LAIR, BuildingType.ORC_LAIR,
+		BuildingType.TREASURY, BuildingType.DEMON_LAIR, BuildingType.ORC_LAIR,
 		BuildingType.TRAINING_ROOM, BuildingType.LIBRARY, BuildingType.WORKSHOP,
 		BuildingType.PRISON, BuildingType.TORTURE_CHAMBER, BuildingType.ARROW_TOWER, BuildingType.ARCANE_TOWER, BuildingType.DEFENSE_WORKS,
 		BuildingType.MAGIC_ALTAR, BuildingType.SHADOW_TEMPLE, BuildingType.MAGIC_RESEARCH_INSTITUTE,
-		BuildingType.ACADEMY, BuildingType.HOSPITAL, BuildingType.FACTORY, BuildingType.MARKET
+		BuildingType.ACADEMY, BuildingType.HOSPITAL, BuildingType.FACTORY, BuildingType.MARKET,
+		BuildingType.BARRACKS
 	]
 	return types
 

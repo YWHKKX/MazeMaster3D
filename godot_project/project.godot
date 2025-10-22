@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="MazeMaster3D"
-run/main_scene="res://img/scenes/Main.tscn"
+run/main_scene="res://scenes/Main.tscn"
 config/features=PackedStringArray("4.3", "Forward Plus")
 #config/icon="res://assets/icons/app_icon.png"
 "#å¾æ æä»¶å·²å é¤[display]window/size/viewport_width"=1920
@@ -42,10 +42,8 @@ BeastsTypes="*res://autoload/BeastsTypes.gd"
 FactionManager="*res://autoload/FactionManager.gd"
 EcosystemRegion="*res://autoload/EcosystemRegion.gd"
 ResourceTypes="*res://autoload/ResourceTypes.gd"
-FoodChainManager="*res://autoload/FoodChainManager.gd"
 CavityConfig="*res://autoload/CavityConfig.gd"
 CavityManager="*res://scripts/map_system/cavity_system/CavityManager.gd"
-CavityHighlightSystem="*res://scripts/map_system/cavity_system/highlight/CavityHighlightSystem.gd"
 AvoidanceManager="*res://scripts/core/AvoidanceManager.gd"
 MovementHelper="*res://scripts/core/MovementHelper.gd"
 BuildingFinder="*res://scripts/core/BuildingFinder.gd"

@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://v8w9x0y1z2a3b"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/components/BuildingComponent.gd" id="1"]
+
+[node name="Academic_Library" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "structure"
+component_material = "wood"
+
+[node name="BoxMesh" type="BoxMesh" parent="."]
+size = Vector3(0.33, 0.33, 0.33)
+
+[node name="StandardMaterial3D" type="StandardMaterial3D" parent="."]
+albedo_color = Color(0.7, 0.7, 0.8, 1)
+roughness = 0.6
+metallic = 0.1

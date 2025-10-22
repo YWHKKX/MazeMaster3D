@@ -1,0 +1,18 @@
+[gd_resource type="Resource" script_class="Resource" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/layered/MaterialSystem.gd" id="1_0x1y2"]
+
+[resource]
+script = ExtResource("1_0x1y2")
+material_cache = {
+"heart_core_material": SubResource("StandardMaterial3D_1"),
+"energy_crystal_material": SubResource("StandardMaterial3D_2"),
+"mana_crystal_material": SubResource("StandardMaterial3D_3"),
+"magic_core_material": SubResource("StandardMaterial3D_4"),
+"energy_conduit_material": SubResource("StandardMaterial3D_5"),
+"energy_node_material": SubResource("StandardMaterial3D_6"),
+"storage_core_material": SubResource("StandardMaterial3D_7"),
+"heart_entrance_material": SubResource("StandardMaterial3D_8"),
+"dungeon_stone_material": SubResource("StandardMaterial3D_9"),
+"dungeon_metal_material": SubResource("StandardMaterial3D_10")
+}

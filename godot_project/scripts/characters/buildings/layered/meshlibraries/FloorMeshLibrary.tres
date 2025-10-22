@@ -1,0 +1,59 @@
+[gd_resource type="MeshLibrary" format=3]
+
+[resource]
+0/name = "Floor_Stone"
+0/mesh = SubResource("Mesh_0")
+0/navigation_mesh = SubResource("NavigationMesh_0")
+0/preview = SubResource("Texture2D_0")
+1/name = "Floor_Wood"
+1/mesh = SubResource("Mesh_1")
+1/navigation_mesh = SubResource("NavigationMesh_1")
+1/preview = SubResource("Texture2D_1")
+2/name = "Floor_Metal"
+2/mesh = SubResource("Mesh_2")
+2/navigation_mesh = SubResource("NavigationMesh_2")
+2/preview = SubResource("Texture2D_2")
+3/name = "Floor_Trap"
+3/mesh = SubResource("Mesh_3")
+3/navigation_mesh = SubResource("NavigationMesh_3")
+3/preview = SubResource("Texture2D_3")
+
+[sub_resource type="BoxMesh" id="Mesh_0"]
+size = Vector3(0.33, 0.05, 0.33)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_0"]
+vertices = PackedVector3Array(0.165, 0.025, 0.165, -0.165, 0.025, 0.165, -0.165, 0.025, -0.165, 0.165, 0.025, -0.165)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_0"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_1"]
+size = Vector3(0.33, 0.05, 0.33)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_1"]
+vertices = PackedVector3Array(0.165, 0.025, 0.165, -0.165, 0.025, 0.165, -0.165, 0.025, -0.165, 0.165, 0.025, -0.165)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_1"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_2"]
+size = Vector3(0.33, 0.05, 0.33)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_2"]
+vertices = PackedVector3Array(0.165, 0.025, 0.165, -0.165, 0.025, 0.165, -0.165, 0.025, -0.165, 0.165, 0.025, -0.165)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_2"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_3"]
+size = Vector3(0.33, 0.05, 0.33)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_3"]
+vertices = PackedVector3Array(0.165, 0.025, 0.165, -0.165, 0.025, 0.165, -0.165, 0.025, -0.165, 0.165, 0.025, -0.165)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_3"]
+size = Vector2(64, 64)

@@ -39,16 +39,15 @@ var camera: Camera3D = null # 3D相机引用
 
 # 地形类型优先级系统（解决重叠区域的渲染冲突）
 var terrain_priorities = {
-	TerrainManager.TerrainType.WASTELAND: 10, # 荒地 - 最高优先级
-	TerrainManager.TerrainType.PRIMITIVE: 9, # 原始生态 - 高优先级
-	TerrainManager.TerrainType.FOREST: 8, # 森林
-	TerrainManager.TerrainType.LAKE: 7, # 湖泊
-	TerrainManager.TerrainType.CAVE: 6, # 洞穴
-	TerrainManager.TerrainType.MAZE_SYSTEM: 5, # 迷宫系统
-	TerrainManager.TerrainType.ROOM_SYSTEM: 4, # 房间系统
-	TerrainManager.TerrainType.GRASSLAND: 3, # 草地
-	TerrainManager.TerrainType.SWAMP: 2, # 沼泽
-	TerrainManager.TerrainType.DEAD_LAND: 1 # 死地 - 最低优先级
+	TerrainManager.TerrainType.WASTELAND: 9, # 荒地
+	TerrainManager.TerrainType.PRIMITIVE: 8, # 原始生态
+	TerrainManager.TerrainType.FOREST: 7, # 森林
+	TerrainManager.TerrainType.LAKE: 6, # 湖泊
+	TerrainManager.TerrainType.CAVE: 5, # 洞穴
+	TerrainManager.TerrainType.GRASSLAND: 4, # 草地
+	TerrainManager.TerrainType.DEAD_LAND: 3, # 死地
+	TerrainManager.TerrainType.MAZE_SYSTEM: 2, # 迷宫系统
+	TerrainManager.TerrainType.ROOM_SYSTEM: 1 # 房间系统 - 最低优先级
 }
 
 # 高亮渲染模式配置
@@ -186,19 +185,9 @@ func _load_terrain_colors_from_manager():
 	if terrain_manager:
 		terrain_highlight_colors = terrain_manager.get_all_terrain_colors()
 	else:
-		# 如果TerrainManager不可用，使用默认颜色
-		terrain_highlight_colors = {
-			TerrainManager.TerrainType.ROOM_SYSTEM: Color(0.8, 0.8, 0.8, 0.3),
-			TerrainManager.TerrainType.MAZE_SYSTEM: Color(0.5, 0.5, 0.5, 0.3),
-			TerrainManager.TerrainType.FOREST: Color(0.2, 0.8, 0.2, 0.3),
-			TerrainManager.TerrainType.GRASSLAND: Color(0.6, 0.9, 0.6, 0.3),
-			TerrainManager.TerrainType.LAKE: Color(0.2, 0.6, 1.0, 0.3),
-			TerrainManager.TerrainType.CAVE: Color(0.4, 0.2, 0.4, 0.3),
-			TerrainManager.TerrainType.WASTELAND: Color(0.8, 0.6, 0.2, 0.3),
-			TerrainManager.TerrainType.SWAMP: Color(0.4, 0.6, 0.2, 0.3),
-			TerrainManager.TerrainType.DEAD_LAND: Color(0.3, 0.3, 0.3, 0.3),
-			TerrainManager.TerrainType.PRIMITIVE: Color(0.8, 0.4, 0.0, 0.3),
-		}
+		# 如果TerrainManager不可用，给出警告并清空颜色
+		LogManager.warning("⚠️ [TerrainHighlightSystem] TerrainManager不可用，无法加载地形颜色")
+		terrain_highlight_colors = {}
 
 func _create_highlight_materials():
 	"""创建高亮材质"""
@@ -719,9 +708,8 @@ func _int_to_terrain_type(terrain_int: int) -> TerrainManager.TerrainType:
 		4: return TerrainManager.TerrainType.LAKE
 		5: return TerrainManager.TerrainType.CAVE
 		6: return TerrainManager.TerrainType.WASTELAND
-		7: return TerrainManager.TerrainType.SWAMP
-		8: return TerrainManager.TerrainType.DEAD_LAND
-		9: return TerrainManager.TerrainType.PRIMITIVE
+		7: return TerrainManager.TerrainType.DEAD_LAND
+		8: return TerrainManager.TerrainType.PRIMITIVE
 		_: return TerrainManager.TerrainType.ROOM_SYSTEM
 
 
@@ -1311,8 +1299,8 @@ func _setup_terrain_meshes() -> void:
 		TerrainManager.TerrainType.LAKE,
 		TerrainManager.TerrainType.CAVE,
 		TerrainManager.TerrainType.WASTELAND,
-		TerrainManager.TerrainType.SWAMP,
-		TerrainManager.TerrainType.DEAD_LAND
+		TerrainManager.TerrainType.DEAD_LAND,
+		TerrainManager.TerrainType.PRIMITIVE
 	]
 	
 	for terrain_type in terrain_types:
@@ -1384,7 +1372,7 @@ func highlight_terrain_regions_optimized() -> void:
 	
 	# 为每种地形类型创建MultiMesh高亮
 	var processed_types = 0
-	for terrain_type in range(9): # 只有9种地形类型 (0-8)
+	for terrain_type in range(10): # 10种地形类型 (0-9)
 		var terrain_enum = _int_to_terrain_type(terrain_type)
 		var regions = terrain_manager.get_terrain_regions_by_type(terrain_enum)
 		if regions.is_empty():
@@ -1701,7 +1689,7 @@ func _update_terrain_position_map() -> void:
 		TerrainManager.TerrainType.LAKE, # 4
 		TerrainManager.TerrainType.CAVE, # 5
 		TerrainManager.TerrainType.WASTELAND, # 6
-		TerrainManager.TerrainType.SWAMP, # 7
+		TerrainManager.TerrainType.PRIMITIVE, # 7
 		TerrainManager.TerrainType.DEAD_LAND # 8
 	]
 	

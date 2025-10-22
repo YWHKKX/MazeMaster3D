@@ -645,8 +645,6 @@ func _get_building_type_from_id(entity_id: String) -> int:
 		# 基础设施建筑
 		"building_treasury":
 			return BuildingTypes.BuildingType.TREASURY
-		"building_lair":
-			return BuildingTypes.BuildingType.LAIR
 		"building_demon_lair":
 			return BuildingTypes.BuildingType.DEMON_LAIR
 		"building_orc_lair":

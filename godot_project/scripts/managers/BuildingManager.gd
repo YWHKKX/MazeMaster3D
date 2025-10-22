@@ -41,8 +41,8 @@ class BuildingManagerConfig:
 		placement_type = p_type
 		can_place_on = terrain
 
-# 注意：Building 类已移至 res://scripts/characters/Building.gd
-# 所有建筑现在使用3D版本（如 DungeonHeart3D, Treasury3D 等）
+# 注意：传统Building类已移除，现在使用UnifiedBuildingSystem
+# 所有建筑现在使用统一建筑系统（UnifiedBuildingSystem, UnifiedArcaneTower 等）
 # 这里保留 BuildingManagerConfig 类用于建筑配置
 
 # 系统引用
@@ -52,7 +52,7 @@ var character_manager = null # CharacterManager (global class)
 var resource_manager = null # ResourceManager (global class)
 
 # 建筑数据
-var buildings: Array = [] # Array of Building objects
+var buildings: Array = [] # Array of UnifiedBuildingSystem objects
 var building_configs: Dictionary = {}
 var next_building_id: int = 1
 
@@ -181,7 +181,7 @@ func initialize_systems(main: Node, tile_mgr, char_mgr, res_mgr):
 	character_manager = char_mgr
 	resource_manager = res_mgr
 
-func register_building(building: Building):
+func register_building(building: Node):
 	"""注册建筑到管理器
 	
 	建筑应该在场景中创建，然后注册到这里进行管理
@@ -205,7 +205,7 @@ func register_building(building: Building):
 		# 建筑已注册
 
 
-func unregister_building(building: Building):
+func unregister_building(building: Node):
 	"""从管理器注销建筑"""
 	if building in buildings:
 		buildings.erase(building)
@@ -477,44 +477,17 @@ func _update_pathfinding_for_building(building: Node, walkable: bool):
 func _create_building_instance(building_type: BuildingTypes.BuildingType) -> Node:
 	"""创建建筑实例（根据类型）
 	
-	🔧 [建造系统] 建筑类型到实例的映射 - 使用3D版本
+	🔧 [建造系统] 建筑类型到实例的映射 - 使用统一建筑系统
 	"""
-	match building_type:
-		BuildingTypes.BuildingType.DUNGEON_HEART:
-			return DungeonHeart3D.new()
-		BuildingTypes.BuildingType.TREASURY:
-			return Treasury3D.new()
-		BuildingTypes.BuildingType.DEMON_LAIR:
-			return DemonLair3D.new()
-		BuildingTypes.BuildingType.ORC_LAIR:
-			return OrcLair3D.new()
-		BuildingTypes.BuildingType.TRAINING_ROOM:
-			return Barracks3D.new()
-		BuildingTypes.BuildingType.LIBRARY:
-			return Library3D.new()
-		BuildingTypes.BuildingType.WORKSHOP:
-			return Workshop3D.new()
-		BuildingTypes.BuildingType.ACADEMY:
-			return Academy3D.new()
-		BuildingTypes.BuildingType.HOSPITAL:
-			return Hospital3D.new()
-		BuildingTypes.BuildingType.FACTORY:
-			return Factory3D.new()
-		BuildingTypes.BuildingType.MARKET:
-			return Market3D.new()
-		BuildingTypes.BuildingType.ARROW_TOWER:
-			return ArrowTower3D.new()
-		BuildingTypes.BuildingType.ARCANE_TOWER:
-			return ArcaneTower3D.new()
-		BuildingTypes.BuildingType.MAGIC_ALTAR:
-			return MagicAltar3D.new()
-		BuildingTypes.BuildingType.SHADOW_TEMPLE:
-			return ShadowTemple3D.new()
-		BuildingTypes.BuildingType.MAGIC_RESEARCH_INSTITUTE:
-			return MagicResearchInstitute3D.new()
-		_:
-			LogManager.warning("⚠️ 未实现的建筑类型: %d，使用默认Building" % building_type)
-			return null
+	# 使用统一建筑系统
+	var building = UnifiedBuildingMigrator.create_unified_building(building_type)
+	if building:
+		LogManager.info("✅ [BuildingManager] 创建统一建筑: %s" % BuildingTypes.BuildingType.keys()[building_type])
+		return building
+	
+	# 如果统一系统创建失败，记录错误
+	LogManager.error("❌ [BuildingManager] 创建建筑失败: %s" % BuildingTypes.BuildingType.keys()[building_type])
+	return null
 
 func clear_all_buildings():
 	"""清空所有建筑"""

@@ -16,7 +16,6 @@ var ui_config = {
 var building_types = [
 	# 基础设施建筑
 	{"emoji": "💰", "name": "金库", "cost": 100, "type": "infrastructure", "description": "金币存储", "build_time": 60, "engineer_cost": 50, "level": "⭐⭐", "health": 200, "armor": 5, "entity_id": "building_treasury"},
-	{"emoji": "🏠", "name": "巢穴", "cost": 150, "type": "infrastructure", "description": "怪物休息", "build_time": 90, "engineer_cost": 75, "level": "⭐⭐", "health": 250, "armor": 4, "entity_id": "building_lair"},
 	{"emoji": "👿", "name": "恶魔巢穴", "cost": 200, "type": "infrastructure", "description": "召唤恶魔", "build_time": 180, "engineer_cost": 100, "level": "⭐⭐⭐⭐", "health": 450, "armor": 6, "entity_id": "building_demon_lair"},
 	{"emoji": "🗡️", "name": "兽人巢穴", "cost": 200, "type": "infrastructure", "description": "训练兽人", "build_time": 150, "engineer_cost": 100, "level": "⭐⭐⭐", "health": 500, "armor": 6, "entity_id": "building_orc_lair"},
 	

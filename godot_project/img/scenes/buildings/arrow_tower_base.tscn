@@ -1,7 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://arrowtower001"]
-
-[ext_resource type="Script" path="res://img/scenes/buildings/arrow_tower_model.gd" id="1"]
-
-[node name="ArrowTowerModel" type="Node3D"]
-script = ExtResource("1")
-

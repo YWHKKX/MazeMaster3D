@@ -1,0 +1,16 @@
+[gd_scene load_steps=2 format=3 uid="uid://i1c5x9z0a3b4h"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/components/BuildingComponent.gd" id="1"]
+
+[node name="Arrow_Slot" type="MeshInstance3D"]
+script = ExtResource("1")
+component_type = "window"
+component_material = "military"
+
+[node name="BoxMesh" type="BoxMesh" parent="."]
+size = Vector3(0.33, 0.33, 0.05)
+
+[node name="StandardMaterial3D" type="StandardMaterial3D" parent="."]
+albedo_color = Color(0.6, 0.6, 0.6, 1)
+roughness = 0.6
+metallic = 0.4

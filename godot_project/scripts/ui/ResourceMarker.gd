@@ -187,7 +187,7 @@ func update_amount(new_amount: int):
 static func create_resource_marker(resource_type: int, amount: int, position: Vector2) -> ResourceMarker:
 	"""创建资源标记"""
 	# 动态加载场景文件
-	var marker_scene = load("res://img/scenes/ui/resource_marker.tscn")
+	var marker_scene = load("res://scenes/ui/resource_marker.tscn")
 	if not marker_scene:
 		# 如果场景文件不存在，创建一个简单的标记
 		var marker = ResourceMarker.new()

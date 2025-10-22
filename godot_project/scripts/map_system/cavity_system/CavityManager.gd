@@ -50,7 +50,7 @@ func register_cavity(cavity: Cavity) -> void:
 	
 	# 检查ID是否已存在
 	if cavities.has(cavity.id):
-		LogManager.warning("CavityManager - 空洞ID已存在，将覆盖: %s" % cavity.id)
+		# 静默覆盖，不输出警告日志
 		unregister_cavity(cavity.id)
 	
 	# 注册到主字典
@@ -97,7 +97,7 @@ func unregister_cavity(cavity_id: String) -> bool:
 		if cavities_by_content[cavity.content_type].is_empty():
 			cavities_by_content.erase(cavity.content_type)
 	
-	LogManager.info("CavityManager - 注销空洞: %s" % cavity_id)
+	# 静默注销，不输出信息日志
 	return true
 
 func clear_all_cavities() -> void:

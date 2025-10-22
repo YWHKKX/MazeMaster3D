@@ -634,7 +634,9 @@ func _create_visual_resource_object(resource_spawn: ResourceTypes.ResourceSpawn)
 	# 创建视觉对象
 	var visual_object = enhanced_renderer.create_resource_object(resource_spawn.resource_type, resource_spawn.position, resource_spawn.amount)
 	if visual_object:
-		LogManager.debug("EcosystemManager - 创建视觉资源对象: %s 在位置 %s" % [ResourceTypes.get_resource_name(resource_spawn.resource_type), str(resource_spawn.position)])
+		LogManager.info("✅ EcosystemManager - 创建视觉资源对象: %s 在位置 %s" % [ResourceTypes.get_resource_name(resource_spawn.resource_type), str(resource_spawn.position)])
+	else:
+		LogManager.warning("❌ EcosystemManager - 视觉资源对象创建失败: %s 在位置 %s" % [ResourceTypes.get_resource_name(resource_spawn.resource_type), str(resource_spawn.position)])
 
 # ============================================================================
 # 生物生成
@@ -961,10 +963,6 @@ func _is_position_in_cavity(pos: Vector3) -> bool:
 	# 🌍 检查是否为生态系统类型的地块（包括所有特殊地块类型）
 	var tile_type = tile_data.type
 	
-	# 检查基础生态系统类型
-	if tile_type in [TileTypes.TileType.FOREST, TileTypes.TileType.WASTELAND, TileTypes.TileType.SWAMP, TileTypes.TileType.CAVE]:
-		return true
-	
 	# 检查森林生态系统特殊地块
 	if tile_type in [TileTypes.TileType.FOREST_CLEARING, TileTypes.TileType.DENSE_FOREST, TileTypes.TileType.FOREST_EDGE, TileTypes.TileType.ANCIENT_FOREST]:
 		return true
@@ -978,7 +976,7 @@ func _is_position_in_cavity(pos: Vector3) -> bool:
 		return true
 	
 	# 检查洞穴生态系统特殊地块
-	if tile_type in [TileTypes.TileType.CAVE_DEEP, TileTypes.TileType.CAVE_CRYSTAL]:
+	if tile_type in [TileTypes.TileType.CAVE_DEEP, TileTypes.TileType.CAVE_CRYSTAL, TileTypes.TileType.CAVE_UNDERGROUND_LAKE]:
 		return true
 	
 	# 检查荒地生态系统特殊地块
@@ -1037,7 +1035,7 @@ func _generate_forest_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.1: # 10%概率生成资源
+		if randf() < 0.3: # 30%概率生成资源
 			# 根据概率选择资源类型
 			var resource_type = _select_resource_type(ResourceTypes.FOREST_RESOURCES)
 			if resource_type != null:
@@ -1054,7 +1052,7 @@ func _generate_forest_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.05: # 5%概率生成生物
+		if randf() < 0.15: # 15%概率生成生物
 			# 根据概率选择野兽类型
 			var creature_type = _select_beast_type(BeastsTypes.FOREST_BEASTS)
 			if creature_type != null:
@@ -1072,7 +1070,7 @@ func _generate_forest_content(positions: Array) -> void:
 				beast_instance.global_position = spawn_position
 				beast_instance.name = BeastsTypes.get_beast_name(creature_type) + "_" + str(creature_count)
 	
-	LogManager.info("🌲 森林内容生成完成: %d 资源, %d 生物" % [resource_count, creature_count])
+	LogManager.info("🌲 森林内容生成完成: %d 资源, %d 生物 (位置总数: %d)" % [resource_count, creature_count, positions.size()])
 
 func _generate_lake_content(positions: Array) -> void:
 	"""生成湖泊内容 - 严格限制在空洞范围内"""
@@ -1088,7 +1086,7 @@ func _generate_lake_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.1: # 10%概率生成资源
+		if randf() < 0.3: # 30%概率生成资源
 			# 根据概率选择资源类型
 			var resource_type = _select_resource_type(ResourceTypes.LAKE_RESOURCES)
 			if resource_type != null:
@@ -1105,7 +1103,7 @@ func _generate_lake_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.05: # 5%概率生成生物
+		if randf() < 0.15: # 15%概率生成生物
 			# 根据概率选择野兽类型
 			var creature_type = _select_beast_type(BeastsTypes.LAKE_BEASTS)
 			if creature_type != null:
@@ -1136,7 +1134,7 @@ func _generate_cave_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.1: # 10%概率生成资源
+		if randf() < 0.3: # 30%概率生成资源
 			# 根据概率选择资源类型
 			var resource_type = _select_resource_type(ResourceTypes.CAVE_RESOURCES)
 			if resource_type != null:
@@ -1153,7 +1151,7 @@ func _generate_cave_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.05: # 5%概率生成生物
+		if randf() < 0.15: # 15%概率生成生物
 			# 根据概率选择野兽类型
 			var creature_type = _select_beast_type(BeastsTypes.CAVE_BEASTS)
 			if creature_type != null:
@@ -1184,7 +1182,7 @@ func _generate_wasteland_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.1: # 10%概率生成资源
+		if randf() < 0.3: # 30%概率生成资源
 			# 根据概率选择资源类型
 			var resource_type = _select_resource_type(ResourceTypes.WASTELAND_RESOURCES)
 			if resource_type != null:
@@ -1201,7 +1199,7 @@ func _generate_wasteland_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.05: # 5%概率生成生物
+		if randf() < 0.15: # 15%概率生成生物
 			# 根据概率选择野兽类型
 			var creature_type = _select_beast_type(BeastsTypes.WASTELAND_BEASTS)
 			if creature_type != null:
@@ -1241,7 +1239,7 @@ func _generate_grassland_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.1: # 10%概率生成资源
+		if randf() < 0.3: # 30%概率生成资源
 			# 根据概率选择资源类型
 			var resource_type = _select_resource_type(ResourceTypes.GRASSLAND_RESOURCES)
 			if resource_type != null:
@@ -1258,7 +1256,7 @@ func _generate_grassland_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.05: # 5%概率生成生物
+		if randf() < 0.15: # 15%概率生成生物
 			# 根据概率选择野兽类型
 			var creature_type = _select_beast_type(BeastsTypes.GRASSLAND_BEASTS)
 			if creature_type != null:
@@ -1909,7 +1907,7 @@ func _generate_dead_land_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.1: # 10%概率生成资源
+		if randf() < 0.3: # 30%概率生成资源
 			# 根据概率选择资源类型
 			var resource_type = _select_resource_type(ResourceTypes.DEAD_LAND_RESOURCES)
 			if resource_type != null:
@@ -1926,7 +1924,7 @@ func _generate_dead_land_content(positions: Array) -> void:
 		if not _is_position_in_cavity(pos):
 			continue
 			
-		if randf() < 0.05: # 5%概率生成生物
+		if randf() < 0.15: # 15%概率生成生物
 			# 根据概率选择野兽类型
 			var creature_type = _select_beast_type(BeastsTypes.DEAD_LAND_BEASTS)
 			if creature_type != null:

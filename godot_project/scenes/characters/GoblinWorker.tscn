@@ -1,0 +1,66 @@
+[gd_scene load_steps=10 format=3 uid="uid://c8vqx7yl3j8ds"]
+
+[ext_resource type="Script" path="res://scripts/characters/monsters/GoblinWorker.gd" id="1"]
+[ext_resource type="PackedScene" uid="uid://hamo84g5ts3u" path="res://scenes/models/goblin_worker_base.tscn" id="2_goblin"]
+[ext_resource type="Script" path="res://scripts/core/state_machine/StateMachine.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/IdleState.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/MoveToMineState.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/MiningState.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/ReturnToBaseState.gd" id="6"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/DepositGoldState.gd" id="7"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/WanderState.gd" id="8"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/goblin_worker_states/EscapeState.gd" id="9"]
+
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_worker"]
+radius = 0.5
+height = 1.6
+
+[node name="GoblinWorker" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1")
+
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.8, 0)
+shape = SubResource("CapsuleShape3D_worker")
+
+[node name="Model" parent="." instance=ExtResource("2_goblin")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.5
+target_desired_distance = 0.5
+path_max_distance = 3.0
+avoidance_enabled = true
+radius = 0.5
+height = 1.8
+max_speed = 4.2
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2")
+initial_state = "IdleState"
+debug_mode = false
+auto_start = true
+
+[node name="IdleState" type="Node" parent="StateMachine"]
+script = ExtResource("3")
+
+[node name="MoveToMineState" type="Node" parent="StateMachine"]
+script = ExtResource("4")
+
+[node name="MiningState" type="Node" parent="StateMachine"]
+script = ExtResource("5")
+
+[node name="ReturnToBaseState" type="Node" parent="StateMachine"]
+script = ExtResource("6")
+
+[node name="DepositGoldState" type="Node" parent="StateMachine"]
+script = ExtResource("7")
+
+[node name="WanderState" type="Node" parent="StateMachine"]
+script = ExtResource("8")
+
+[node name="EscapeState" type="Node" parent="StateMachine"]
+script = ExtResource("9")
+

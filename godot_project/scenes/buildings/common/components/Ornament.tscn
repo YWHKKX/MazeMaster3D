@@ -1,0 +1,20 @@
+[gd_scene load_steps=4 format=3 uid="uid://313704"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/components/BuildingComponent.gd" id="1_8x7y2"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.15, 0.15, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.9, 0.7, 0.3, 1.0)
+roughness = 0.5
+metallic = 0.3
+uv1_scale = Vector2(1.5, 1.5)
+
+[node name="Ornament" type="MeshInstance3D"]
+script = ExtResource("1_8x7y2")
+component_type = "decoration"
+component_material = "decorative"
+component_id = 39
+mesh = SubResource("BoxMesh_1")
+surface_material_override/0 = SubResource("StandardMaterial3D_1")

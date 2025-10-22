@@ -1,0 +1,61 @@
+[gd_scene load_steps=8 format=3 uid="uid://bqvx8y7wqj2v2"]
+
+[ext_resource type="Script" path="res://scripts/characters/monsters/OrcWarrior.gd" id="1_8j5k3"]
+[ext_resource type="Script" path="res://scripts/core/state_machine/StateMachine.gd" id="2"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/monster_states/IdleState.gd" id="3"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/monster_states/CombatState.gd" id="4"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/monster_states/RetreatState.gd" id="5"]
+[ext_resource type="Script" path="res://scripts/characters/monsters/monster_states/PatrolState.gd" id="6"]
+
+[sub_resource type="CapsuleShape3D" id="CapsuleShape3D_orc"]
+radius = 0.6
+height = 1.8
+
+[sub_resource type="SphereShape3D" id="SphereShape3D_detection"]
+radius = 15.0
+
+[node name="OrcWarrior" type="CharacterBody3D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_8j5k3")
+
+[node name="CollisionShape" type="CollisionShape3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
+shape = SubResource("CapsuleShape3D_orc")
+
+[node name="Model" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+
+[node name="NavigationAgent3D" type="NavigationAgent3D" parent="."]
+path_desired_distance = 0.5
+target_desired_distance = 0.5
+path_max_distance = 3.0
+avoidance_enabled = true
+radius = 0.6
+height = 1.8
+max_speed = 2.5
+
+[node name="DetectionArea" type="Area3D" parent="."]
+collision_layer = 0
+collision_mask = 4
+
+[node name="DetectionCollision" type="CollisionShape3D" parent="DetectionArea"]
+shape = SubResource("SphereShape3D_detection")
+
+[node name="StateMachine" type="Node" parent="."]
+script = ExtResource("2")
+initial_state = "IdleState"
+debug_mode = false
+auto_start = true
+
+[node name="IdleState" type="Node" parent="StateMachine"]
+script = ExtResource("3")
+
+[node name="CombatState" type="Node" parent="StateMachine"]
+script = ExtResource("4")
+
+[node name="RetreatState" type="Node" parent="StateMachine"]
+script = ExtResource("5")
+
+[node name="PatrolState" type="Node" parent="StateMachine"]
+script = ExtResource("6")

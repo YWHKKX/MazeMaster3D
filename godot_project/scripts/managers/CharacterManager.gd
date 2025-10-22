@@ -26,10 +26,10 @@ func _ready():
 	_setup_character_container()
 	
 	# 延迟加载场景
-	GoblinWorkerScene = load("res://img/scenes/characters/GoblinWorker.tscn")
-	GoblinEngineerScene = load("res://img/scenes/characters/GoblinEngineer.tscn")
-	ImpScene = load("res://img/scenes/characters/Imp.tscn")
-	OrcWarriorScene = load("res://img/scenes/characters/OrcWarrior.tscn")
+	GoblinWorkerScene = load("res://scenes/characters/GoblinWorker.tscn")
+	GoblinEngineerScene = load("res://scenes/characters/GoblinEngineer.tscn")
+	ImpScene = load("res://scenes/characters/Imp.tscn")
+	OrcWarriorScene = load("res://scenes/characters/OrcWarrior.tscn")
 	
 	# 使用 GameServices 获取管理器
 	call_deferred("_setup_manager_references")

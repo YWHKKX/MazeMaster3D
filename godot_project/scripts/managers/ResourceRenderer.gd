@@ -5,7 +5,7 @@ class_name ResourceRenderer
 ## 负责在地图上渲染和显示所有资源
 
 # 资源标记场景
-const ResourceMarkerScene = preload("res://img/scenes/ui/resource_marker.tscn")
+const ResourceMarkerScene = preload("res://scenes/ui/resource_marker.tscn")
 
 # 渲染配置
 var render_config = {

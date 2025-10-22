@@ -277,7 +277,7 @@ func _create_resource_marker(resource_type: ResourceManager.ResourceType, positi
 func _create_3d_marker(resource_type: ResourceManager.ResourceType, position: Vector2, amount: int) -> Node3D:
 	"""创建3D资源标记"""
 	# 使用预制的ResourceMarker场景
-	var marker_scene = preload("res://img/scenes/ui/resource_marker.tscn")
+	var marker_scene = preload("res://scenes/ui/resource_marker.tscn")
 	var marker = marker_scene.instantiate() as ResourceMarker
 	
 	if marker:

@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://crystal_ball_001"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/components/BuildingComponent.gd" id="1_8x7y2"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.25, 0.25, 0.25)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.5, 0.2, 0.8, 0.8)
+roughness = 0.1
+metallic = 0.0
+emission_enabled = true
+emission = Color(0.6, 0.3, 1.0)
+emission_energy = 2.0
+transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+uv1_scale = Vector2(1, 1)
+
+[node name="Crystal_Ball" type="MeshInstance3D"]
+script = ExtResource("1_8x7y2")
+component_type = "decoration"
+component_material = "magic"
+component_id = 1011
+mesh = SubResource("BoxMesh_1")
+surface_material_override/0 = SubResource("StandardMaterial3D_1")

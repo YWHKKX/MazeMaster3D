@@ -192,6 +192,14 @@ func _initialize_renderers():
 func _register_scene_managers():
 	"""注册场景中的@onready管理器到GameServices"""
 	# 这些管理器是从场景树获取的，在_ready()中已经可用
+	
+	# 注册动态创建的管理器
+	if resource_manager:
+		GameServices.register("resource_manager", resource_manager)
+		LogManager.info("✅ ResourceManager 已注册到 GameServices")
+	else:
+		LogManager.error("❌ ResourceManager 未找到！")
+	
 	if tile_manager:
 		GameServices.register("tile_manager", tile_manager)
 	
@@ -229,11 +237,7 @@ func _register_scene_managers():
 	if resource_allocation_manager:
 		GameServices.register("resource_allocation_manager", resource_allocation_manager)
 	
-	if plant_renderer:
-		GameServices.register("plant_renderer", plant_renderer)
-	
-	if mineral_renderer:
-		GameServices.register("mineral_renderer", mineral_renderer)
+	# plant_renderer 和 mineral_renderer 由 EnhancedResourceRenderer 内部管理，不需要单独注册
 	
 	if enhanced_resource_renderer:
 		GameServices.register("enhanced_resource_renderer", enhanced_resource_renderer)
@@ -241,7 +245,7 @@ func _register_scene_managers():
 	else:
 		LogManager.error("❌ EnhancedResourceRenderer 节点未找到！")
 	
-	LogManager.info("地形高亮功能已整合到 CavityHighlightSystem")
+	LogManager.info("地形高亮功能已整合到 TerrainHighlightSystem")
 	
 	LogManager.info("GameServices - 所有场景管理器已注册")
 
@@ -703,15 +707,22 @@ func create_dungeon_heart():
 	var map_size = tile_manager.get_map_size() if tile_manager else MapConfig.get_map_size()
 	var center_x = int(map_size.x / 2)
 	var center_z = int(map_size.z / 2)
-	var heart_position = Vector3(center_x, 0.05, center_z)
 	
-	var DungeonHeartScript = preload("res://scripts/characters/buildings/DungeonHeart3D.gd")
-	var dungeon_heart = DungeonHeartScript.new()
-	# 🔧 2x2 建筑，位置直接设置在2x2区域的几何中心
-	# 2x2区域占据 (50,50) 到 (51,51)，中心在 (51.0, 0.05, 51.0)
-	dungeon_heart.position = Vector3(center_x + 1.0, 0.05, center_z + 1.0)
-	dungeon_heart.tile_x = center_x
-	dungeon_heart.tile_y = center_z
+	# 🔧 修复：2x2建筑应该占据 (center_x, center_z) 到 (center_x+1, center_z+1)
+	# 建筑位置应该是2x2区域的几何中心
+	var building_position = Vector3(
+		center_x + 1.0, # 2x2区域的X中心
+		0.05, # Y坐标固定在地面表面
+		center_z + 1.0 # 2x2区域的Z中心
+	)
+	
+	# 使用统一建筑系统创建地牢之心
+	var dungeon_heart = UnifiedBuildingMigrator.create_unified_building(BuildingTypes.BuildingType.DUNGEON_HEART)
+	
+	# 🔧 修复：设置正确的建筑位置和瓦片坐标
+	dungeon_heart.position = building_position
+	dungeon_heart.tile_x = center_x # 2x2区域的左下角X坐标
+	dungeon_heart.tile_y = center_z # 2x2区域的左下角Z坐标
 	dungeon_heart.building_id = "dungeon_heart_main"
 	
 	LogManager.info("🏰 [Main] 创建地牢之心对象: 位置=(%f, %f, %f), 2x2中心, 瓦片左下=(%d, %d)" % [
@@ -1072,8 +1083,6 @@ func _map_building_name_to_entity_id(building_name: String) -> String:
 		# 基础设施建筑
 		"金库":
 			return "building_treasury"
-		"巢穴":
-			return "building_lair"
 		"恶魔巢穴":
 			return "building_demon_lair"
 		"兽人巢穴":

@@ -185,7 +185,9 @@ func create_resource_object(resource_type, position: Vector3, amount: int = 1) -
 				resource_object = _create_resource_marker(resource_type, position, amount)
 	
 	if resource_object:
-		LogManager.debug("EnhancedResourceRenderer - 创建资源对象: %s 在位置 %s" % [str(resource_type), str(position)])
+		LogManager.info("✅ EnhancedResourceRenderer - 创建资源对象: %s 在位置 %s" % [str(resource_type), str(position)])
+	else:
+		LogManager.warning("❌ EnhancedResourceRenderer - 资源对象创建失败: %s 在位置 %s" % [str(resource_type), str(position)])
 	
 	return resource_object
 

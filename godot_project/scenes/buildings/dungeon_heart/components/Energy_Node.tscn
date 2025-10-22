@@ -1,0 +1,24 @@
+[gd_scene load_steps=4 format=3 uid="uid://o3i7e5f6g9h0n"]
+
+[ext_resource type="Script" path="res://scripts/characters/buildings/components/BuildingComponent.gd" id="1_8x7y2"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_1"]
+size = Vector3(0.33, 0.33, 0.33)
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_1"]
+albedo_color = Color(0.2, 0.6, 0.9, 0.7)
+roughness = 0.1
+metallic = 0.4
+emission_enabled = true
+emission = Color(0.3, 0.7, 0.9, 1.0)
+emission_energy = 1.6
+transparency = 1
+uv1_tile = Vector2(1, 1)
+
+[node name="Energy_Node" type="MeshInstance3D"]
+script = ExtResource("1_8x7y2")
+component_type = "decoration"
+component_material = "magic"
+component_id = 135
+mesh = SubResource("BoxMesh_1")
+surface_material_override/0 = SubResource("StandardMaterial3D_1")

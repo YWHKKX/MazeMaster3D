@@ -89,8 +89,8 @@ func _create_preview_mesh():
 	# 添加到场景树
 	add_child(preview_mesh)
 	
-	# 🔧 [建筑渲染系统] 调整位置（与Building.gd保持一致）
-	# Building的global_position在格子中心(x+0.5, 0.05, z+0.5)
+	# 🔧 [建筑渲染系统] 调整位置（与UnifiedBuildingSystem保持一致）
+	# UnifiedBuildingSystem的global_position在格子中心(x+0.5, 0.05, z+0.5)
 	# Mesh底部在Y=0，中心在Y=0.4
 	# 相对于Building(Y=0.05)的偏移 = 0.4 - 0.05 = 0.35
 	preview_mesh.position = Vector3(0, 0.35, 0)

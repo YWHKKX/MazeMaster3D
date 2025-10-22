@@ -1,0 +1,101 @@
+[gd_resource type="MeshLibrary" format=3]
+
+[resource]
+0/name = "Wall_Stone"
+0/mesh = SubResource("Mesh_0")
+0/navigation_mesh = SubResource("NavigationMesh_0")
+0/preview = SubResource("Texture2D_0")
+1/name = "Wall_Wood"
+1/mesh = SubResource("Mesh_1")
+1/navigation_mesh = SubResource("NavigationMesh_1")
+1/preview = SubResource("Texture2D_1")
+2/name = "Wall_Metal"
+2/mesh = SubResource("Mesh_2")
+2/navigation_mesh = SubResource("NavigationMesh_2")
+2/preview = SubResource("Texture2D_2")
+3/name = "Door_Wood"
+3/mesh = SubResource("Mesh_3")
+3/navigation_mesh = SubResource("NavigationMesh_3")
+3/preview = SubResource("Texture2D_3")
+4/name = "Door_Metal"
+4/mesh = SubResource("Mesh_4")
+4/navigation_mesh = SubResource("NavigationMesh_4")
+4/preview = SubResource("Texture2D_4")
+5/name = "Window_Small"
+5/mesh = SubResource("Mesh_5")
+5/navigation_mesh = SubResource("NavigationMesh_5")
+5/preview = SubResource("Texture2D_5")
+6/name = "Window_Large"
+6/mesh = SubResource("Mesh_6")
+6/navigation_mesh = SubResource("NavigationMesh_6")
+6/preview = SubResource("Texture2D_6")
+
+[sub_resource type="BoxMesh" id="Mesh_0"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_0"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_0"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_1"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_1"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_1"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_2"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_2"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_2"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_3"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_3"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_3"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_4"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_4"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_4"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_5"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_5"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_5"]
+size = Vector2(64, 64)
+
+[sub_resource type="BoxMesh" id="Mesh_6"]
+size = Vector3(0.33, 0.33, 0.05)
+
+[sub_resource type="NavigationMesh" id="NavigationMesh_6"]
+vertices = PackedVector3Array(0.165, 0.165, 0.025, -0.165, 0.165, 0.025, -0.165, -0.165, 0.025, 0.165, -0.165, 0.025)
+polygons = Array[PackedInt32Array]([PackedInt32Array(0, 1, 2, 3)])
+
+[sub_resource type="PlaceholderTexture2D" id="Texture2D_6"]
+size = Vector2(64, 64)

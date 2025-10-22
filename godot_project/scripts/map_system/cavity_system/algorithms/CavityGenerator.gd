@@ -59,14 +59,17 @@ func _initialize_components() -> void:
 func generate_cavities() -> Array[Cavity]:
 	"""生成所有空洞"""
 	var cavities: Array[Cavity] = []
+	var cavity_index = 0
 	
 	# 1. 生成固定空洞（关键建筑）
 	var fixed_cavities = _generate_fixed_cavities()
 	cavities.append_array(fixed_cavities)
+	cavity_index += fixed_cavities.size()
 	
 	# 2. 使用泊松圆盘采样生成随机空洞
-	var random_cavities = _generate_random_cavities()
+	var random_cavities = _generate_random_cavities_with_index(cavity_index)
 	cavities.append_array(random_cavities)
+	cavity_index += random_cavities.size()
 	
 	# 3. 后处理：平滑边缘和清除过小空洞
 	cavities = _post_process_cavities(cavities)
@@ -92,7 +95,8 @@ func generate_cavities_with_constraints() -> Array[Cavity]:
 	
 	# 3. 使用约束泊松圆盘采样生成随机空洞
 	LogManager.info("CavityGenerator - 步骤3: 生成随机空洞...")
-	var random_cavities = _generate_constrained_cavities(constraints)
+	var cavity_index = fixed_cavities.size()
+	var random_cavities = _generate_constrained_cavities_with_index(constraints, cavity_index)
 	LogManager.info("CavityGenerator - 生成了 %d 个随机空洞" % random_cavities.size())
 	cavities.append_array(random_cavities)
 	
@@ -183,6 +187,10 @@ func _create_cavity_from_config(config: Dictionary) -> Cavity:
 
 func _generate_random_cavities() -> Array[Cavity]:
 	"""生成随机空洞"""
+	return _generate_random_cavities_with_index(0)
+
+func _generate_random_cavities_with_index(start_index: int) -> Array[Cavity]:
+	"""生成随机空洞（带起始索引）"""
 	var cavities: Array[Cavity] = []
 	
 	# 使用泊松圆盘采样生成空洞中心
@@ -192,7 +200,7 @@ func _generate_random_cavities() -> Array[Cavity]:
 	# 为每个中心生成空洞
 	for i in range(hole_centers.size()):
 		var center = hole_centers[i]
-		var cavity = _create_random_cavity_from_center(center, i)
+		var cavity = _create_random_cavity_from_center(center, start_index + i)
 		if cavity:
 			cavities.append(cavity)
 	
@@ -200,6 +208,10 @@ func _generate_random_cavities() -> Array[Cavity]:
 
 func _generate_constrained_cavities(constraints: Array[Dictionary]) -> Array[Cavity]:
 	"""生成约束空洞"""
+	return _generate_constrained_cavities_with_index(constraints, 0)
+
+func _generate_constrained_cavities_with_index(constraints: Array[Dictionary], start_index: int) -> Array[Cavity]:
+	"""生成约束空洞（带起始索引）"""
 	var cavities: Array[Cavity] = []
 	
 	# 使用约束泊松圆盘采样
@@ -209,7 +221,7 @@ func _generate_constrained_cavities(constraints: Array[Dictionary]) -> Array[Cav
 	# 为每个中心生成空洞
 	for i in range(hole_centers.size()):
 		var center = hole_centers[i]
-		var cavity = _create_random_cavity_from_center(center, i)
+		var cavity = _create_random_cavity_from_center(center, start_index + i)
 		if cavity:
 			cavities.append(cavity)
 	

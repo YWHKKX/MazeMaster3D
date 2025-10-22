@@ -1,7 +1,0 @@
-[gd_scene load_steps=2 format=3 uid="uid://barracks001"]
-
-[ext_resource type="Script" path="res://img/scenes/buildings/barracks_model.gd" id="1"]
-
-[node name="BarracksModel" type="Node3D"]
-script = ExtResource("1")
-

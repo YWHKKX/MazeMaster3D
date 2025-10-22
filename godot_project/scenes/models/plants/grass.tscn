@@ -1,0 +1,30 @@
+[gd_scene load_steps=3 format=3 uid="uid://g8x9v7k2j3x4y"]
+
+[ext_resource type="Script" path="res://scripts/managers/rendering/PlantRenderer.gd" id="1_0x8v7"]
+
+[sub_resource type="QuadMesh" id="QuadMesh_1x8v7"]
+size = Vector2(0.1, 0.2)
+
+[sub_resource type="QuadMesh" id="QuadMesh_2x8v7"]
+size = Vector2(0.08, 0.15)
+
+[sub_resource type="QuadMesh" id="QuadMesh_3x8v7"]
+size = Vector2(0.06, 0.12)
+
+[node name="Grass" type="Node3D"]
+script = ExtResource("1_0x8v7")
+
+[node name="Blade1" type="MeshInstance3D" parent="."]
+mesh = SubResource("QuadMesh_1x8v7")
+position = Vector3(0, 0.1, 0)
+rotation = Vector3(0, 0, 0.2)
+
+[node name="Blade2" type="MeshInstance3D" parent="."]
+mesh = SubResource("QuadMesh_2x8v7")
+position = Vector3(0.05, 0.075, 0)
+rotation = Vector3(0, 0, -0.1)
+
+[node name="Blade3" type="MeshInstance3D" parent="."]
+mesh = SubResource("QuadMesh_3x8v7")
+position = Vector3(-0.05, 0.06, 0)
+rotation = Vector3(0, 0, 0.3)

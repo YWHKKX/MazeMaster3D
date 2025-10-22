@@ -1,0 +1,257 @@
+[gd_scene load_steps=29 format=3 uid="uid://bqxv8jxq8jqjx"]
+
+[ext_resource type="Script" path="res://scripts/main.gd" id="1_0x8jx"]
+[ext_resource type="Script" path="res://scripts/managers/GameManager.gd" id="2_1x9jy"]
+[ext_resource type="Script" path="res://scripts/managers/TileManager.gd" id="3_tile_manager"]
+[ext_resource type="Script" path="res://scripts/map_system/MapGenerator.gd" id="4_map_generator"]
+[ext_resource type="Script" path="res://scripts/managers/CharacterManager.gd" id="5_character_manager"]
+[ext_resource type="Script" path="res://scripts/managers/GridManager.gd" id="6_grid_manager"]
+[ext_resource type="Script" path="res://scripts/ui/MainMenuUI.gd" id="7_main_menu_ui"]
+[ext_resource type="Script" path="res://scripts/ui/GameUI.gd" id="9_game_ui"]
+[ext_resource type="Script" path="res://scripts/ui/BuildingSelectionUI.gd" id="10_building_ui"]
+[ext_resource type="Script" path="res://scripts/ui/MonsterSelectionUI.gd" id="11_monster_ui"]
+[ext_resource type="Script" path="res://scripts/ui/LogisticsSelectionUI.gd" id="12_logistics_ui"]
+[ext_resource type="Script" path="res://scripts/ui/MiningSystemUI.gd" id="14_mining_ui"]
+[ext_resource type="Script" path="res://scripts/managers/BuildingManager.gd" id="15_building_manager"]
+[ext_resource type="Script" path="res://scripts/managers/AutoAssigner.gd" id="16_auto_assigner"]
+[ext_resource type="Script" path="res://scripts/managers/CombatManager.gd" id="17_combat_manager"]
+[ext_resource type="Script" path="res://scripts/ui/SelectionHighlightSystem.gd" id="19_selection_highlight"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceCollectionManager.gd" id="20_resource_collection_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceManager.gd" id="20_resource_manager"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceDisplayUI.gd" id="21_resource_display_ui"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceVisualizationUI.gd" id="22_resource_visualization_ui"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceCollectionUI.gd" id="23_resource_collection_ui"]
+[ext_resource type="Script" path="res://scripts/ui/ResourceDensityUI.gd" id="24_resource_density_ui"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceTradeManager.gd" id="25_resource_trade_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourcePredictionManager.gd" id="26_resource_prediction_manager"]
+[ext_resource type="Script" path="res://scripts/managers/resource/ResourceAllocationManager.gd" id="27_resource_allocation_manager"]
+[ext_resource type="Script" path="res://scripts/managers/rendering/PlantRenderer.gd" id="28_plant_renderer"]
+[ext_resource type="Script" path="res://scripts/managers/rendering/MineralRenderer.gd" id="29_mineral_renderer"]
+[ext_resource type="Script" path="res://scripts/managers/rendering/EnhancedResourceRenderer.gd" id="30_enhanced_resource_renderer"]
+
+[node name="Main" type="Node3D"]
+script = ExtResource("1_0x8jx")
+
+[node name="GameManager" type="Node" parent="."]
+script = ExtResource("2_1x9jy")
+
+[node name="TileManager" type="Node" parent="."]
+script = ExtResource("3_tile_manager")
+
+[node name="MapGenerator" type="Node" parent="."]
+script = ExtResource("4_map_generator")
+
+[node name="CharacterManager" type="Node" parent="."]
+script = ExtResource("5_character_manager")
+
+[node name="GridManager" type="Node3D" parent="."]
+script = ExtResource("6_grid_manager")
+
+[node name="BuildingManager" type="Node" parent="."]
+script = ExtResource("15_building_manager")
+
+[node name="AutoAssigner" type="Node" parent="."]
+script = ExtResource("16_auto_assigner")
+
+[node name="CombatManager" type="Node" parent="."]
+script = ExtResource("17_combat_manager")
+
+[node name="SelectionHighlightSystem" type="Node" parent="."]
+script = ExtResource("19_selection_highlight")
+
+[node name="ResourceManager" type="Node" parent="."]
+script = ExtResource("20_resource_manager")
+
+[node name="ResourceCollectionManager" type="Node" parent="."]
+script = ExtResource("20_resource_collection_manager")
+
+[node name="ResourceTradeManager" type="Node" parent="."]
+script = ExtResource("25_resource_trade_manager")
+
+[node name="ResourcePredictionManager" type="Node" parent="."]
+script = ExtResource("26_resource_prediction_manager")
+
+[node name="ResourceAllocationManager" type="Node" parent="."]
+script = ExtResource("27_resource_allocation_manager")
+
+[node name="PlantRenderer" type="Node" parent="."]
+script = ExtResource("28_plant_renderer")
+
+[node name="MineralRenderer" type="Node" parent="."]
+script = ExtResource("29_mineral_renderer")
+
+[node name="EnhancedResourceRenderer" type="Node" parent="."]
+script = ExtResource("30_enhanced_resource_renderer")
+
+[node name="World" type="Node3D" parent="."]
+
+[node name="Camera3D" type="Camera3D" parent="World"]
+transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 100, 30, 100)
+fov = 90.0
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="World"]
+transform = Transform3D(0.707107, -0.5, 0.5, 0, 0.707107, 0.707107, -0.707107, -0.5, 0.5, 0, 10, 0)
+shadow_enabled = true
+
+[node name="Environment" type="Node3D" parent="World"]
+
+[node name="Dungeon" type="Node3D" parent="World/Environment"]
+
+[node name="Characters" type="Node3D" parent="World"]
+
+[node name="Buildings" type="Node3D" parent="World"]
+
+[node name="Effects" type="Node3D" parent="World"]
+
+[node name="Cursor3D" type="Node3D" parent="World"]
+
+[node name="UI" type="CanvasLayer" parent="."]
+
+[node name="MainMenuUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("7_main_menu_ui")
+
+[node name="Background" type="ColorRect" parent="UI/MainMenuUI"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.1, 0.1, 0.2, 1)
+
+[node name="VBoxContainer" type="VBoxContainer" parent="UI/MainMenuUI"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -200.0
+offset_right = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="TitleLabel" type="Label" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+text = "MazeMaster3D"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SubtitleLabel" type="Label" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+text = "3D地下世界管理游戏"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="StartButton" type="Button" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="SettingsButton" type="Button" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="ExitButton" type="Button" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="HSeparator2" type="HSeparator" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+
+[node name="VersionLabel" type="Label" parent="UI/MainMenuUI/VBoxContainer"]
+layout_mode = 2
+text = "v1.0.0"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="GameUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("9_game_ui")
+
+[node name="BuildingSelectionUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("10_building_ui")
+
+[node name="MonsterSelectionUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("11_monster_ui")
+
+[node name="LogisticsSelectionUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("12_logistics_ui")
+
+[node name="MiningSystemUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("14_mining_ui")
+
+[node name="ResourceDisplayUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("21_resource_display_ui")
+
+[node name="ResourceVisualizationUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("22_resource_visualization_ui")
+
+[node name="ResourceCollectionUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("23_resource_collection_ui")
+
+[node name="ResourceDensityUI" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("24_resource_density_ui")
+
+[node name="ResourcePanel" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 20.0
+offset_top = -120.0
+offset_right = 300.0
+offset_bottom = -20.0
+grow_vertical = 0
+
+[node name="BuildPanel" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -200.0
+offset_right = -20.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 0
+
+[node name="StatusPanel" type="Control" parent="UI"]
+layout_mode = 3
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -150.0
+offset_top = -80.0
+offset_right = 150.0
+offset_bottom = -20.0
+grow_horizontal = 0
+grow_vertical = 2
